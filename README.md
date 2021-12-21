@@ -2,6 +2,8 @@
 
 An attempt at uh... somewhat modernizing our setup after 9 years. Whee.
 
+Jump to the Container Setup section for docker-compose notes
+
 ## Thoughts
 - Containerizing our Minecraft install should allow for easier development, debugging, and general maintainability
     - Testing server upgrades would be much easier for example as you can just adjust some params and spin it up.
@@ -37,7 +39,6 @@ An attempt at uh... somewhat modernizing our setup after 9 years. Whee.
         - Just keep locally?
         - ... Just be lazy and commit to VCS? (Ick)
 
-
 ### Hahaha
 - https://github.com/itzg/docker-minecraft-server
 - This makes life easier.
@@ -47,6 +48,11 @@ An attempt at uh... somewhat modernizing our setup after 9 years. Whee.
 - Ability to easily connect to and use the console on a given instance
 - Backup-friendly filesystem layout with container volumes
 
+## Container Setup
+- We're using the `itzg/minecraft-server` image See [Documentatino](https://github.com/itzg/docker-minecraft-server/blob/master/README.md)
+- Worlds are setup in a `worlds/` subdirectory as per `bukkit.yml` config.
+- Configs are copied from `minecraft-data/configs/` into the container working dir
+    - Likewise with plugins
 
 ## Notes
 - OpenJDK 11
