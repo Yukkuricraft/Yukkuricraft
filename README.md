@@ -12,7 +12,7 @@ An attempt at uh... somewhat modernizing our setup after 9 years. Whee.
         - Containerization helps here as we can allow SSH access to individual containers or jump boxes for the non-sysadmins.
         - This still doesn't address CaC for the YC container host though.
 
-## Architecture
+## Architecture (WIP)
 
 ![Architecture Draft](https://lucid.app/publicSegments/view/c3058b49-3abb-4443-81e9-e89ee0b908e6/image.png)
 
@@ -24,3 +24,30 @@ An attempt at uh... somewhat modernizing our setup after 9 years. Whee.
     - Single gateway to serve all containers? This would be pretty difficult in conjunction with using branches.
     - Serve on different subdomains based on branch and its configurations??
         - Could deploy based on branches then, but which branches to "enable"? Or do we just deploy for every branch? This seems unscalable/prone to human error
+- Minecraft Root Directory Layout
+    - By default, volumes mapped to local FS will go under `/var/lib/yukkuricraft/`
+        - Production - ie the instance you connect to at `mc.yukkuricraft.net`, will go under `yukkuricraft/prod/`
+        - Symlink `~/yukkuricraft` to `/var/lib/yukkuricraft/`
+    - Plugins
+        - `/var/lib/yukkuricraft/prod/plugins:/app/plugins`
+    - Worlds
+        - `/var/lib/yukkuricraft/prod/worlds:/app/worlds`
+    - Jars?
+        - Hm... Maybe keep a list of all jars we use in an S3 and use from there?
+        - Just keep locally?
+        - ... Just be lazy and commit to VCS? (Ick)
+
+
+### Hahaha
+- https://github.com/itzg/docker-minecraft-server
+- This makes life easier.
+
+## Required "Functionality"
+- Ability to easily spin up new minecraft instances
+- Ability to easily connect to and use the console on a given instance
+- Backup-friendly filesystem layout with container volumes
+
+
+## Notes
+- OpenJDK 11
+- Ahaha, `itzg/*` images to the rescue

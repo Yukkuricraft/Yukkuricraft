@@ -1,0 +1,22 @@
+version: "3.2"
+services:
+  mc:
+    container_name: Yukkuricraft
+    image: itzg/minecraft-server:java11
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    environment:
+      EULA: 'true'
+      VERSION: 1.16.5
+      TYPE: PAPER
+      PAPER_BUILD: 792
+      STOP_SERVER_ANNOUNCE_DELAY: 5
+      EXEC_DIRECTLY: 'true'
+    ports:
+      - 25666:25565
+    volumes:
+      - mcdata:/data # For now.
+
+volumes:
+  mcdata:
