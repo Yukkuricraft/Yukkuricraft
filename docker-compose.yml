@@ -12,11 +12,20 @@ services:
       TYPE: PAPER
       PAPER_BUILD: 792
       STOP_SERVER_ANNOUNCE_DELAY: 5
+      COPY_CONFIG_DEST: /data
       EXEC_DIRECTLY: 'true'
     ports:
       - 25666:25565
     volumes:
       - mcdata:/data # For now.
+      - ./minecraft-data/plugins:/plugins
+      - ./minecraft-data/config:/config
+  mysql:
+    container_name: MySQL
+    image: mysql/mysql-server:5.7
+    volumes:
+      - dbdata:/var/lib/mysql
 
 volumes:
   mcdata:
+  dbdata:

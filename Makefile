@@ -7,7 +7,10 @@ up:
 
 .PHONY: down
 down:
-	docker-compose -f $(COMPOSE_FILE) -t 10 down
+	docker-compose -f $(COMPOSE_FILE) down
+
+.PHONY: restart
+restart: down up
 
 .PHONY: logs
 logs:
