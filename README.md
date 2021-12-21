@@ -14,7 +14,7 @@ An attempt at uh... somewhat modernizing our setup after 9 years. Whee.
 
 ## Architecture
 
-![Architecture](https://lucid.app/publicSegments/view/b71cec67-8a86-4368-820b-c4618bdc69e3/image.pdf)
+![Architecture Draft](https://lucid.app/publicSegments/view/c3058b49-3abb-4443-81e9-e89ee0b908e6/image.png)
 
 ### Major Outstanding Questions
 - How do we "deploy" a new environment? Just make a copy of a docker-compose and `up` it? That sounds lazy/brittle
