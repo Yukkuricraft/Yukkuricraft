@@ -2,14 +2,18 @@ version: "3.2"
 services:
   mc:
     container_name: YC-${ENV}
+    depends_on:
+      - mysql
     image: yukkuricraft/minecraft-server
     tty: true
     stdin_open: true
     restart: unless-stopped
     environment:
+      YC_ENV: ${ENV_TYPE}
+      MOTD: ${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]
       EULA: 'true'
-      VERSION: 1.16.5
-      TYPE: PAPER
+      VERSION: ${MC_VERSION}
+      TYPE: ${MC_TYPE}
       PAPER_BUILD: ${PAPER_BUILD}
       STOP_SERVER_ANNOUNCE_DELAY: 5
       COPY_CONFIG_DEST: /data
@@ -19,17 +23,26 @@ services:
     volumes:
       -
         type: bind
-        source: ${MC_FS_ROOT}/${ENV}/worlds
-        target: /yc-worlds
+        source: ${MC_FS_ROOT}/prod/worlds # This should always mount prod
+        target: /worlds
+      - ycworlds:/yc-worlds
       - mcdata:/data # For now.
       - ./minecraft-data/plugins:/plugins
       - ./minecraft-data/config:/config
+    networks:
+      - ycnet
   mysql:
     container_name: MySQL-${ENV}
     image: mysql/mysql-server:5.7
     volumes:
       - dbdata:/var/lib/mysql
+    networks:
+      - ycnet
 
 volumes:
   mcdata:
   dbdata:
+  ycworlds:
+
+networks:
+  ycnet:

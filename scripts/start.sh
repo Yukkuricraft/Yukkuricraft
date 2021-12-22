@@ -1,12 +1,17 @@
 #!/bin/bash
 
 echo "Poop"
-mkdir -p /data/worlds
-echo "aaa"
-ls -al --color /yc-worlds
-echo "bbb"
-ls -al --color /data
-echo "ccc"
-ls -al --color /data/worlds
+echo "YC_ENV: $YC_ENV"
+
+if [[ "$YC_ENV" == "prod" ]]; then
+    echo "WE PROD";
+    ln -s /worlds /yc-worlds
+fi
+
+if [[ "$YC_ENV" == "dev" ]]; then
+    echo "WE DEV";
+    rsync -uarP /worlds/* /yc-worlds/
+    chown -R minecraft:minecraft /yc-worlds
+fi
 
 /start

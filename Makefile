@@ -1,4 +1,8 @@
+###########
+## SETUP ##
+###########
 SHELL=/bin/bash
+ENV?=dev1
 
 .PHONY: __pre_ensure
 __pre_ensure: __ensure_env
@@ -7,16 +11,16 @@ __pre_ensure: __ensure_env_file_exists
 
 .PHONY: __ensure_env
 __ensure_env:
-ifndef ENV
-	@echo 'Must pass ENV: make ENV=(prod|dev1) <target>'
-	@echo ''
-	@exit 1
-endif
+	@if [[ -z "$(ENV)" ]]; then \
+		echo 'Must pass ENV: make ENV=(prod|dev1) <target>. Aborting.'; \
+		echo ''; \
+		exit 1; \
+	fi
 
 .PHONY: __ensure_valid_env
 __ensure_valid_env:
-	@if ! [[ "$(ENV_STR)" =~ ^(dev|prod)$$ ]]; then \
-		echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_STR)"; \
+	@if ! [[ "$(ENV_TYPE)" =~ ^(dev|prod)$$ ]]; then \
+		echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_TYPE). Aborting."; \
 		echo ''; \
 		exit 1; \
 	fi
@@ -29,28 +33,37 @@ __ensure_env_file_exists:
 		exit 1; \
 	fi
 
-# Stripping numbers so we only keep dev or prod
-ENV_STR=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
-COMPOSE_FILE="docker-compose.$(ENV_STR).yml"
+#############
+## TARGETS ##
+#############
+# ENV_TYPE strips numbers so we only keep dev or prod
+ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
+COMPOSE_FILE="docker-compose.yml"
 YC_CONTAINER=YC-$(ENV)
+
+COMPOSE_ARGS=--project-name $(ENV) \
+			 --env-file env/$(ENV).env
+
+PRE=ENV_TYPE=$(ENV_TYPE)
+
+.PHONY: build
+build:
+	docker build -f images/minecraft-server/Dockerfile \
+		--tag='yukkuricraft/minecraft-server' \
+		.
 
 .PHONY: up
 up: __pre_ensure
 up:
-	echo $(ENV_STR)
-	echo $(COMPOSE_FILE)
-	echo $(YC_CONTAINER)
-	docker-compose -f $(COMPOSE_FILE) \
-		--project-name $(ENV) \
-		--env-file env/$(ENV).env \
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
 		up -d
 
 .PHONY: _down
 down: __pre_ensure
 down:
-	docker-compose -f $(COMPOSE_FILE) \
-		--project-name $(ENV) \
-		--env-file env/$(ENV).env \
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
 		down
 
 .PHONY: clean
@@ -66,24 +79,33 @@ cleanstart: down clean up
 .PHONY: logs
 logs: __pre_ensure
 logs:
-	docker-compose -f $(COMPOSE_FILE) \
-		--project-name $(ENV) \
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
 		logs --follow
 
 .PHONY: attach
 attach: __pre_ensure
 attach:
-	docker-compose attach $(YC_CONTAINER)
+	$(PRE) docker-compose attach $(YC_CONTAINER)
 
 .PHONY: exec
 exec: __pre_ensure
 exec:
-	echo $(YC_CONTAINER)
 	docker exec -it $(YC_CONTAINER) /bin/bash
 
+# Prod Shortcuts
+.PHONY: up_prod
+up_prod: ENV=prod
+up_prod: up
 
-.PHONY: build
-build:
-	docker build -f images/minecraft-server/Dockerfile \
-		--tag='yukkuricraft/minecraft-server' \
-		.
+.PHONY: down_prod
+down_prod: ENV=prod
+down_prod: down
+
+.PHONY: logs_prod
+logs_prod: ENV=prod
+logs_prod: logs
+
+.PHONY: exec_prod
+exec_prod: ENV=prod
+exec_prod: exec
