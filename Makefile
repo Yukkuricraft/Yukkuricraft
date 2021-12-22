@@ -3,6 +3,7 @@ SHELL=/bin/bash
 .PHONY: __pre_ensure
 __pre_ensure: __ensure_env
 __pre_ensure: __ensure_valid_env
+__pre_ensure: __ensure_env_file_exists
 
 .PHONY: __ensure_env
 __ensure_env:
@@ -14,8 +15,19 @@ endif
 
 .PHONY: __ensure_valid_env
 __ensure_valid_env:
-	@if ! [[ "$(ENV_STR)" =~ ^(dev|prod)$$ ]]; then echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_STR)"; echo ''; exit 1;  fi
-	echo "else ifeq ($(strip $(ENV_STR)),dev)"
+	@if ! [[ "$(ENV_STR)" =~ ^(dev|prod)$$ ]]; then \
+		echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_STR)"; \
+		echo ''; \
+		exit 1; \
+	fi
+
+.PHONY: __ensure_env_file_exists
+__ensure_env_file_exists:
+	@if ! [[ -f "env/$(ENV).env" ]]; then \
+		echo "Got '$(ENV)' for ENV but could not find 'env/$(ENV).env'! Aborting."; \
+		echo ''; \
+		exit 1; \
+	fi
 
 # Stripping numbers so we only keep dev or prod
 ENV_STR=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
