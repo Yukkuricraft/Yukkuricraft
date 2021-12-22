@@ -1,8 +1,8 @@
 version: "3.2"
 services:
   mc:
-    container_name: Yukkuricraft
-    image: itzg/minecraft-server:java11
+    container_name: YC-${ENV}
+    image: yukkuricraft/minecraft-server
     tty: true
     stdin_open: true
     restart: unless-stopped
@@ -10,13 +10,17 @@ services:
       EULA: 'true'
       VERSION: 1.16.5
       TYPE: PAPER
-      PAPER_BUILD: 792
+      PAPER_BUILD: ${PAPER_BUILD}
       STOP_SERVER_ANNOUNCE_DELAY: 5
       COPY_CONFIG_DEST: /data
       EXEC_DIRECTLY: 'true'
     ports:
-      - 25666:25565
+      - ${HOST_PORT}:25565
     volumes:
+      -
+        type: bind
+        source: ${MC_FS_ROOT}/${ENV}/worlds
+        target: /yc-worlds
       - mcdata:/data # For now.
       - ./minecraft-data/plugins:/plugins
       - ./minecraft-data/config:/config
