@@ -25,7 +25,7 @@ services:
       - ./minecraft-data/plugins:/plugins
       - ./minecraft-data/config:/config
   mysql:
-    container_name: MySQL
+    container_name: MySQL-${ENV}
     image: mysql/mysql-server:5.7
     volumes:
       - dbdata:/var/lib/mysql
