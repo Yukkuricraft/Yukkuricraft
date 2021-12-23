@@ -67,6 +67,9 @@ Below are the commonly used commands:
 |`make purge`|Purges all docker volumes that are not in use. Must down containers first.|
 |`make save_world`|Runs `save-all` inside the console of the `YC-${ENV}` container. **Writes the world to disk.**|
 
+There are `_prod` suffixed variants for most targets which simply sets `ENV=prod` for each target.
+- Eg, `make up_prod`, `make down_prod`
+
 See the contents of `Makefile` for a full list of valid targets.
 
 ## Outstanding Questions
