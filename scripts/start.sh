@@ -23,8 +23,8 @@ if [[ "$YC_ENV" == "dev" ]]; then
     debuglog '>>> ln -s /worlds-volume /yc-worlds'
     ln -s /worlds-volume /yc-worlds
 
-    debuglog '>>> chown -R minecraft:minecraft /yc-worlds'
-    chown -R minecraft:minecraft /yc-worlds
+    debuglog '>>> chown -R minecraft:minecraft /worlds-volume /yc-worlds'
+    chown -R minecraft:minecraft /worlds-volume /yc-worlds
 
     # If dev env, use the MOTD passed in from docker-compose which gives us useful info.
     # If prod, just copy `minecraft-data/configs/server.properties` wholesale and don't do anything extra.

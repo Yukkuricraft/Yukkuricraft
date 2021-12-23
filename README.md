@@ -11,7 +11,7 @@ This is our attempt at containerizing the Yukkuricraft minecraft server utilizin
 We support two "types" of environments - `prod` and `dev`.
 - The `prod` type env is a singular environment - ie only one prod.
 - There can however be multiple `dev` type envs. We standardize our names as `dev#` where # is an int starting at 1.
-- Thus, as a minimal setup we have a `prod` and `dev1` environments.
+- Eg, we can have environments named: `prod`, `dev1`, `dev2`
 
 We use a singular `docker-compose.yml` file which uses a combination of buildtime and runtime environment variable substitutions. We recommend that you do _not_ run `docker-compose` or `docker` commands manually, but rather use the `Makefile` targets provided. See [Running Containers](#running-containers).
 
@@ -44,10 +44,16 @@ To accomplish this, we setup our volumes and mounts slightly differently from pr
 
 This roundabout setup is necessary as we want to effectively use `/yc-worlds` as both a bind mount for production and a docker volume for development. Since we cannot configure docker-compose to use both, we instead use the `scripts/start.sh` script to setup our symlinks based on environment type.
 
-### Filesystem Diagram
+#### Filesystem Diagram
 Below is a diagram illustrating the paragraphs above pertaining to filesystem layouts
 
 ![Filesystem Layout](https://lucid.app/publicSegments/view/8cbe134b-8d15-4081-a8b3-d83f9b2ea5d7/image.png)
+
+### Creating New Environments
+
+To create new dev environments, simply create a corresponding `env/dev#.env` file. You can now use the new `dev#` in `make` commands, eg `make ENV=dev2 up`.
+
+**Note**: You will get a freshly generated world unless you also add the `COPY_PROD_WORLD=1` flag, eg `make COPY_PROD_WORLD=1 ENV=dev2 up`.
 
 ## Running Containers
 
@@ -71,6 +77,8 @@ There are `_prod` suffixed variants for most targets which simply sets `ENV=prod
 - Eg, `make up_prod`, `make down_prod`
 
 See the contents of `Makefile` for a full list of valid targets.
+
+
 
 ## Outstanding Questions
 - Logs?
