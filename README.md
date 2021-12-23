@@ -44,7 +44,7 @@ To accomplish this, we setup our volumes and mounts slightly differently from pr
 
 This roundabout setup is necessary as we want to effectively use `/yc-worlds` as both a bind mount for production and a docker volume for development. Since we cannot configure docker-compose to use both, we instead use the `scripts/start.sh` script to setup our symlinks based on environment type.
 
-<h2 id="running-containers">Running Containers</h2>
+## Running Containers
 
 - All containers are named with the environment added as a suffix. Eg, `YC-prod`, `MySQL-prod`, `YC-dev`, etc
 - All container management should generally be done using `Makefile` targets. **All commands by default will target the `dev1` environment.**
@@ -54,6 +54,7 @@ Below are the commonly used commands:
 |Command|Description|
 |-------|-----------|
 |`make up`|Starts the server on the specified environment.|
+|`make COPY_PROD_WORLD=1 ENV=dev1 up`|Assuming the ENV is a non-production env, setting `COPY_PROD_WORLD` to a **non-empty value** will run an `rsync` from `/worlds-bindmount` (production world data) to `/worlds-volume` (container-specific volume mount). This effectively performs a one-time ro mirror of the production data to our dev world. Because we use volumes, the first `rsync` will take time as it is copying the entire world. However, subsequent runs should be much faster (assuming volumes have not been pruned) as we only `rsync` new or modified files.|
 |`make down`|Kills containers in the specified environment.|
 |`make logs`|Runs `docker-compose logs` for the specified environment's containers.|
 |`make attach`|Runs `docker attach` to the `YC-${ENV}` container. **This is attaching to Console.** Be aware that ctrl+c kills the server. Detaching is done with `Ctrl+P`, then `Ctrl+Q`.|
