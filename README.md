@@ -2,7 +2,7 @@
 Containerized Yukkuricraft
 
 ## Architecture (WIP)
-![Architecture Draft](https://lucid.app/publicSegments/view/c3058b49-3abb-4443-81e9-e89ee0b908e6/image.png)
+![Architecture Draft](https://lucid.app/publicSegments/view/822c5fcf-e707-4a4b-abea-79d6c8e0de78/image.png)
 
 ## Description
 
@@ -43,6 +43,11 @@ To accomplish this, we setup our volumes and mounts slightly differently from pr
 - Finally, we create a symlink so `/yc-worlds` points to `/worlds-volume`.
 
 This roundabout setup is necessary as we want to effectively use `/yc-worlds` as both a bind mount for production and a docker volume for development. Since we cannot configure docker-compose to use both, we instead use the `scripts/start.sh` script to setup our symlinks based on environment type.
+
+### Filesystem Diagram
+Below is a diagram illustrating the paragraphs above pertaining to filesystem layouts
+
+![Filesystem Layout](https://lucid.app/publicSegments/view/8cbe134b-8d15-4081-a8b3-d83f9b2ea5d7/image.png)
 
 ## Running Containers
 
