@@ -72,15 +72,15 @@ down:
 		$(COMPOSE_ARGS) \
 		down
 
-.PHONY: clean
-clean:
+.PHONY: purge
+purge:
 	docker volume prune -f
 
 .PHONY: restart
 restart: down up
 
-.PHONY: cleanstart
-cleanstart: down clean up
+.PHONY: purgestart
+purgestart: down purge up
 
 .PHONY: logs
 logs: __pre_ensure
