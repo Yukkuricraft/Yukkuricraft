@@ -10,8 +10,9 @@ services:
     restart: unless-stopped
     environment:
       YC_ENV: ${ENV_TYPE}
-      MOTD: ${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]
+      MOTD: "${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
       EULA: 'true'
+      COPY_PROD_WORLD: ${COPY_PROD_WORLD}
       VERSION: ${MC_VERSION}
       TYPE: ${MC_TYPE}
       PAPER_BUILD: ${PAPER_BUILD}
@@ -24,8 +25,9 @@ services:
       -
         type: bind
         source: ${MC_FS_ROOT}/prod/worlds # This should always mount prod
-        target: /worlds
-      - ycworlds:/yc-worlds
+        target: /worlds-bindmount
+        read_only: ${BINDMOUNT_RO}
+      - ycworldsvolume:/worlds-volume
       - mcdata:/data # For now.
       - ./minecraft-data/plugins:/plugins
       - ./minecraft-data/config:/config
@@ -42,7 +44,7 @@ services:
 volumes:
   mcdata:
   dbdata:
-  ycworlds:
+  ycworldsvolume:
 
 networks:
   ycnet:

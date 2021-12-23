@@ -44,7 +44,12 @@ YC_CONTAINER=YC-$(ENV)
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --env-file env/$(ENV).env
 
-PRE=ENV_TYPE=$(ENV_TYPE)
+COPY_PROD_WORLD?=
+PRE=ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
+
+.PHONY: save_world
+save_world:
+	echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
 .PHONY: build
 build:
@@ -61,6 +66,7 @@ up:
 
 .PHONY: _down
 down: __pre_ensure
+down: save_world
 down:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
@@ -86,7 +92,7 @@ logs:
 .PHONY: attach
 attach: __pre_ensure
 attach:
-	$(PRE) docker-compose attach $(YC_CONTAINER)
+	$(PRE) docker attach $(YC_CONTAINER)
 
 .PHONY: exec
 exec: __pre_ensure
@@ -109,3 +115,11 @@ logs_prod: logs
 .PHONY: exec_prod
 exec_prod: ENV=prod
 exec_prod: exec
+
+.PHONY: attach_prod
+attach_prod: ENV=prod
+attach_prod: attach
+
+.PHONY: save_world_prod
+save_world_prod: ENV=prod
+save_world_prod: save_world
