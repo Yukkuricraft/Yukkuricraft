@@ -53,6 +53,7 @@ This roundabout setup is necessary as we want to effectively use `/yc-worlds` as
 Below are the commonly used commands:
 |Command|Description|
 |-------|-----------|
+|`make build`|Builds the `yukkuricraft/minecraft-server` image which adds small setup scripts to `itzg/minecraft-server`.|
 |`make up`|Starts the server on the specified environment.|
 |`make COPY_PROD_WORLD=1 ENV=dev1 up`|Assuming the ENV is a non-production env, setting `COPY_PROD_WORLD` to a **non-empty value** will run an `rsync` from `/worlds-bindmount` (production world data) to `/worlds-volume` (container-specific volume mount). This effectively performs a one-time ro mirror of the production data to our dev world. Because we use volumes, the first `rsync` will take time as it is copying the entire world. However, subsequent runs should be much faster (assuming volumes have not been pruned) as we only `rsync` new or modified files.|
 |`make down`|Kills containers in the specified environment.|
