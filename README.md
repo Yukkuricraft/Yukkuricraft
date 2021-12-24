@@ -78,11 +78,10 @@ There are `_prod` suffixed variants for most targets which simply sets `ENV=prod
 
 See the contents of `Makefile` for a full list of valid targets.
 
-
-
 ## Outstanding Questions
 - Logs?
 - Plugins and configs?
 
 ## See Also
 - [Initial Thoughts - First Draft README](docs/initial_thoughts.md)
+- [Thoughts on Plugin Management VCS](docs/plugin_vcs_management_thoughts.md)
