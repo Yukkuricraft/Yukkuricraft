@@ -40,6 +40,7 @@ __ensure_env_file_exists:
 ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
 COMPOSE_FILE="docker-compose.yml"
 YC_CONTAINER=YC-$(ENV)
+YC_ROOT?=/var/lib/yukkuricraft
 
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --env-file env/$(ENV).env
@@ -47,9 +48,32 @@ COMPOSE_ARGS=--project-name $(ENV) \
 COPY_PROD_WORLD?=
 PRE=ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
 
+.PHONY: save_devdata_to_disk
+save_devdata_to_disk: __pre_ensure
+save_devdata_to_disk:
+	@if [[ "$(ENV_TYPE)" == "prod" ]]; then \
+		echo "You ran the 'save_devdata_to_disk' target with an ENV_TYPE of prod! Aborting."; \
+		exit 1; \
+	fi
+	@if [[ ! -d "${YC_ROOT}/${ENV}/worlds" ]]; then \
+		echo "Please create the '${YC_ROOT}/${ENV}/worlds' directory owned by minecraft:minecraft to continue. Aborting"; \
+		exit 1; \
+	elif [[ ! -d "${YC_ROOT}/${ENV}/plugins" ]]; then \
+		echo "Please create the '${YC_ROOT}/${ENV}/plugins' directory owned by minecraft:minecraft to continue. Aborting"; \
+		exit 1; \
+	fi
+	@docker run \
+		--rm \
+		--mount type=bind,source=${YC_ROOT}/${ENV}/worlds,target=/worlds-data \
+		--mount type=bind,source=${YC_ROOT}/${ENV}/plugins,target=/plugins-data \
+		--volume $(PWD)/scripts/rsync.sh:/rsync.sh \
+		--volumes-from YC-${ENV} \
+		eeacms/rsync \
+		/rsync.sh
+
 .PHONY: save_world
 save_world:
-	echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
+	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
 .PHONY: build
 build:
@@ -92,7 +116,7 @@ logs:
 .PHONY: attach
 attach: __pre_ensure
 attach:
-	$(PRE) docker attach $(YC_CONTAINER)
+	$(PRE) docker attach --sig-proxy=false $(YC_CONTAINER)
 
 .PHONY: exec
 exec: __pre_ensure

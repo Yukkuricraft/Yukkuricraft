@@ -25,12 +25,18 @@ services:
       -
         type: bind
         source: ${MC_FS_ROOT}/prod/worlds # This should always mount prod
-        target: /worlds-bindmount
+        target: /worlds-bindmount-prod
         read_only: ${BINDMOUNT_RO}
-      - ycworldsvolume:/worlds-volume
-      - mcdata:/data # For now.
-      - ./minecraft-data/plugins:/plugins
-      - ./minecraft-data/config:/config
+      -
+        type: bind
+        source: ${MC_FS_ROOT}/prod/plugins # This should always mount prod
+        target: /plugins-bindmount-prod
+        read_only: ${BINDMOUNT_RO}
+      - ycworldsvolume:/worlds-volume-dev # This volume is unused in prod. Only in dev.
+      - ycpluginsvolume:/plugins-volume-dev # Also unused in prod
+      - mcdata:/data
+      - ./minecraft-data/${ENV}/plugins:/yc-plugins
+      - ./minecraft-data/${ENV}/config:/yc-config
     networks:
       - ycnet
   mysql:
@@ -45,6 +51,7 @@ volumes:
   mcdata:
   dbdata:
   ycworldsvolume:
+  ycpluginsvolume:
 
 networks:
   ycnet:
