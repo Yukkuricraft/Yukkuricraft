@@ -1,0 +1,3 @@
+[submodule "secrets"]
+	path = secrets
+	url = git@github.com:Yukkuricraft/Yukkuricraft-secrets.git

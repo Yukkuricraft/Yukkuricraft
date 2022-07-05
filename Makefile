@@ -2,7 +2,8 @@
 ## SETUP ##
 ###########
 SHELL=/bin/bash
-ENV?=dev1
+ENV?=prod
+
 
 .PHONY: __pre_ensure
 __pre_ensure: __ensure_env
@@ -39,7 +40,7 @@ __ensure_env_file_exists:
 # ENV_TYPE strips numbers so we only keep dev or prod
 ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
 COMPOSE_FILE="docker-compose.yml"
-YC_CONTAINER=YC-$(ENV)
+YC_CONTAINER=YC-survival-$(ENV)
 YC_ROOT?=/var/lib/yukkuricraft
 
 COMPOSE_ARGS=--project-name $(ENV) \
@@ -76,7 +77,10 @@ save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
 .PHONY: build
-build:
+build: build_minecraft_server
+
+.PHONY: build_minecraft_server
+build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
 		--tag='yukkuricraft/minecraft-server' \
 		.
@@ -99,6 +103,10 @@ down:
 .PHONY: purge
 purge:
 	docker volume prune -f
+
+.PHONY: restart_velocity
+restart_velocity:
+	docker restart Velocity-$(ENV)
 
 .PHONY: restart
 restart: down up
