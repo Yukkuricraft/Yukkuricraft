@@ -1,0 +1,7 @@
+# This config is used to dynamically generated a docker-compose.yml from the docker-compose.tpl.yml.
+# This is because repeating the minecraft server container definition 7+ times is gross when
+#   all that changes between configs is the name of the world group.
+
+world_groups:
+    - survival
+    - creative

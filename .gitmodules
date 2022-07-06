@@ -1,3 +1,6 @@
 [submodule "secrets"]
 	path = secrets
 	url = git@github.com:Yukkuricraft/Yukkuricraft-secrets.git
+[submodule "src/common"]
+	path = src/common
+	url = git@github.com:Yukkuricraft/yc-common.git
