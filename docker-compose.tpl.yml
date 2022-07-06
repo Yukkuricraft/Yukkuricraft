@@ -1,0 +1,76 @@
+version: "3.4"
+
+custom_extensions:
+  mc_service_template:
+    container_name: YC-<<WORLDGROUP>>-${ENV}
+    image: yukkuricraft/minecraft-server
+    depends_on:
+      - velocity
+      - mysql
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    networks:
+      - ycnet
+    environment:
+      YC_ENV: ${ENV_TYPE}
+      MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
+      EULA: 'true'
+      COPY_PROD_WORLD: ${COPY_PROD_WORLD}
+      VERSION: ${MC_VERSION}
+      TYPE: ${MC_TYPE}
+      PAPER_BUILD: ${PAPER_BUILD}
+      STOP_SERVER_ANNOUNCE_DELAY: 5
+      COPY_CONFIG_DEST: /data
+      EXEC_DIRECTLY: 'true'
+    volumes:
+      -
+        type: bind
+        source: ${MC_FS_ROOT}/prod/<<WORLDGROUP>>/worlds # This should always mount prod
+        target: /worlds-bindmount-prod
+        read_only: ${BINDMOUNT_RO}
+      -
+        type: bind
+        source: ${MC_FS_ROOT}/prod/<<WORLDGROUP>>/plugins # This should always mount prod
+        target: /plugins-bindmount-prod
+        read_only: ${BINDMOUNT_RO}
+      - mcdata_<<WORLDGROUP>>:/data
+      - ./minecraft-data/${ENV}/<<WORLDGROUP>>/plugins:/yc-plugins
+      - ./minecraft-data/${ENV}/<<WORLDGROUP>>/config:/yc-config
+      - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
+      - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
+
+
+services:
+  mysql:
+    container_name: MySQL-${ENV}
+    image: mysql/mysql-server:5.7
+    volumes:
+      - dbdata-${ENV}:/var/lib/mysql
+    networks:
+      - ycnet
+
+  velocity:
+    container_name: Velocity-${ENV}
+    depends_on:
+      - mysql
+    image: itzg/bungeecord
+    environment:
+      TYPE: "VELOCITY"
+      CFG_MOTD: "Powered by Docker"
+    volumes:
+      - velocity:/server
+      - ./velocity/velocity.toml:/config/velocity.toml
+      - ./secrets/forwarding.secret:/config/forwarding.secret
+    ports:
+      - 25600:25600
+    networks:
+      - ycnet
+
+
+volumes:
+  velocity:
+  dbdata-prod:
+
+networks:
+  ycnet:

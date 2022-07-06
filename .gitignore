@@ -2,3 +2,4 @@ tags
 *.sw[a-z]
 *.DS_Store
 __pycache__
+docker-compose.yml

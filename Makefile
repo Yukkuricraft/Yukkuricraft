@@ -76,6 +76,10 @@ save_devdata_to_disk:
 save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
+.PHONY: generate
+generate:
+	./generate-docker-compose
+
 .PHONY: build
 build: build_minecraft_server
 
@@ -87,6 +91,7 @@ build_minecraft_server:
 
 .PHONY: up
 up: __pre_ensure
+up: generate
 up:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
