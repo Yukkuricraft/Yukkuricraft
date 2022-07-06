@@ -1,7 +1,0 @@
-yukkuricraft.can_interact:
-    description: Permission node for building in restricted worlds
-    default: false
-    children:
-        modifyworld.*: true
-        modifyworld.blocks.place.grass: false
-        modifyworld.blocks.destroy.grass: false

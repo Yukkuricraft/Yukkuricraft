@@ -34,7 +34,7 @@ prevent-client-proxy-connections = false
 #                  unable to implement network level firewalling (on a shared host).
 # - "modern":      Forward player IPs and UUIDs as part of the login process using
 #                  Velocity's native forwarding. Only applicable for Minecraft 1.13 or higher.
-player-info-forwarding-mode = "NONE"
+player-info-forwarding-mode = "modern"
 
 # If you are using modern or BungeeGuard IP forwarding, configure a file that contains a unique secret here.
 # The file is expected to be UTF-8 encoded and not empty.
@@ -64,7 +64,7 @@ kick-existing-players = false
 #                  description and mod list.
 # - "all":         Uses the backend server's response as the proxy response. The Velocity
 #                  configuration is used if no servers could be contacted.
-ping-passthrough = "DISABLED"
+ping-passthrough = "description"
 
 # If not enabled (default is true) player IP addresses will be replaced by <ip address withheld> in logs
 enable-player-address-logging = true
@@ -81,19 +81,33 @@ minigames-and-events = "YC-minigames-and-events-prod:25565"
 
 # In what order we should try servers when a player logs in or is kicked from a server.
 try = [
+  "lobby",
+  "neo-gensokyo",
+  "old-gensokyo",
   "survival",
   "creative",
-  "old-gensokyo",
 ]
 
 [forced-hosts]
 # Configure your forced hosts here.
+"mc.yukkuricraft.net" = [
+  "lobby"
+]
+
+"lobby.yukkuricraft.net" = [
+  "lobby"
+]
+
 "survival.yukkuricraft.net" = [
   "survival"
 ]
 
 "creative.yukkuricraft.net" = [
   "creative"
+]
+
+"neo-gensokyo.yukkuricraft.net" = [
+  "neo-gensokyo"
 ]
 
 "old-gensokyo.yukkuricraft.net" = [

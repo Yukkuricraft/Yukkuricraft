@@ -35,8 +35,9 @@ custom_extensions:
         target: /plugins-bindmount-prod
         read_only: ${BINDMOUNT_RO}
       - mcdata_<<WORLDGROUP>>:/data
-      - ./minecraft-data/${ENV}/<<WORLDGROUP>>/plugins:/yc-plugins
-      - ./minecraft-data/${ENV}/<<WORLDGROUP>>/config:/yc-config
+      - ./secrets/configs/${ENV}/default:/yc-default-configs
+      - ./secrets/configs/${ENV}/<<WORLDGROUP>>/plugins:/yc-plugin-configs
+      - ./secrets/configs/${ENV}/<<WORLDGROUP>>/server:/yc-server-configs
       - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
 
