@@ -74,11 +74,16 @@ enable-player-address-logging = true
 # represents the IP address of the server to connect to.
 survival = "YC-survival-prod:25565"
 creative = "YC-creative-prod:25565"
+old-gensokyo = "YC-old-gensokyo-prod:25565"
+neo-gensokyo = "YC-neo-gensokyo-prod:25565"
+lobby = "YC-lobby-prod:25565"
+minigames-and-events = "YC-minigames-and-events-prod:25565"
 
 # In what order we should try servers when a player logs in or is kicked from a server.
 try = [
   "survival",
-  "creative"
+  "creative",
+  "old-gensokyo",
 ]
 
 [forced-hosts]
@@ -89,6 +94,10 @@ try = [
 
 "creative.yukkuricraft.net" = [
   "creative"
+]
+
+"old-gensokyo.yukkuricraft.net" = [
+  "old-gensokyo"
 ]
 
 [advanced]

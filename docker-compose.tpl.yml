@@ -1,7 +1,7 @@
 version: "3.4"
 
 custom_extensions:
-  mc_service_template:
+  mc_service_template: # This is the config used to run all world group containers.
     container_name: YC-<<WORLDGROUP>>-${ENV}
     image: yukkuricraft/minecraft-server
     depends_on:
