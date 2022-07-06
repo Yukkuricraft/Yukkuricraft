@@ -1,7 +1,12 @@
+# This is the template docker-compose config that will generate the actual config used to run.
+# We do this because copypasting this seven times is gross when everything is the same minus worldgroup name.
+#
+# We also get the benefit of being able to effectively "enable" and "disable" world groups due to the dynamic nature.
+
 version: "3.4"
 
 custom_extensions:
-  mc_service_template: # This is the config used to run all world group containers.
+  mc_service_template: # Config used to run all world group containers.
     container_name: YC-<<WORLDGROUP>>-${ENV}
     image: yukkuricraft/minecraft-server
     depends_on:
@@ -42,6 +47,7 @@ custom_extensions:
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
 
 
+# "Static" services
 services:
   mysql:
     container_name: MySQL-${ENV}
@@ -61,14 +67,14 @@ services:
       CFG_MOTD: "Powered by Docker"
     volumes:
       - velocity:/server
-      - ./velocity/velocity.toml:/config/velocity.toml
-      - ./secrets/forwarding.secret:/config/forwarding.secret
+      - ./secrets/velocity/:/config/
     ports:
       - 25600:25600
     networks:
       - ycnet
 
 
+# Volumes will also be dynamically generated for each "enabled" world group.
 volumes:
   velocity:
   dbdata-prod:

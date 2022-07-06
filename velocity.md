@@ -8,6 +8,5 @@ We generate our compose file as there are a lot of repeated fields and values wh
 
 When adding a new worldgroup name to `yc_config.yml`, there are a few pre-requisite steps to make it work.
 
-1. Modify `velocity/velocity.toml` to contain a server definition with the appropriate container names. Ports should always be 25565.
-2. Ensure the appropriate folders exist in both `/var/lib/yukkuricraft/<ENV>/<WORLDGROUP>/` as well as `./minecraft-data/<ENV>/<WORLDGROUP>/`
-
+1. Modify `./secrets/velocity/velocity.toml` to contain a server definition with the appropriate container names. Ports should always be 25565.
+2. Ensure the appropriate folders exist in both `/var/lib/yukkuricraft/<ENV>/<WORLDGROUP>/` as well as `./secrets/configs/<ENV>/<WORLDGROUP>/`
