@@ -69,7 +69,7 @@ services:
       - velocity:/server
       - ./secrets/velocity/:/config/
     ports:
-      - ${VELOCITY_PORT}:25600
+      - '${VELOCITY_PORT}:25600'
     networks:
       - ycnet
 

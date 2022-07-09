@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 
+import os
+
 from src.generator import Generator
 
 if __name__ == "__main__":
-    Generator().run()
+    env = os.getenv("ENV")
+    if env is None:
+        raise Exception("Environment variable 'ENV' was not set. Must be set to generate docker-compose file. Use Makefile targets ('make generate') instead of invoking manually.")
+    else:
+        Generator(env).run()
 
