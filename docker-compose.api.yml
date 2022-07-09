@@ -1,0 +1,14 @@
+#
+# Temp file? Generate eventually?
+#
+
+version: '3.4'
+services:
+  mysql:
+    container_name: YC-Api
+    image: yukkuricraft/yc-docker-api
+    volumes:
+    - ./src:/app/src
+    ports:
+    - 5000:5000
+    - 5001:5001

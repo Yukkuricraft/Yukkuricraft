@@ -84,12 +84,27 @@ generate:
 
 .PHONY: build
 build: build_minecraft_server
+build: build_api
 
 .PHONY: build_minecraft_server
 build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
 		--tag='yukkuricraft/minecraft-server' \
 		.
+
+.PHONY: build_api
+build_api:
+	docker build -f images/yc-docker-api/Dockerfile \
+		--tag='yukkuricraft/yc-docker-api' \
+		.
+
+.PHONY: up_api
+up_api:
+	docker-compose -f docker-compose.api.yml up -d
+
+.PHONY: down_api
+down_api:
+	docker-compose -f docker-compose.api.yml down
 
 .PHONY: up
 up: __pre_ensure
