@@ -6,5 +6,6 @@ COPY ./requirements.txt /app
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY ./src/ /app/src
+RUN ls /app
 
 ENTRYPOINT ["python3", "src/api/main.py"]

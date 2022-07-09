@@ -9,6 +9,8 @@ services:
     image: yukkuricraft/yc-docker-api
     volumes:
     - ./src:/app/src
+    - /usr/bin/docker:/usr/bin/docker
+    - /var/run/docker.sock:/var/run/docker.sock
     ports:
     - 5000:5000
     - 5001:5001
