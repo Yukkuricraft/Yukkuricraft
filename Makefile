@@ -43,6 +43,8 @@ COMPOSE_FILE="docker-compose.yml"
 YC_CONTAINER=YC-survival-$(ENV)
 YC_ROOT?=/var/lib/yukkuricraft
 
+CONTAINER=$(filter-out $@,$(MAKECMDGOALS))
+
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --env-file env/$(ENV).env
 
@@ -97,6 +99,15 @@ up:
 		$(COMPOSE_ARGS) \
 		up -d
 
+.PHONY: up_one
+up_one: __pre_ensure
+up_one: generate
+up_one:
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
+		up \
+		$(CONTAINER)
+
 .PHONY: _down
 down: __pre_ensure
 down: save_world
@@ -104,6 +115,15 @@ down:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		down
+
+.PHONY: up_down
+up_down: __pre_ensure
+up_down: generate
+up_down:
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
+		down \
+		$(CONTAINER)
 
 .PHONY: purge
 purge:
