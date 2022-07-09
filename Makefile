@@ -2,7 +2,7 @@
 ## SETUP ##
 ###########
 SHELL=/bin/bash
-ENV?=prod
+ENV?=dev1
 
 
 .PHONY: __pre_ensure
@@ -39,15 +39,17 @@ __ensure_env_file_exists:
 #############
 # ENV_TYPE strips numbers so we only keep dev or prod
 ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
-COMPOSE_FILE="docker-compose.yml"
+COMPOSE_FILE="docker-compose-$(ENV).yml"
 YC_CONTAINER=YC-survival-$(ENV)
 YC_ROOT?=/var/lib/yukkuricraft
+
+CONTAINER=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --env-file env/$(ENV).env
 
 COPY_PROD_WORLD?=
-PRE=ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
+PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
 
 .PHONY: save_devdata_to_disk
 save_devdata_to_disk: __pre_ensure
@@ -78,7 +80,7 @@ save_world:
 
 .PHONY: generate
 generate:
-	./generate-docker-compose
+	$(PRE) ./generate-docker-compose
 
 .PHONY: build
 build: build_minecraft_server
@@ -97,13 +99,31 @@ up:
 		$(COMPOSE_ARGS) \
 		up -d
 
-.PHONY: _down
+.PHONY: up_one
+up_one: __pre_ensure
+up_one: generate
+up_one:
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
+		up \
+		$(CONTAINER)
+
+.PHONY: down
 down: __pre_ensure
 down: save_world
 down:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		down
+
+.PHONY: down_one
+down_one: __pre_ensure
+down_one: generate
+down_one:
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
+		down \
+		$(CONTAINER)
 
 .PHONY: purge
 purge:

@@ -3,3 +3,4 @@ tags
 *.DS_Store
 __pycache__
 docker-compose.yml
+docker-compose-*.yml

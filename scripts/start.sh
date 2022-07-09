@@ -19,7 +19,11 @@ function create_symlinks {
 }
 
 function copy_configs {
-    cp /yc-config/ /data/
+    debuglog "Copying /yc-default-configs/server to /data"
+    run cp /yc-default-configs/server/* /data/
+
+    debuglog "Copying /yc-server-configs to /data"
+    run cp /yc-server-configs/* /data/
 }
 
 debuglog "YC_ENV: $YC_ENV"
@@ -32,8 +36,7 @@ if [[ "$YC_ENV" == "prod" ]]; then
     debuglog "WE PROD";
     create_symlinks symlinkmap
 
-    debuglog "Copying configs to /data"
-    run cp /yc-config/* /data/
+    copy_configs
 
     debuglog "Chown /data to minecraft:minecraft:"
     run chown -R minecraft:minecraft /data
@@ -74,7 +77,7 @@ if [[ "$YC_ENV" == "dev" ]]; then
     # If dev env, use the MOTD passed in from docker-compose which gives us useful info.
     # If prod, just copy `minecraft-data/configs/server.properties` wholesale and don't do anything extra.
     if [[ ! -s "/data/server.properties" ]]; then
-        run cp /yc-config/server.properties /data/server.properties
+        run cp /yc-server-configs/server.properties /data/server.properties
     fi
     if ! grep -q "motd" /data/server.properties; then
         echo "motd=$MOTD" >> /data/server.properties # Don't use 'run' - the >> is processed after the 'run' so it also appends debug echos.
