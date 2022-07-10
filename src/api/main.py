@@ -1,12 +1,27 @@
 from flask import Flask
 from flask_restx import Api, Resource, fields  # type: ignore
 
-from subprocess import Popen, PIPE
-from typing import List, Tuple
+from subprocess import check_output, Popen, PIPE
+from typing import Optional, Dict, List, Tuple, Callable
+from pathlib import Path
 
+import io
+import os
 import pprint
 import json
 import codecs
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+logger.addHandler(ch)
+
+logger.info("LOGGER INITIALIZED")
 
 app = Flask(__name__)
 api = Api(
@@ -17,14 +32,6 @@ api = Api(
 )
 
 ns = api.namespace("api", description="YC Docker Api")
-
-todo = api.model(
-    "Todo",
-    {
-        "id": fields.Integer(readonly=True, description="The task unique identifier"),
-        "task": fields.String(required=True, description="The task details"),
-    },
-)
 
 Container = api.model(
     "Container",
@@ -48,37 +55,78 @@ Container = api.model(
 
 
 class Environment:
-    def __init__(self):
-        pass
+    env_folder: Path = Path("/app/env")
+
+    @staticmethod
+    def is_env_valid(env: str):
+        env_file_path = Environment.env_folder / f"{env}.env"
+        return env_file_path.exists()
+
+    @staticmethod
+    def ensure_valid_env(func: Callable):
+        """
+        Decorated function must take a named arg called 'env'
+        """
+
+        def wrapper(*args, **kwargs):
+            if "env" not in kwargs:
+                raise Exception("Must pass an 'env' arg to this function call!")
+
+            env = kwargs["env"]
+            if not Environment.is_env_valid(env):
+                raise Exception(
+                    f"Tried to run a command on an environment that does not exist! Got: '{env}'"
+                )
+            return func(*args, **kwargs)
+
+        return wrapper
 
 
 class YCDockerApi:
     def __init__(self):
         pass
 
-    def __run(self, cmd: List) -> Tuple[str, str]:
-        with Popen(cmd, stdout=PIPE, stderr=PIPE) as proc:
-            stdout = (
-                bytes(proc.stdout.read()).decode("utf8")
-                if proc.stdout is not None
-                else ""
-            )
-            stderr = (
-                bytes(proc.stderr.read()).decode("utf8")
-                if proc.stderr is not None
-                else ""
-            )
-            return stdout, stderr
+    def __run(
+        self, cmds: List[List[str]], env_vars: Optional[Dict[str, str]] = None
+    ) -> Tuple[str, str]:
+        env = os.environ.copy()
+        if env_vars is not None:
+            for key, value in env_vars.items():
+                env[key] = value
 
-    def list(self):
-        cmd = [
-            "docker",
-            "ps",
-            "--format",
-            "{{ json . }}",
-            "--no-trunc",
+        prev_stdout, prev_stderr = "", ""
+
+        for cmd in cmds:
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
+            stdout_b, stderr_b = proc.communicate(prev_stdout.encode("utf8"))
+
+            prev_stdout, prev_stderr = stdout_b.decode("utf8"), stderr_b.decode("utf8")
+
+        return prev_stdout, prev_stderr
+
+    @Environment.ensure_valid_env
+    def __run_make_cmd(self, cmd: List, env: str) -> Tuple[str, str]:
+        env_vars = {"ENV": env}
+        return self.__run([cmd], env_vars=env_vars)
+
+    @Environment.ensure_valid_env
+    def list(self, env: str):
+        """
+        Eh, the @Environment.ensure_valid_env decorator might be confusing
+        as this func needs 'env=env' in the calling sig vs just 'env' for up/up_one/down/down_one
+        """
+        cmds = [
+            [
+                "docker",
+                "ps",
+                "-a",
+                "--format",
+                "{{ json . }}",
+                "--no-trunc",
+            ],
+            ["grep", env],
         ]
-        stdout, stderr = self.__run(cmd)
+        stdout, stderr = self.__run(cmds)
 
         containers = []
         for line in stdout.splitlines():
@@ -88,40 +136,54 @@ class YCDockerApi:
         return containers
 
     def up(self, env: str):
-        pass
+        cmd = [
+            "make",
+            "up",
+        ]
+
+        stdout, stderr = self.__run_make_cmd(cmd, env=env)
+        return stdout
+
+    def down(self, env: str):
+        cmd = [
+            "make",
+            "down",
+        ]
+
+        stdout, stderr = self.__run_make_cmd(cmd, env=env)
+        return stdout
+
+    def up_one(self, env: str, container_name: str):
+        cmd = [
+            "make",
+            "up_one",
+            container_name,
+        ]
+
+        stdout, stderr = self.__run_make_cmd(cmd, env=env)
+        return stdout
+
+    def restart(self, env: str, container_name: str):
+        cmd = [
+            "make",
+            "restart",
+        ]
+
+        stdout, stderr = self.__run_make_cmd(cmd, env=env)
+        return stdout
+
+    def restart_one(self, env: str, container_name: str):
+        cmd = [
+            "make",
+            "restart_one",
+            container_name,
+        ]
+
+        stdout, stderr = self.__run_make_cmd(cmd, env=env)
+        return stdout
 
 
 DockerApi = YCDockerApi()
-
-
-class TodoDAO(object):
-    def __init__(self):
-        self.counter = 0
-        self.todos = []
-
-    def get(self, id):
-        for todo in self.todos:
-            if todo["id"] == id:
-                return todo
-        api.abort(404, "Todo {} doesn't exist".format(id))
-
-    def create(self, data):
-        todo = data
-        todo["id"] = self.counter = self.counter + 1
-        self.todos.append(todo)
-        return todo
-
-    def update(self, id, data):
-        todo = self.get(id)
-        todo.update(data)
-        return todo
-
-    def delete(self, id):
-        todo = self.get(id)
-        self.todos.remove(todo)
-
-
-DAO = TodoDAO()
 
 
 @ns.route("/")
@@ -131,39 +193,48 @@ class NotFound(Resource):
         return ""
 
 
-@ns.route("/containers")
+@ns.route("/<string:env>/containers")
+@ns.param("env", "Environment to run the command on")
 class ContainersList(Resource):
     @ns.doc("list_containers")
     @ns.marshal_list_with(Container)
-    def get(self):
+    def get(self, env):
         """List all containers running"""
-        return DockerApi.list()
+        return DockerApi.list(env=env)
 
 
-@ns.route("/<int:id>")
-@ns.response(404, "Todo not found")
-@ns.param("id", "The task identifier")
-class Todo(Resource):
-    """Show a single todo item and lets you delete them"""
+@ns.route("/<string:env>/containers/up")
+@ns.param("env", "Environment to run the command on")
+class ContainersUp(Resource):
+    @ns.doc("up_containers")
+    def get(self, env):
+        return DockerApi.up(env)
 
-    @ns.doc("get_todo")
-    @ns.marshal_with(todo)
-    def get(self, id):
-        """Fetch a given resource"""
-        return DAO.get(id)
 
-    @ns.doc("delete_todo")
-    @ns.response(204, "Todo deleted")
-    def delete(self, id):
-        """Delete a task given its identifier"""
-        DAO.delete(id)
-        return "", 204
+@ns.route("/<string:env>/containers/up_one/<string:container_name>")
+@ns.param("env", "Environment to run the command on")
+@ns.param("container_name", "Container name to run command on")
+class ContainersUpOne(Resource):
+    @ns.doc("up_container")
+    def get(self, env: str, container_name: str):
+        return DockerApi.up_one(env, container_name)
 
-    @ns.expect(todo)
-    @ns.marshal_with(todo)
-    def put(self, id):
-        """Update a task given its identifier"""
-        return DAO.update(id, api.payload)
+
+@ns.route("/<string:env>/containers/down")
+@ns.param("env", "Environment to run the command on")
+class ContainersDown(Resource):
+    @ns.doc("down_containers")
+    def get(self, env):
+        return DockerApi.down(env)
+
+
+@ns.route("/<string:env>/containers/restart_one/<string:container_name>")
+@ns.param("env", "Environment to run the command on")
+@ns.param("container_name", "Container name to run command on")
+class ContainersRestartOne(Resource):
+    @ns.doc("restart_container")
+    def get(self, env: str, container_name: str):
+        return DockerApi.restart_one(env, container_name)
 
 
 if __name__ == "__main__":

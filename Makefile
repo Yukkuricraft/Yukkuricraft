@@ -82,6 +82,8 @@ save_world:
 generate:
 	$(PRE) ./generate-docker-compose
 
+# BUILD
+
 .PHONY: build
 build: build_minecraft_server
 build: build_api
@@ -97,6 +99,8 @@ build_api:
 	docker build -f images/yc-docker-api/Dockerfile \
 		--tag='yukkuricraft/yc-docker-api' \
 		.
+
+# UP DOWN RESTARTS
 
 .PHONY: up_api
 up_api:
@@ -121,6 +125,7 @@ up_one:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		up \
+		-d \
 		$(CONTAINER)
 
 .PHONY: down
@@ -131,14 +136,25 @@ down:
 		$(COMPOSE_ARGS) \
 		down
 
-.PHONY: down_one
-down_one: __pre_ensure
-down_one: generate
-down_one:
+.PHONY: restart
+restart: __pre_ensure
+restart: generate
+restart:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
-		down \
+		restart \
 		$(CONTAINER)
+
+.PHONY: restart_one
+restart_one: __pre_ensure
+restart_one: generate
+restart_one:
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
+		restart \
+		$(CONTAINER)
+
+# COMPOUNDS
 
 .PHONY: purge
 purge:
@@ -148,11 +164,10 @@ purge:
 restart_velocity:
 	docker restart Velocity-$(ENV)
 
-.PHONY: restart
-restart: down up
-
 .PHONY: purgestart
 purgestart: down purge up
+
+# HELPERS
 
 .PHONY: logs
 logs: __pre_ensure
@@ -172,6 +187,7 @@ exec:
 	docker exec -it $(YC_CONTAINER) /bin/bash
 
 # Prod Shortcuts
+
 .PHONY: up_prod
 up_prod: ENV=prod
 up_prod: up
