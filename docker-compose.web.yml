@@ -1,0 +1,61 @@
+version: '3.4'
+
+services:
+  yakumo-dash:
+    container_name: yakumo-dash
+    image: yukkuricraft/yakumo-dash
+    environment:
+      VIRTUAL_HOST: "yakumo.yukkuricraft.net"
+      LETSENCRYPT_HOST: "yakumo.yukkuricraft.net"
+    ports:
+      - 25698:80
+
+  yc_api:
+    container_name: yc-api
+    image: yukkuricraft/yc-docker-api
+    restart: 'on-failure'
+    environment:
+      VIRTUAL_HOST: "mc.yukkuricraft.net"
+      LETSENCRYPT_HOST: "mc.yukkuricraft.net"
+    volumes:
+    - /usr/bin/docker:/usr/bin/docker
+    - /usr/bin/docker-compose:/usr/bin/docker-compose
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ./:/app
+    ports:
+    - 5000:5000
+    - 5001:5001
+
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: nginxproxy/nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs:ro
+      - html:/usr/share/nginx/html
+      - vhost:/etc/nginx/vhost.d
+
+  letsencrypt-nginx-proxy:
+    container_name: letsencrypt-nginx-proxy
+    image: nginxproxy/acme-companion
+    environment:
+      - DEFAULT_EMAIL=remi@yukkuricraft.net
+      - ACME_CA_URI=https://acme-v02.api.letsencrypt.org/directory
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs:rw
+      - html:/usr/share/nginx/html
+      - vhost:/etc/nginx/vhost.d
+      - acme:/etc/acme.sh
+    depends_on:
+      - nginx-proxy
+
+volumes:
+  certs:
+  html:
+  vhost:
+  acme:

@@ -102,13 +102,13 @@ build_api:
 
 # UP DOWN RESTARTS
 
-.PHONY: up_api
-up_api:
-	docker-compose -f docker-compose.api.yml up -d
+.PHONY: up_web
+up_web:
+	docker-compose -f docker-compose.web.yml --env=env/$(ENV).env up -d
 
-.PHONY: down_api
-down_api:
-	docker-compose -f docker-compose.api.yml down
+.PHONY: down_web
+down_web:
+	docker-compose -f docker-compose.web.yml down
 
 .PHONY: up
 up: __pre_ensure
@@ -142,8 +142,7 @@ restart: generate
 restart:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
-		restart \
-		$(CONTAINER)
+		restart
 
 .PHONY: restart_one
 restart_one: __pre_ensure

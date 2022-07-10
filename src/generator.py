@@ -70,7 +70,12 @@ class Generator:
 
         # Add volumes
         volumes = self.docker_compose_template.volumes.as_dict()
+
+        volumes[f"velocity-{self.env}"] = None
         volumes[f"dbdata-{self.env}"] = None
+        volumes[f"html-{self.env}"] = None
+        volumes[f"vhost-{self.env}"] = None
+        volumes[f"acme-{self.env}"] = None
         volumes[f"certs-{self.env}"] = {
             "driver": "local",
             "driver_opts": {
@@ -79,10 +84,12 @@ class Generator:
                 "device": f"{self.env_config['MC_FS_ROOT']}/{self.env}/certs",
             },
         }
+
         for world in self.world_group_config.world_groups:
             volumes[f"mcdata_{world}"] = None
             volumes[f"ycworldsvolume_{world}"] = None
             volumes[f"ycpluginsvolume_{world}"] = None
+
         self.generated_config["volumes"] = volumes
 
         # Add networks

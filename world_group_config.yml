@@ -7,7 +7,7 @@
 world_groups:
     - survival
     - creative
-    - old-gensokyo
-    - neo-gensokyo
-    - lobby
-    - minigames-and-events
+      #- old-gensokyo
+      #- neo-gensokyo
+      #- lobby
+      #- minigames-and-events
