@@ -39,13 +39,14 @@ __ensure_env_file_exists:
 #############
 # ENV_TYPE strips numbers so we only keep dev or prod
 ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
-COMPOSE_FILE="docker-compose-$(ENV).yml"
-YC_CONTAINER=YC-survival-$(ENV)
+COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
+YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
 YC_ROOT?=/var/lib/yukkuricraft
 
 CONTAINER=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
+			 --project-directory $(shell pwd) \
 			 --env-file env/$(ENV).env
 
 COPY_PROD_WORLD?=
@@ -79,7 +80,15 @@ save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
 .PHONY: generate
-generate:
+generate: generate_velocity_config
+generate: generate_docker_compose
+
+.PHONY: generate_velocity_config
+generate_velocity_config:
+	$(PRE) ./generate-velocity-config
+
+.PHONY: generate_docker_compose
+generate_docker_compose:
 	$(PRE) ./generate-docker-compose
 
 # BUILD
@@ -109,6 +118,10 @@ up_web:
 .PHONY: down_web
 down_web:
 	docker-compose -f docker-compose.web.yml down
+
+.PHONY: restart_web
+restart_web:
+	docker-compose -f docker-compose.web.yml restart
 
 .PHONY: up
 up: __pre_ensure
