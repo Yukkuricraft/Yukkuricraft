@@ -28,8 +28,8 @@ __ensure_valid_env:
 
 .PHONY: __ensure_env_file_exists
 __ensure_env_file_exists:
-	@if ! [[ -f "env/$(ENV).env" ]]; then \
-		echo "Got '$(ENV)' for ENV but could not find 'env/$(ENV).env'! Aborting."; \
+	@if ! [[ -f "gen/$(ENV).env" ]]; then \
+		echo "Got '$(ENV)' for ENV but could not find 'gen/$(ENV).env'! Was ./generate-env-file run first? Aborting."; \
 		echo ''; \
 		exit 1; \
 	fi
@@ -39,14 +39,15 @@ __ensure_env_file_exists:
 #############
 # ENV_TYPE strips numbers so we only keep dev or prod
 ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
-COMPOSE_FILE="docker-compose-$(ENV).yml"
-YC_CONTAINER=YC-survival-$(ENV)
+COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
+YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
 YC_ROOT?=/var/lib/yukkuricraft
 
-CONTAINER=$(filter-out $@,$(MAKECMDGOALS))
+ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
-			 --env-file env/$(ENV).env
+			 --project-directory $(shell pwd) \
+			 --env-file gen/$(ENV).env
 
 COPY_PROD_WORLD?=
 PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
@@ -78,18 +79,66 @@ save_devdata_to_disk:
 save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
+# It's 'make generate' but it's more 'make generate_runtime_configs_for_envs'
 .PHONY: generate
-generate:
+generate: generate_velocity_config
+generate: generate_env_file
+generate: generate_docker_compose
+
+.PHONY: generate_velocity_config
+generate_velocity_config:
+	$(PRE) ./generate-velocity-config
+
+.PHONY: generate_env_file
+generate_env_file:
+	$(PRE) ./generate-env-file
+
+.PHONY: generate_docker_compose
+generate_docker_compose:
 	$(PRE) ./generate-docker-compose
+
+# DEV ENV CREATE/DELETE
+
+.PHONY: create_new_env
+create_new_env:
+	# Do we want to do based on current active env or always use prod as BASE_ENV?
+	BASE_ENV=prod NEW_ENV=$(ARGS) ./generate-new-dev-env
+
+.PHONY: delete_env
+delete_env:
+	ENV=$(ARGS) ./scripts/delete_dev_env.sh
+
+# BUILD
 
 .PHONY: build
 build: build_minecraft_server
+build: build_api
 
 .PHONY: build_minecraft_server
 build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
 		--tag='yukkuricraft/minecraft-server' \
 		.
+
+.PHONY: build_api
+build_api:
+	docker build -f images/yc-docker-api/Dockerfile \
+		--tag='yukkuricraft/yc-docker-api' \
+		.
+
+# UP DOWN RESTARTS
+
+.PHONY: up_web
+up_web:
+	docker-compose -f docker-compose.web.yml --env=gen/$(ENV).env up -d
+
+.PHONY: down_web
+down_web:
+	docker-compose -f docker-compose.web.yml down
+
+.PHONY: restart_web
+restart_web:
+	docker-compose -f docker-compose.web.yml restart
 
 .PHONY: up
 up: __pre_ensure
@@ -106,7 +155,8 @@ up_one:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		up \
-		$(CONTAINER)
+		-d \
+		$(ARGS)
 
 .PHONY: down
 down: __pre_ensure
@@ -116,14 +166,24 @@ down:
 		$(COMPOSE_ARGS) \
 		down
 
-.PHONY: down_one
-down_one: __pre_ensure
-down_one: generate
-down_one:
+.PHONY: restart
+restart: __pre_ensure
+restart: generate
+restart:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
-		down \
-		$(CONTAINER)
+		restart
+
+.PHONY: restart_one
+restart_one: __pre_ensure
+restart_one: generate
+restart_one:
+	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+		$(COMPOSE_ARGS) \
+		restart \
+		$(ARGS)
+
+# COMPOUNDS
 
 .PHONY: purge
 purge:
@@ -133,11 +193,10 @@ purge:
 restart_velocity:
 	docker restart Velocity-$(ENV)
 
-.PHONY: restart
-restart: down up
-
 .PHONY: purgestart
 purgestart: down purge up
+
+# HELPERS
 
 .PHONY: logs
 logs: __pre_ensure
@@ -157,6 +216,7 @@ exec:
 	docker exec -it $(YC_CONTAINER) /bin/bash
 
 # Prod Shortcuts
+
 .PHONY: up_prod
 up_prod: ENV=prod
 up_prod: up

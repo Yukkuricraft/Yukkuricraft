@@ -7,10 +7,8 @@ version: "3.4"
 
 custom_extensions:
   mc_service_template: # Config used to run all world group containers.
-    container_name: YC-<<WORLDGROUP>>-${ENV}
     image: yukkuricraft/minecraft-server
     depends_on:
-      - velocity
       - mysql
     tty: true
     stdin_open: true
@@ -20,6 +18,7 @@ custom_extensions:
     environment:
       YC_ENV: ${ENV_TYPE}
       MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
+      DEBUG: 'true'
       EULA: 'true'
       COPY_PROD_WORLD: ${COPY_PROD_WORLD}
       VERSION: ${MC_VERSION}
@@ -40,44 +39,43 @@ custom_extensions:
         target: /plugins-bindmount-prod
         read_only: ${BINDMOUNT_RO}
       - mcdata_<<WORLDGROUP>>:/data
-      - ./secrets/configs/${ENV}/default:/yc-default-configs
-      - ./secrets/configs/${ENV}/<<WORLDGROUP>>/plugins:/yc-plugin-configs
-      - ./secrets/configs/${ENV}/<<WORLDGROUP>>/server:/yc-server-configs
+      - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/default:/yc-default-configs
+      - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
+      - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
       - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
+
+  velocity_template:
+    depends_on:
+      - mysql
+    image: itzg/bungeecord
+    environment:
+      DEBUG: "false"
+      TYPE: "VELOCITY"
+      SYNC_SKIP_NEWER_IN_DESTINATION: "false"
+    volumes:
+      - velocity-${ENV}:/server
+      - ${YC_REPO_ROOT}/gen/velocity-${ENV}.toml:/config/velocity.toml
+      - ${YC_REPO_ROOT}/secrets/velocity/forwarding.secret:/config/forwarding.secret
+    ports:
+      - '${VELOCITY_PORT}:25577'
+    networks:
+      - ycnet
 
 
 # "Static" services
 services:
   mysql:
-    container_name: MySQL-${ENV}
     image: mysql/mysql-server:5.7
     volumes:
       - dbdata-${ENV}:/var/lib/mysql
     networks:
       - ycnet
 
-  velocity:
-    container_name: Velocity-${ENV}
-    depends_on:
-      - mysql
-    image: itzg/bungeecord
-    environment:
-      TYPE: "VELOCITY"
-      CFG_MOTD: "Powered by Docker"
-    volumes:
-      - velocity:/server
-      - ./secrets/velocity/:/config/
-    ports:
-      - '${VELOCITY_PORT}:25600'
-    networks:
-      - ycnet
-
 
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:
-  velocity:
-  dbdata-prod:
 
+# Networks will be automatically generated as ycnet-${ENV}
 networks:
   ycnet:

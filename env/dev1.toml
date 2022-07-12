@@ -1,0 +1,21 @@
+#
+# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/prod.toml AS A BASE
+# MODIFY AS NECESSARY BY HAND
+# SEE prod.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS
+#
+
+[runtime-environment-variables]
+MC_FS_ROOT = "/var/lib/yukkuricraft"
+MC_TYPE = "PAPER"
+MC_VERSION = "1.18.2"
+PAPER_BUILD = 318
+BINDMOUNT_RO = false
+VELOCITY_PORT = 25600
+YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
+ENV = "dev1"
+
+[world-groups]
+enabled_groups = [
+    "survival",
+    "creative",
+]

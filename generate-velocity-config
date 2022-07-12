@@ -8,11 +8,11 @@ sys.path.append(Path(__file__).parent.as_posix())
 
 from src.generator.generator import GeneratorType, get_generator
 
+
 if __name__ == "__main__":
     env = os.getenv("ENV")
     if env is None:
         raise Exception("Environment variable 'ENV' was not set. Must be set to generate docker-compose file. Use Makefile targets ('make generate') instead of invoking manually.")
     else:
-        gen = get_generator(GeneratorType.DOCKER_COMPOSE, env)
-        gen.run()
+        get_generator(GeneratorType.VELOCITY_CONFIG, env).run()
 
