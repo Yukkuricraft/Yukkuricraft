@@ -18,6 +18,7 @@ custom_extensions:
     environment:
       YC_ENV: ${ENV_TYPE}
       MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
+      DEBUG: 'true'
       EULA: 'true'
       COPY_PROD_WORLD: ${COPY_PROD_WORLD}
       VERSION: ${MC_VERSION}

@@ -54,6 +54,8 @@ if [[ "$YC_ENV" == "dev" ]]; then
     debuglog "WE DEV";
     create_symlinks symlinkmap
 
+    copy_configs
+
     ## Chowns
     for vol in ${!symlinkmap[@]}; do
         run chown -R minecraft:minecraft ${vol}

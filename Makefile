@@ -28,8 +28,8 @@ __ensure_valid_env:
 
 .PHONY: __ensure_env_file_exists
 __ensure_env_file_exists:
-	@if ! [[ -f "env/$(ENV).env" ]]; then \
-		echo "Got '$(ENV)' for ENV but could not find 'env/$(ENV).env'! Aborting."; \
+	@if ! [[ -f "gen/$(ENV).env" ]]; then \
+		echo "Got '$(ENV)' for ENV but could not find 'gen/$(ENV).env'! Was ./generate-env-file run first? Aborting."; \
 		echo ''; \
 		exit 1; \
 	fi
@@ -47,7 +47,7 @@ ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --project-directory $(shell pwd) \
-			 --env-file env/$(ENV).env
+			 --env-file gen/$(ENV).env
 
 COPY_PROD_WORLD?=
 PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
@@ -79,13 +79,19 @@ save_devdata_to_disk:
 save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
+# It's 'make generate' but it's more 'make generate_runtime_configs_for_envs'
 .PHONY: generate
 generate: generate_velocity_config
+generate: generate_env_file
 generate: generate_docker_compose
 
 .PHONY: generate_velocity_config
 generate_velocity_config:
 	$(PRE) ./generate-velocity-config
+
+.PHONY: generate_env_file
+generate_env_file:
+	$(PRE) ./generate-env-file
 
 .PHONY: generate_docker_compose
 generate_docker_compose:
@@ -124,7 +130,7 @@ build_api:
 
 .PHONY: up_web
 up_web:
-	docker-compose -f docker-compose.web.yml --env=env/$(ENV).env up -d
+	docker-compose -f docker-compose.web.yml --env=gen/$(ENV).env up -d
 
 .PHONY: down_web
 down_web:

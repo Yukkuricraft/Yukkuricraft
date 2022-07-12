@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+from pathlib import Path
+
+sys.path.append(Path(__file__).parent.as_posix())
+
+from src.generator.generator import GeneratorType, get_generator
+
+if __name__ == "__main__":
+    env = os.getenv("ENV")
+    if env is None:
+        raise Exception("Environment variable 'ENV' was not set. Must be set to know what env to create the .env file for.\n    Use Makefile targets ('make generate_env_file') instead of invoking manually.")
+    else:
+
+        gen = get_generator(GeneratorType.ENV_FILE, env)
+        gen.run()
