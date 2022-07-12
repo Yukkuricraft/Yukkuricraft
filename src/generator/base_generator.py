@@ -5,19 +5,18 @@ from pathlib import Path
 
 from src.generator.constants import WORLD_GROUP_CONFIG_NAME
 from src.common.yaml_config import YamlConfig
-from src.common.config import load_env_config, load_yaml_config
+from src.common.toml_config import TomlConfig
+from src.common.config import load_toml_config, load_yaml_config
 
 
 class BaseGenerator:
-    env_config: Dict[str, str]
-    world_group_config: YamlConfig
+    env_config: TomlConfig
 
     def __init__(self, env: str):
         self.env = env
-        self.env_config = load_env_config(f"env/{env}.env")
 
         curr_dir = Path(__file__).parent
-        self.world_group_config = load_yaml_config(WORLD_GROUP_CONFIG_NAME, curr_dir)
+        self.env_config = load_toml_config(f"env/{env}.toml", curr_dir)
 
     def replace_interpolations(self, inp, replace_value: str):
         """

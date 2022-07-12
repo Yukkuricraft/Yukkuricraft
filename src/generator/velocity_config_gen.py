@@ -56,7 +56,7 @@ class VelocityConfigGen(BaseGenerator):
         servers = {}
         forced_hosts = {}
         try_servers = []
-        for world in self.world_group_config.world_groups:
+        for world in self.env_config['world-groups'].enabled_groups:
             world_underscored = world.replace("-", "_")
 
             # Using the generated name (when no container_name is supplied) or config object name (eg, "mc_survival"), Velocity isn't able to

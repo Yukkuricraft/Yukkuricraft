@@ -1,0 +1,25 @@
+# This TOML file is used to configure a given environment.
+# It contains both general settings for our dynamically generated app configs
+#     as well as runtime env vars for our individual containers
+
+[runtime-environment-variables]
+# These environment variables are generated as gen/{env}.env which are used as args to --env-file in docker-compose commands.
+# We also dynamically generate certain environment variables:
+# - 'ENV': This var is dynamically added based on the TOML config's filename. 'prod.toml` will generate 'ENV=prod', etc.
+
+MC_FS_ROOT = "/var/lib/yukkuricraft"
+MC_TYPE = "PAPER"
+MC_VERSION = "1.18.2"
+PAPER_BUILD = 318
+BINDMOUNT_RO = false
+
+VELOCITY_PORT = 25600
+
+YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
+
+[world-groups]
+# The values in the world-groups.enabled_groups array will be used to generate all dynamic configs.
+enabled_groups = [
+    "survival",
+    "creative",
+]

@@ -16,7 +16,7 @@ from src.generator.constants import (
 )
 
 from src.generator.base_generator import BaseGenerator
-from src.common.config import YamlConfig, load_env_config, load_yaml_config
+from src.common.config import YamlConfig, load_yaml_config
 
 
 class DockerComposeGen(BaseGenerator):
@@ -51,7 +51,7 @@ class DockerComposeGen(BaseGenerator):
         services = self.docker_compose_template.services.as_dict()
 
         velocity_service = self.docker_compose_template.custom_extensions.velocity_template.as_dict()
-        for world in self.world_group_config.world_groups:
+        for world in self.env_config['world-groups'].enabled_groups:
             velocity_service["depends_on"].append(f"mc_{world}")
 
         services["velocity"] = velocity_service
@@ -59,7 +59,7 @@ class DockerComposeGen(BaseGenerator):
 
         # Add minecraft services
 
-        for world in self.world_group_config.world_groups:
+        for world in self.env_config['world-groups'].enabled_groups:
             service_template = copy.deepcopy(
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
@@ -89,11 +89,11 @@ class DockerComposeGen(BaseGenerator):
             "driver_opts": {
                 "type": "none",
                 "o": "bind",
-                "device": f"{self.env_config['MC_FS_ROOT']}/{self.env}/certs",
+                "device": f"{self.env_config['runtime-environment-variables'].MC_FS_ROOT}/{self.env}/certs",
             },
         }
 
-        for world in self.world_group_config.world_groups:
+        for world in self.env_config['world-groups'].enabled_groups:
             volumes[f"mcdata_{world}"] = None
             volumes[f"ycworldsvolume_{world}"] = None
             volumes[f"ycpluginsvolume_{world}"] = None

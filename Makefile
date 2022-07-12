@@ -43,7 +43,7 @@ COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
 YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
 YC_ROOT?=/var/lib/yukkuricraft
 
-CONTAINER=$(filter-out $@,$(MAKECMDGOALS))
+ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --project-directory $(shell pwd) \
@@ -90,6 +90,17 @@ generate_velocity_config:
 .PHONY: generate_docker_compose
 generate_docker_compose:
 	$(PRE) ./generate-docker-compose
+
+# DEV ENV CREATE/DELETE
+
+.PHONY: create_new_env
+create_new_env:
+	# Do we want to do based on current active env or always use prod as BASE_ENV?
+	BASE_ENV=prod NEW_ENV=$(ARGS) ./generate-new-dev-env
+
+.PHONY: delete_env
+delete_env:
+	ENV=$(ARGS) ./scripts/delete_dev_env.sh
 
 # BUILD
 
@@ -139,7 +150,7 @@ up_one:
 		$(COMPOSE_ARGS) \
 		up \
 		-d \
-		$(CONTAINER)
+		$(ARGS)
 
 .PHONY: down
 down: __pre_ensure
@@ -164,7 +175,7 @@ restart_one:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		restart \
-		$(CONTAINER)
+		$(ARGS)
 
 # COMPOUNDS
 
