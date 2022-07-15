@@ -1,9 +1,14 @@
 from flask import Flask, Blueprint
-from flask_restx import Api, Resource, fields  # type: ignore
 
 from subprocess import check_output, Popen, PIPE
 from typing import Optional, Dict, List, Tuple, Callable
 from pathlib import Path
+
+from src.api.auth import (
+    validate_access_token,
+    intercept_cors_preflight,
+    make_cors_response,
+)
 
 import io
 import os
@@ -11,33 +16,11 @@ import pprint
 import json
 import codecs
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-docker_blueprint: Blueprint = Blueprint("docker", __name__)
-docker_api: Api = Api(docker_blueprint)
-
-# docker_api = api.namespace("docker", description="YC Docker Api")
-
-Container = docker_api.model(
-    "Container",
-    {
-        "Command": fields.String(required=True, description="Command"),
-        "CreatedAt": fields.String(required=True, description="Created At"),
-        "ID": fields.String(required=True, description="Container ID"),
-        "Image": fields.String(required=True, description="Image Name"),
-        "Labels": fields.String(required=True, description="Labels"),
-        "LocalVolumes": fields.String(required=True, description="Local Volumes"),
-        "Mounts": fields.String(required=True, description="Mounts"),
-        "Names": fields.String(required=True, description="Names"),
-        "Networks": fields.String(required=True, description="Networks"),
-        "Ports": fields.String(required=True, description="Ports"),
-        "RunningFor": fields.String(required=True, description="RunningFor"),
-        "Size": fields.String(required=True, description="Size"),
-        "State": fields.String(required=True, description="State"),
-        "Status": fields.String(required=True, description="Status"),
-    },
-)
+docker_bp: Blueprint = Blueprint("docker", __name__)
 
 
 class Environment:
@@ -173,57 +156,48 @@ class YCDockerApi:
 DockerApi = YCDockerApi()
 
 
-@docker_api.route("/")
-class NotFound(Resource):
+@docker_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def list_containers(env):
+    """List all containers running"""
+    resp = make_cors_response()
+    resp.data = json.dumps(DockerApi.list(env=env))
 
-    @docker_api.doc("Not Found")
-    def get(self):
-        return ""
-
-
-@docker_api.route("/<string:env>/containers")
-@docker_api.param("env", "Environment to run the command on")
-class ContainersList(Resource):
-
-    @docker_api.doc("list_containers")
-    @docker_api.marshal_list_with(Container)
-    def get(self, env):
-        """List all containers running"""
-        return DockerApi.list(env=env)
+    return resp
 
 
-@docker_api.route("/<string:env>/containers/up")
-@docker_api.param("env", "Environment to run the command on")
-class ContainersUp(Resource):
-    @docker_api.doc("up_containers")
-    def get(self, env):
-        return DockerApi.up(env)
+@docker_bp.route("/<env>/containers/up", methods=["GET", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def up_containers(env):
+    """Spin up containers for <env>"""
+    return DockerApi.up(env=env)
 
 
-@docker_api.route("/<string:env>/containers/up_one/<string:container_name>")
-@docker_api.param("env", "Environment to run the command on")
-@docker_api.param("container_name", "Container name to run command on")
-class ContainersUpOne(Resource):
-
-    @docker_api.doc("up_container")
-    def get(self, env: str, container_name: str):
-        return DockerApi.up_one(env, container_name)
-
-
-@docker_api.route("/<string:env>/containers/down")
-@docker_api.param("env", "Environment to run the command on")
-class ContainersDown(Resource):
-
-    @docker_api.doc("down_containers")
-    def get(self, env):
-        return DockerApi.down(env)
+@docker_bp.route(
+    "/<env>/containers/up_one/<container_name>", methods=["GET", "OPTIONS"]
+)
+@intercept_cors_preflight
+@validate_access_token
+def up_one_container(env, container_name):
+    """Spin up one container(<>) for <env>"""
+    return DockerApi.up_one(env, container_name)
 
 
-@docker_api.route("/<string:env>/containers/restart_one/<string:container_name>")
-@docker_api.param("env", "Environment to run the command on")
-@docker_api.param("container_name", "Container name to run command on")
-class ContainersRestartOne(Resource):
+@docker_bp.route("/<env>/containers/down", methods=["GET", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def down_containers(env):
+    """Spin down containers for <env>"""
+    return DockerApi.down(env=env)
 
-    @docker_api.doc("restart_container")
-    def get(self, env: str, container_name: str):
-        return DockerApi.restart_one(env, container_name)
+
+@docker_bp.route(
+    "/<env>/containers/down_one/<container_name>", methods=["GET", "OPTIONS"]
+)
+@intercept_cors_preflight
+@validate_access_token
+def down_one_container(env, container_name):
+    """Spin down one container(<>) for <env>"""
+    return DockerApi.down_one(env, container_name)

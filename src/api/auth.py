@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-from pprint import pformat, pprint
 
-from flask import Blueprint, request, make_response
-from flask_restx import Api, Resource, abort, fields, reqparse  # type: ignore
+import json
+
+from flask import Blueprint, abort, request, make_response
 
 from datetime import datetime
 from functools import wraps
 from google.oauth2 import id_token  # type: ignore
 from google.auth.transport import requests as g_requests  # type: ignore
-from typing import Callable, Dict
+from pprint import pformat, pprint
+from secrets import token_hex
+from typing import Callable, Dict, Tuple
 
-from src.api.constants import G_CLIENT_ID, CORS_ORIGIN, WHITELISTED_USERS_FILE
+from src.api.constants import (
+    ACCESS_TOKEN_DUR_MINS,
+    G_CLIENT_ID,
+    CORS_ORIGIN,
+    WHITELISTED_USERS_FILE,
+)
 from src.api.db import db
-from src.api.models import User, JTI, create_db_tables
+from src.api.models import AccessToken, User, JTI, create_db_tables
 
-
-from logging import getLogger
-
-logger = getLogger(__name__)
+from src.common.logger_setup import logger
 
 # TODO: Make more sophisticated in the future but for now this suffices.
 WHITELISTED_USERS = set(open(WHITELISTED_USERS_FILE, "r").read().splitlines())
@@ -58,7 +62,12 @@ class UnknownUserError(RuntimeError):
         super().__init__(pformat(user))
 
 
-def verify_id_token_allowed(token: str):
+def generate_access_token():
+    return token_hex(), (int(datetime.now().timestamp()) + 1000 * ACCESS_TOKEN_DUR_MINS)
+
+
+def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
+    json_resp = {}
     try:
         idinfo = id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
 
@@ -71,6 +80,8 @@ def verify_id_token_allowed(token: str):
             idinfo["sub"],
             idinfo["email"],
         )
+
+        logger.info(idinfo)
 
         user = User(sub=sub, email=email)
         exp_dt = datetime.utcfromtimestamp(exp)
@@ -87,12 +98,18 @@ def verify_id_token_allowed(token: str):
         elif sub not in WHITELISTED_USERS:
             raise UnknownUserError(user)
 
+        access_token, access_token_exp = generate_access_token()
         if not User.query.filter_by(sub=sub).first():
             db.session.add(user)
         db.session.add(JTI(jti=jti, exp=exp, iat=iat, user=user.sub))
+        db.session.add(
+            AccessToken(token_id=access_token, user=user.sub, exp=access_token_exp)
+        )
         db.session.commit()
 
-        return True
+        json_resp["access_token"] = access_token
+
+        return True, json_resp
     except ValueError as e:
         logger.warning("Got an invalid idtoken?")
         logger.warning(f"Token: {token}")
@@ -104,73 +121,93 @@ def verify_id_token_allowed(token: str):
     except ExpiredJTIError as e:
         logger.warning(e)
 
-    return False
+    return False, json_resp
 
 
-def req_https(func: Callable):
-    if not request.is_secure:
-        abort(401)
+def verify_access_token_allowed(access_token: str):
+    token = AccessToken.query.filter_by(token_id=access_token).first()
+
+    if not token:
+        logger.warning(pformat(token))
+        logger.warning("Unknown Token")
+        return False
+    elif datetime.now() >= datetime.utcfromtimestamp(token.exp):
+        logger.warning(token.exp)
+        logger.warning("Expired token")
+        return False
+
+    return True
 
 
-def req_google_id_whitelist(func: Callable):
-    post_data = request.get_json()
-    token = ""
-    if not verify_id_token_allowed(token):
-        abort(401)
-        pass
+def validate_access_token(func: Callable):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        access_token = request.headers.get("Authorization", "")
+        logger.warning(f"AccessToken? - {access_token}")
+        logger.warning(f"Request Headers: {pformat(request.headers)}")
+        if not verify_access_token_allowed(access_token):
+            logger.info("?")
+            abort(401)
+        logger.info("??")
+        return func(*args, **kwargs)
+
+    logger.info("Returning validate_access_token decorated func")
+    return decorated_function
 
 
-def _add_yakumo_cors_response():
-    response = make_response()
-    if request.method == "OPTIONS":
-        response.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
-        response.headers.add("Access-Control-Allow-Headers", "*")
-        response.headers.add("Access-Control-Allow-Methods", "*")
-        return response
+def intercept_cors_preflight(func: Callable):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        logger.debug("??? Hm ???")
+        logger.info(request.method)
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
+            resp.headers.add("Access-Control-Allow-Headers", "*")
+            resp.headers.add("Access-Control-Allow-Methods", "*")
 
-    elif request.method == "POST":
-        response.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
-        return response
+            logger.info(f"RETURNING INTERCEPTED CORS PREFLIGHT:")
+            logger.info(pformat(resp))
+            return resp
 
-    else:
-        raise Exception(
-            f"Tried adding CORS headers to invalid request type. Got: '{request.method}'"
-        )
+        return func(*args, **kwargs)
 
-
-auth_blueprint: Blueprint = Blueprint("auth", __name__)
-auth_api: Api = Api(auth_blueprint)
-
-LoginReqArgs = reqparse.RequestParser()
-LoginReqArgs.add_argument(
-    "id_token", type=str, required=True, help="Must pass id_token to authenticate as"
-)
+    logger.info("Returning intercept_cors_preflight decorated func")
+    return decorated_function
 
 
-@auth_api.route("/login")
-class Login(Resource):
-    def options(self):
-        return _add_yakumo_cors_response()
+def make_cors_response():
+    resp = make_response()
+    resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
+    return resp
 
-    @auth_api.doc("Log in with id_token")
-    def post(self):
-        resp = _add_yakumo_cors_response()
+
+auth_bp: Blueprint = Blueprint("auth", __name__)
+
+
+@auth_bp.route("/login", methods=["OPTIONS", "POST"])
+@intercept_cors_preflight
+def login():
+    if request.method == "POST":
+        resp = make_cors_response()
         resp.status = 401
 
-        data = LoginReqArgs.parse_args()
+        data = request.get_json()
 
-        logger.info(">>>>>>>>>>>>>>>>>>")
-        logger.info(resp)
-        logger.info(data)
+        logger.warning(">>>>>>>>>>>>>>>>>>")
+        logger.warning(resp)
+        logger.warning(data)
 
-        if verify_id_token_allowed(data.id_token):
+        is_allowed, json_resp = verify_id_token_allowed(data["id_token"])
+
+        if is_allowed:
             resp.status = 200
+            resp.data = json.dumps(json_resp)
 
         return resp
 
 
-# @auth_api.route("/createdbdeleteme")
-class CreateDB(Resource):
-    def get(self):
-        create_db_tables()
-        return "Aaaa"
+@auth_bp.route("/createdbdeleteme")
+def createdb():
+    create_db_tables()
+    return "Aaaa"
