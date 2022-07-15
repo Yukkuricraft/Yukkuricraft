@@ -10,6 +10,9 @@ import os
 import pprint
 import json
 import codecs
+import logging
+logger = logging.getLogger(__name__)
+
 
 docker_blueprint: Blueprint = Blueprint("docker", __name__)
 docker_api: Api = Api(docker_blueprint)
@@ -42,7 +45,7 @@ class Environment:
 
     @staticmethod
     def is_env_valid(env: str):
-        env_file_path = Environment.env_folder / f"{env}.env"
+        env_file_path = Environment.env_folder / f"{env}.toml"
         return env_file_path.exists()
 
     @staticmethod
@@ -84,6 +87,7 @@ class YCDockerApi:
             stdout_b, stderr_b = proc.communicate(prev_stdout.encode("utf8"))
 
             prev_stdout, prev_stderr = stdout_b.decode("utf8"), stderr_b.decode("utf8")
+            logger.warning(prev_stderr)
 
         return prev_stdout, prev_stderr
 
@@ -171,6 +175,7 @@ DockerApi = YCDockerApi()
 
 @docker_api.route("/")
 class NotFound(Resource):
+
     @docker_api.doc("Not Found")
     def get(self):
         return ""
@@ -179,6 +184,7 @@ class NotFound(Resource):
 @docker_api.route("/<string:env>/containers")
 @docker_api.param("env", "Environment to run the command on")
 class ContainersList(Resource):
+
     @docker_api.doc("list_containers")
     @docker_api.marshal_list_with(Container)
     def get(self, env):
@@ -198,6 +204,7 @@ class ContainersUp(Resource):
 @docker_api.param("env", "Environment to run the command on")
 @docker_api.param("container_name", "Container name to run command on")
 class ContainersUpOne(Resource):
+
     @docker_api.doc("up_container")
     def get(self, env: str, container_name: str):
         return DockerApi.up_one(env, container_name)
@@ -206,6 +213,7 @@ class ContainersUpOne(Resource):
 @docker_api.route("/<string:env>/containers/down")
 @docker_api.param("env", "Environment to run the command on")
 class ContainersDown(Resource):
+
     @docker_api.doc("down_containers")
     def get(self, env):
         return DockerApi.down(env)
@@ -215,6 +223,7 @@ class ContainersDown(Resource):
 @docker_api.param("env", "Environment to run the command on")
 @docker_api.param("container_name", "Container name to run command on")
 class ContainersRestartOne(Resource):
+
     @docker_api.doc("restart_container")
     def get(self, env: str, container_name: str):
         return DockerApi.restart_one(env, container_name)
