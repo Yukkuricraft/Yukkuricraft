@@ -15,7 +15,7 @@ if [ -z ${ENV+x} ]; then
     exit 1
 fi
 
-BASE=/var/lib/yukkuricraft/${ENV}
+BASE=/var/lib/yukkuricraft/env/${ENV}
 
 # Create docker fs mount points
 

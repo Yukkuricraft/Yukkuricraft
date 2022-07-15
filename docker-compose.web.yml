@@ -2,19 +2,34 @@ version: '3.5'
 
 services:
   # For yakumo-dash, run yakumo-dash-dev from yakumo-dash repo.
-  yc_api:
+  yc-api:
     container_name: yc-api
     image: yukkuricraft/yc-docker-api
     restart: 'on-failure'
+    depends_on:
+      - yc-api-mysql
     environment:
-      VIRTUAL_HOST: "api.yukkuricraft.net"
+      VIRTUAL_HOST: "api2.yukkuricraft.net"
       VIRTUAL_PORT: 5001
-      LETSENCRYPT_HOST: "api.yukkuricraft.net"
+      LETSENCRYPT_HOST: "api2.yukkuricraft.net"
     volumes:
-    - /usr/bin/docker:/usr/bin/docker
-    - /usr/bin/docker-compose:/usr/bin/docker-compose
-    - /var/run/docker.sock:/var/run/docker.sock
-    - ./:/app
+      - /usr/bin/docker:/usr/bin/docker
+      - /usr/bin/docker-compose:/usr/bin/docker-compose
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/app
+    networks:
+      - yc-web-dev
+
+  yc-api-mysql:
+    container_name: yc-api-mysql
+    image: mysql:5.7
+    restart: 'on-failure'
+    env_file:
+      - ./secrets/db.env
+    ports:
+      - "3366:3306"
+    volumes:
+      - ${MC_FS_ROOT}/db/api:/var/lib/mysql
     networks:
       - yc-web-dev
 
@@ -26,9 +41,9 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - certs:/etc/nginx/certs:ro
-      - html:/usr/share/nginx/html
-      - vhost:/etc/nginx/vhost.d
+      - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
+      - ${MC_FS_ROOT}/nginx/html:/usr/share/nginx/html
+      - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
     networks:
       - yc-web-dev
 
@@ -41,16 +56,17 @@ services:
       - NGINX_PROXY_CONTAINER=nginx-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - certs:/etc/nginx/certs:rw
-      - html:/usr/share/nginx/html
-      - vhost:/etc/nginx/vhost.d
-      - acme:/etc/acme.sh
+      - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
+      - ${MC_FS_ROOT}/nginx/html:/usr/share/nginx/html
+      - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
+      - ${MC_FS_ROOT}/nginx/acme:/etc/acme.sh
     depends_on:
       - nginx-proxy
     networks:
       - yc-web-dev
 
 volumes:
+  api-mysql-data:
   certs:
   html:
   vhost:

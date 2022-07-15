@@ -2,7 +2,7 @@
 
 MONOYC_BASE=/home/minecraft/YC/YukkuriCraft
 
-CONTAINER_YC_BASE=/var/lib/yukkuricraft/prod
+CONTAINER_YC_BASE=/var/lib/yukkuricraft/env/prod
 
 # Survival
 rsync -arP "$MONOYC_BASE/Survival4" "$CONTAINER_YC_BASE/survival/worlds/"
