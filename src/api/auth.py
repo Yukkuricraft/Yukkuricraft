@@ -10,8 +10,7 @@ from google.oauth2 import id_token  # type: ignore
 from google.auth.transport import requests as g_requests  # type: ignore
 from typing import Callable, Dict
 
-from src.api.constants import G_CLIENT_ID
-from src.api.constants import CORS_ORIGIN
+from src.api.constants import G_CLIENT_ID, CORS_ORIGIN, WHITELISTED_USERS_FILE
 from src.api.db import db
 from src.api.models import User, JTI, create_db_tables
 
@@ -19,6 +18,9 @@ from src.api.models import User, JTI, create_db_tables
 from logging import getLogger
 
 logger = getLogger(__name__)
+
+# TODO: Make more sophisticated in the future but for now this suffices.
+WHITELISTED_USERS = set(open(WHITELISTED_USERS_FILE, "r").read().splitlines())
 
 
 class DuplicateJTIError(RuntimeError):
@@ -49,6 +51,13 @@ class TimeTravelerError(RuntimeError):
         )
 
 
+class UnknownUserError(RuntimeError):
+    msg = "Encountered valid login but user was not whitelisted."
+
+    def __init__(self, user: User):
+        super().__init__(pformat(user))
+
+
 def verify_id_token_allowed(token: str):
     try:
         idinfo = id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
@@ -63,6 +72,7 @@ def verify_id_token_allowed(token: str):
             idinfo["email"],
         )
 
+        user = User(sub=sub, email=email)
         exp_dt = datetime.utcfromtimestamp(exp)
         iat_dt = datetime.utcfromtimestamp(iat)
 
@@ -74,8 +84,9 @@ def verify_id_token_allowed(token: str):
             raise ExpiredJTIError(exp_dt, now)
         elif now <= iat_dt:
             raise TimeTravelerError(iat_dt)
+        elif sub not in WHITELISTED_USERS:
+            raise UnknownUserError(user)
 
-        user = User(sub=sub, email=email)
         if not User.query.filter_by(sub=sub).first():
             db.session.add(user)
         db.session.add(JTI(jti=jti, exp=exp, iat=iat, user=user.sub))

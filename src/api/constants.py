@@ -5,3 +5,5 @@ G_CLIENT_ID = (
 CORS_ORIGIN = "https://yakumo2.yukkuricraft.net"
 
 DB_ENV_FILE = "secrets/db.env"
+
+WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"
