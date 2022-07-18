@@ -1,5 +1,4 @@
 from flask import Flask
-from flask_restx import Api, Resource, fields  # type: ignore
 
 import src.common.logger_setup
 from src.common.config import load_env_config

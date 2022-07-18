@@ -17,6 +17,7 @@ from src.api.constants import (
     G_CLIENT_ID,
     CORS_ORIGIN,
     WHITELISTED_USERS_FILE,
+    YC_TOKEN_AUTH_SCHEME,
 )
 from src.api.db import db
 from src.api.models import AccessToken, User, JTI, create_db_tables
@@ -62,14 +63,36 @@ class UnknownUserError(RuntimeError):
         super().__init__(pformat(user))
 
 
-def generate_access_token():
+class UnknownAccessTokenError(RuntimeError):
+    def __init__(self, access_token: str):
+        super().__init__(f"Got unknown access token: '{access_token}'")
+
+
+class ExpiredAccessTokenError(RuntimeError):
+    def __init__(self, token: AccessToken):
+        super().__init__(f"Got expired token: {token.id}\nExpired at: {token.exp}")
+
+
+def generate_access_token() -> Tuple[str, int]:
     return token_hex(), (int(datetime.now().timestamp()) + 1000 * ACCESS_TOKEN_DUR_MINS)
+
+
+def deserialize_id_token(token: str) -> Dict:
+    return id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
+
+
+def get_access_token_from_headers() -> Tuple[str, str]:
+    # Authorization: YC-Token <access_token>
+    auth_header = request.headers.get("Authorization", "")
+    scheme, token = auth_header.split()
+
+    return scheme, token
 
 
 def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
     json_resp = {}
     try:
-        idinfo = id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
+        idinfo = deserialize_id_token(token)
 
         logger.debug(pformat(idinfo))
 
@@ -103,7 +126,7 @@ def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
             db.session.add(user)
         db.session.add(JTI(jti=jti, exp=exp, iat=iat, user=user.sub))
         db.session.add(
-            AccessToken(token_id=access_token, user=user.sub, exp=access_token_exp)
+            AccessToken(id=access_token, user=user.sub, exp=access_token_exp)
         )
         db.session.commit()
 
@@ -125,7 +148,7 @@ def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
 
 
 def verify_access_token_allowed(access_token: str):
-    token = AccessToken.query.filter_by(token_id=access_token).first()
+    token = AccessToken.query.filter_by(id=access_token).first()
 
     if not token:
         logger.warning(pformat(token))
@@ -142,23 +165,28 @@ def verify_access_token_allowed(access_token: str):
 def validate_access_token(func: Callable):
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        access_token = request.headers.get("Authorization", "")
-        logger.warning(f"AccessToken? - {access_token}")
-        logger.warning(f"Request Headers: {pformat(request.headers)}")
-        if not verify_access_token_allowed(access_token):
-            logger.info("?")
-            abort(401)
-        logger.info("??")
+        unauthed_resp = make_cors_response()
+        unauthed_resp.status = 401
+        try:
+            scheme, token = get_access_token_from_headers()
+            logger.warning(f"INSPECTING AUTH HEADER: '{scheme}' '{token}'")
+
+            if scheme != YC_TOKEN_AUTH_SCHEME:
+                return unauthed_resp
+            elif not verify_access_token_allowed(token):
+                return unauthed_resp
+        except Exception as e:
+            logger.warning(e)
+            return unauthed_resp
+
         return func(*args, **kwargs)
 
-    logger.info("Returning validate_access_token decorated func")
     return decorated_function
 
 
 def intercept_cors_preflight(func: Callable):
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        logger.debug("??? Hm ???")
         logger.info(request.method)
         if request.method == "OPTIONS":
             resp = make_response()
@@ -172,7 +200,6 @@ def intercept_cors_preflight(func: Callable):
 
         return func(*args, **kwargs)
 
-    logger.info("Returning intercept_cors_preflight decorated func")
     return decorated_function
 
 
@@ -199,7 +226,6 @@ def login():
         logger.warning(data)
 
         is_allowed, json_resp = verify_id_token_allowed(data["id_token"])
-
         if is_allowed:
             resp.status = 200
             resp.data = json.dumps(json_resp)
@@ -207,7 +233,43 @@ def login():
         return resp
 
 
-@auth_bp.route("/createdbdeleteme")
+@auth_bp.route("/logout", methods=["OPTIONS", "POST"])
+@intercept_cors_preflight
+def logout():
+    if request.method == "POST":
+        resp = make_cors_response()
+        resp.status = 200
+
+        _, token = get_access_token_from_headers()
+        access_token = AccessToken.query.filter_by(id=token).first()
+        access_token.exp = int(datetime.now().timestamp())
+        db.session.commit()
+
+        return resp
+
+
+@auth_bp.route("/me", methods=["OPTIONS", "GET"])
+@intercept_cors_preflight
+@validate_access_token
+def me():
+    if request.method == "GET":
+        resp = make_cors_response()
+        scheme, access_token = get_access_token_from_headers()
+        token = AccessToken.query.filter_by(id=access_token).first()
+
+        logger.warning(f"??? {pformat(token.to_dict())}")
+
+        user = User.query.filter_by(sub=token.user).first()
+        logger.warning(f"YOU ARE: \n{pformat(user)}")
+        resp.data = json.dumps(user.to_dict())
+
+        return resp
+
+
+# @auth_bp.route("/createdbdeleteme", methods=["OPTIONS", "GET"])
+# @intercept_cors_preflight
+# @validate_access_token
 def createdb():
+    logger.warning("?? CREATEDB")
     create_db_tables()
     return "Aaaa"
