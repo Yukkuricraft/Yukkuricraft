@@ -34,7 +34,7 @@ ServerMgmtApi = ServerManagement()
 def list_containers(env):
     """List all containers running"""
     resp = make_cors_response()
-    resp.data = json.dumps(ServerMgmtApi.list(env=env))
+    resp.data = json.dumps(ServerMgmtApi.list_containers(env=env))
 
     return resp
 
@@ -43,8 +43,10 @@ def list_containers(env):
 @intercept_cors_preflight
 @validate_access_token
 def up_containers(env):
-    """Spin up containers for <env>"""
-    return ServerMgmtApi.up(env=env)
+    resp = make_cors_response()
+    resp.data = json.dumps(ServerMgmtApi.up(env=env))
+
+    return resp
 
 
 @docker_bp.route(
@@ -53,16 +55,22 @@ def up_containers(env):
 @intercept_cors_preflight
 @validate_access_token
 def up_one_container(env, container_name):
-    """Spin up one container(<>) for <env>"""
-    return ServerMgmtApi.up_one(env, container_name)
+    resp = make_cors_response()
+    resp.data = json.dumps(
+        ServerMgmtApi.up_one_container(env=env, container_name=container_name)
+    )
+
+    return resp
 
 
 @docker_bp.route("/<env>/containers/down", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
 def down_containers(env):
-    """Spin down containers for <env>"""
-    return ServerMgmtApi.down(env=env)
+    resp = make_cors_response()
+    resp.data = json.dumps(ServerMgmtApi.down_containers(env=env))
+
+    return resp
 
 
 @docker_bp.route(
@@ -71,5 +79,9 @@ def down_containers(env):
 @intercept_cors_preflight
 @validate_access_token
 def down_one_container(env, container_name):
-    """Spin down one container(<>) for <env>"""
-    return ServerMgmtApi.down_one(env, container_name)
+    resp = make_cors_response()
+    resp.data = json.dumps(
+        ServerMgmtApi.down_one_container(env=env, container_name=container_name)
+    )
+
+    return resp

@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, abort
+from flask import Blueprint, abort, request
 
 from pprint import pformat, pprint
 from typing import Callable, Dict, Tuple
@@ -11,11 +11,14 @@ from src.api.constants import (
     YC_TOKEN_AUTH_SCHEME,
 )
 from src.api.lib.auth import (
-    intercept_cors_preflight,
-    validate_access_token,
     make_cors_response,
+    intercept_cors_preflight,
+    verify_id_token_allowed,
+    validate_access_token,
+    get_access_token_from_headers,
 )
 from src.api.db import db
+from src.api.models import AccessToken, User
 
 from src.common.logger_setup import logger
 
