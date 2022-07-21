@@ -6,10 +6,12 @@ ENV_FOLDER: Path = Path("/app/env")
 
 
 class Environment:
+    @staticmethod
     def is_env_valid(env: str):
         env_file_path = ENV_FOLDER / f"{env}.toml"
         return env_file_path.exists()
 
+    @staticmethod
     def ensure_valid_env(func: Callable):
         """
         Decorated function must take a named arg called 'env'
@@ -29,3 +31,6 @@ class Environment:
         return wrapper
 
     # TODO: Env creation
+
+    def create_new_dev_env(self, name: str):
+        pass
