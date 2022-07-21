@@ -3,8 +3,8 @@ from flask import Flask
 import src.common.logger_setup
 from src.common.config import load_env_config
 from src.api.constants import DB_ENV_FILE
-from src.api.docker import docker_bp
-from src.api.auth import auth_bp
+from src.api.blueprints.docker import docker_bp
+from src.api.blueprints.auth import auth_bp
 from src.api.db import db
 
 db_config = load_env_config(DB_ENV_FILE)

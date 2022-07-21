@@ -1,16 +1,13 @@
-#!/usr/bin/env python3
+from flask import request
 
-import json
-
-from flask import Blueprint, abort, request, make_response
-
-from datetime import datetime
+from pprint import pformat
 from functools import wraps
+from typing import Dict, Tuple, Callable
+from datetime import datetime
+from secrets import token_hex
 from google.oauth2 import id_token  # type: ignore
 from google.auth.transport import requests as g_requests  # type: ignore
-from pprint import pformat, pprint
-from secrets import token_hex
-from typing import Callable, Dict, Tuple
+
 
 from src.api.constants import (
     ACCESS_TOKEN_DUR_MINS,
@@ -26,6 +23,8 @@ from src.common.logger_setup import logger
 
 # TODO: Make more sophisticated in the future but for now this suffices.
 WHITELISTED_USERS = set(open(WHITELISTED_USERS_FILE, "r").read().splitlines())
+
+## Custom Errors
 
 
 class DuplicateJTIError(RuntimeError):
@@ -71,6 +70,9 @@ class UnknownAccessTokenError(RuntimeError):
 class ExpiredAccessTokenError(RuntimeError):
     def __init__(self, token: AccessToken):
         super().__init__(f"Got expired token: {token.id}\nExpired at: {token.exp}")
+
+
+## Funcs
 
 
 def generate_access_token() -> Tuple[str, int]:
@@ -207,69 +209,3 @@ def make_cors_response():
     resp = make_response()
     resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
     return resp
-
-
-auth_bp: Blueprint = Blueprint("auth", __name__)
-
-
-@auth_bp.route("/login", methods=["OPTIONS", "POST"])
-@intercept_cors_preflight
-def login():
-    if request.method == "POST":
-        resp = make_cors_response()
-        resp.status = 401
-
-        data = request.get_json()
-
-        logger.warning(">>>>>>>>>>>>>>>>>>")
-        logger.warning(resp)
-        logger.warning(data)
-
-        is_allowed, json_resp = verify_id_token_allowed(data["id_token"])
-        if is_allowed:
-            resp.status = 200
-            resp.data = json.dumps(json_resp)
-
-        return resp
-
-
-@auth_bp.route("/logout", methods=["OPTIONS", "POST"])
-@intercept_cors_preflight
-def logout():
-    if request.method == "POST":
-        resp = make_cors_response()
-        resp.status = 200
-
-        _, token = get_access_token_from_headers()
-        access_token = AccessToken.query.filter_by(id=token).first()
-        access_token.exp = int(datetime.now().timestamp())
-        db.session.commit()
-
-        return resp
-
-
-@auth_bp.route("/me", methods=["OPTIONS", "GET"])
-@intercept_cors_preflight
-@validate_access_token
-def me():
-    if request.method == "GET":
-        resp = make_cors_response()
-        scheme, access_token = get_access_token_from_headers()
-        token = AccessToken.query.filter_by(id=access_token).first()
-
-        logger.warning(f"??? {pformat(token.to_dict())}")
-
-        user = User.query.filter_by(sub=token.user).first()
-        logger.warning(f"YOU ARE: \n{pformat(user)}")
-        resp.data = json.dumps(user.to_dict())
-
-        return resp
-
-
-# @auth_bp.route("/createdbdeleteme", methods=["OPTIONS", "GET"])
-# @intercept_cors_preflight
-# @validate_access_token
-def createdb():
-    logger.warning("?? CREATEDB")
-    create_db_tables()
-    return "Aaaa"
