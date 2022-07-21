@@ -105,7 +105,14 @@ generate_docker_compose:
 .PHONY: create_new_env
 create_new_env:
 	# Do we want to do based on current active env or always use prod as BASE_ENV?
-	BASE_ENV=prod NEW_ENV=$(ARGS) ./generate-new-dev-env
+	BASE_ENV=prod \
+	NEW_ENV=$(word 1,$(ARGS)) \
+	VELOCITY_PORT=$(word 2, $(ARGS)) \
+	./generate-new-dev-env
+
+.PHONY: test
+test:
+	echo $(word 2,$(ARGS))
 
 .PHONY: delete_env
 delete_env:
