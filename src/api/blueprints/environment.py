@@ -49,6 +49,9 @@ def list_envs_with_configs():
         resp = make_cors_response()
         resp.status = 200
 
-        resp.data = json.dumps(list_valid_envs())
+        valid_envs = list_valid_envs()
+        valid_envs_as_dicts = list(map(lambda env: env.toJson(), valid_envs))
+
+        resp.data = json.dumps(valid_envs_as_dicts)
 
         return resp

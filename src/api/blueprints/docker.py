@@ -34,6 +34,7 @@ ServerMgmtApi = ServerManagement()
 def list_containers(env):
     """List all containers running"""
     resp = make_cors_response()
+    resp.headers.add("Content-Type", "application/json")
     resp.data = json.dumps(ServerMgmtApi.list_containers(env=env))
 
     return resp
