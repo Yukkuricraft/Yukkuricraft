@@ -26,8 +26,8 @@ if [ ${ENV} == 'prod' ]; then
 fi
 
 
-# Delete ENV folder in /var/lib/yukkuricraft
-BASE=/var/lib/yukkuricraft/${ENV}
+# Delete ENV folder in /var/lib/yukkuricraft/env
+BASE=/var/lib/yukkuricraft/env/${ENV}
 if [ -d ${BASE} ]; then
     log ""
     log "Deleting ${BASE}..."

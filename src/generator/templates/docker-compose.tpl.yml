@@ -30,12 +30,12 @@ custom_extensions:
     volumes:
       -
         type: bind
-        source: ${MC_FS_ROOT}/prod/<<WORLDGROUP>>/worlds # This should always mount prod
+        source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/worlds # This should always mount prod
         target: /worlds-bindmount-prod
         read_only: ${BINDMOUNT_RO}
       -
         type: bind
-        source: ${MC_FS_ROOT}/prod/<<WORLDGROUP>>/plugins # This should always mount prod
+        source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/plugins # This should always mount prod
         target: /plugins-bindmount-prod
         read_only: ${BINDMOUNT_RO}
       - mcdata_<<WORLDGROUP>>:/data
@@ -67,14 +67,17 @@ custom_extensions:
 services:
   mysql:
     image: mysql/mysql-server:5.7
+    env_file:
+      - ./secrets/db.env
     volumes:
-      - dbdata-${ENV}:/var/lib/mysql
+      - dbdata:/var/lib/mysql
     networks:
       - ycnet
 
 
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:
+  dbdata:
 
 # Networks will be automatically generated as ycnet-${ENV}
 networks:

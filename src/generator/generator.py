@@ -16,12 +16,11 @@ class GeneratorType(enum.Enum):
 
 
 def get_generator(gen_type: GeneratorType, env: str):
-    match gen_type:
-        case GeneratorType.DOCKER_COMPOSE:
-            return DockerComposeGen(env)
-        case GeneratorType.VELOCITY_CONFIG:
-            return VelocityConfigGen(env)
-        case GeneratorType.NEW_DEV_ENV:
-            return NewDevEnvGen(env)
-        case GeneratorType.ENV_FILE:
-            return EnvFileGen(env)
+    if gen_type == GeneratorType.DOCKER_COMPOSE:
+        return DockerComposeGen(env)
+    elif gen_type == GeneratorType.VELOCITY_CONFIG:
+        return VelocityConfigGen(env)
+    elif gen_type == GeneratorType.NEW_DEV_ENV:
+        return NewDevEnvGen(env)
+    elif gen_type == GeneratorType.ENV_FILE:
+        return EnvFileGen(env)

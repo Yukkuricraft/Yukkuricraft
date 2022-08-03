@@ -39,9 +39,12 @@ __ensure_env_file_exists:
 #############
 # ENV_TYPE strips numbers so we only keep dev or prod
 ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
+
 COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
+WEB_COMPOSE_FILE="docker-compose.web.yml"
+
 YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
-YC_ROOT?=/var/lib/yukkuricraft
+YC_ROOT?=/var/lib/yukkuricraft/env
 
 ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
@@ -102,7 +105,14 @@ generate_docker_compose:
 .PHONY: create_new_env
 create_new_env:
 	# Do we want to do based on current active env or always use prod as BASE_ENV?
-	BASE_ENV=prod NEW_ENV=$(ARGS) ./generate-new-dev-env
+	BASE_ENV=prod \
+	NEW_ENV=$(word 1,$(ARGS)) \
+	VELOCITY_PORT=$(word 2, $(ARGS)) \
+	./generate-new-dev-env
+
+.PHONY: test
+test:
+	echo $(word 2,$(ARGS))
 
 .PHONY: delete_env
 delete_env:
@@ -129,8 +139,13 @@ build_api:
 # UP DOWN RESTARTS
 
 .PHONY: up_web
+up_web: ENV=prod
+up_web: generate_env_file
 up_web:
-	docker-compose -f docker-compose.web.yml --env=gen/$(ENV).env up -d
+	docker-compose -f $(WEB_COMPOSE_FILE) \
+		--env=gen/$(ENV).env \
+		up \
+		-d
 
 .PHONY: down_web
 down_web:
@@ -141,16 +156,16 @@ restart_web:
 	docker-compose -f docker-compose.web.yml restart
 
 .PHONY: up
-up: __pre_ensure
 up: generate
+up: __pre_ensure
 up:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		up -d
 
 .PHONY: up_one
-up_one: __pre_ensure
 up_one: generate
+up_one: __pre_ensure
 up_one:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
@@ -167,16 +182,16 @@ down:
 		down
 
 .PHONY: restart
-restart: __pre_ensure
 restart: generate
+restart: __pre_ensure
 restart:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		restart
 
 .PHONY: restart_one
-restart_one: __pre_ensure
 restart_one: generate
+restart_one: __pre_ensure
 restart_one:
 	$(PRE) docker-compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \

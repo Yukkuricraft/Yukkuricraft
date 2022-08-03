@@ -50,16 +50,17 @@ class DockerComposeGen(BaseGenerator):
         # Add velocity service
         services = self.docker_compose_template.services.as_dict()
 
-        velocity_service = self.docker_compose_template.custom_extensions.velocity_template.as_dict()
-        for world in self.env_config['world-groups'].enabled_groups:
+        velocity_service = (
+            self.docker_compose_template.custom_extensions.velocity_template.as_dict()
+        )
+        for world in self.env_config["world-groups"].enabled_groups:
             velocity_service["depends_on"].append(f"mc_{world}")
 
         services["velocity"] = velocity_service
 
-
         # Add minecraft services
 
-        for world in self.env_config['world-groups'].enabled_groups:
+        for world in self.env_config["world-groups"].enabled_groups:
             service_template = copy.deepcopy(
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
@@ -89,11 +90,11 @@ class DockerComposeGen(BaseGenerator):
             "driver_opts": {
                 "type": "none",
                 "o": "bind",
-                "device": f"{self.env_config['runtime-environment-variables'].MC_FS_ROOT}/{self.env}/certs",
+                "device": f"{self.env_config['runtime-environment-variables'].MC_FS_ROOT}/env/{self.env}/certs",
             },
         }
 
-        for world in self.env_config['world-groups'].enabled_groups:
+        for world in self.env_config["world-groups"].enabled_groups:
             volumes[f"mcdata_{world}"] = None
             volumes[f"ycworldsvolume_{world}"] = None
             volumes[f"ycpluginsvolume_{world}"] = None
@@ -106,11 +107,9 @@ class DockerComposeGen(BaseGenerator):
             if self.docker_compose_template.networks is not None
             else {}
         )
-        #networks[f"ycnet-{self.env}"] = None
+        # networks[f"ycnet-{self.env}"] = None
 
-        self.generated_docker_compose[
-            "networks"
-        ] = networks
+        self.generated_docker_compose["networks"] = networks
 
     def dump_generated_docker_compose(self):
         print("Generating new docker-compose.yml...")

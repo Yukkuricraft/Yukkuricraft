@@ -34,8 +34,9 @@ Generate .env files for use with docker-compose.
 Since .env files only accept key-value pairs, our implementation makes a Dict[str, str] assumption for the generated config.
 As such an ENV.toml that defines non-string values for keys in '[runtime-environment-variables]' may cause issues.
 """
+
+
 class EnvFileGen(BaseGenerator):
-    repo_root: Path
     generated_env_file_name: str
     generated_env_file_path: Path
 
@@ -44,21 +45,26 @@ class EnvFileGen(BaseGenerator):
     def __init__(self, env: str):
         super().__init__(env)
 
-        self.repo_root = Path(self.env_config["runtime-environment-variables"].YC_REPO_ROOT)
         self.generated_env_file_name = f"{env}.env"
-        self.generated_env_file_path = self.repo_root / "gen"
+        self.generated_env_file_path = (
+            Path(__file__).parent.parent.parent / "gen"
+        )  # G w o s s
 
     def run(self):
         self.generate_env_file()
         self.dump_generated_env_file()
 
     def generate_env_file(self):
-        self.generated_env_config = self.env_config['runtime-environment-variables'].as_dict()
+        self.generated_env_config = self.env_config[
+            "runtime-environment-variables"
+        ].as_dict()
 
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
 
-        generated_env_file_path = self.generated_env_file_path / self.generated_env_file_name
+        generated_env_file_path = (
+            self.generated_env_file_path / self.generated_env_file_name
+        )
         with open(generated_env_file_path, "w") as f:
             f.write(
                 "#\n"
@@ -68,6 +74,5 @@ class EnvFileGen(BaseGenerator):
                 "#\n\n"
             )
             for key, value in self.generated_env_config.items():
-                f.write(f"{key}=\"{value}\"\n")
-        print("Done. Not. Implement me.")
-
+                f.write(f'{key}="{value}"\n')
+        print("Done.")
