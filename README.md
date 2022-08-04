@@ -6,26 +6,60 @@ Containerized Yukkuricraft
 
 ## Description
 
-This is our attempt at containerizing the Yukkuricraft minecraft server utilizing `itzg/minecraft-server`.
+This is our attempt at containerizing the Yukkuricraft minecraft server utilizing `itzg/minecraft-server` and `itzg/bungeecord`.
 
 We support two "types" of environments - `prod` and `dev`.
 - The `prod` type env is a singular environment - ie only one prod.
 - There can however be multiple `dev` type envs. We standardize our names as `dev#` where # is an int starting at 1.
 - Eg, we can have environments named: `prod`, `dev1`, `dev2`
 
-We use a singular `docker-compose.yml` file which uses a combination of buildtime and runtime environment variable substitutions. We recommend that you do _not_ run `docker-compose` or `docker` commands manually, but rather use the `Makefile` targets provided. See [Running Containers](#running-containers).
+### World Groups
+
+To organize our worlds into individual servers, we do so using "world groups".
+
+A "world group" represents a group of Minecraft worlds that are thematically related.
+- Eg, 'survival', 'creative', and 'neo-gensokyo' worlds.
+
+On the filesystem, a world group is represented as:
+- `/var/lib/yukkuricraft/<ENV>/<WORLD GROUP>/...`
+- `./secrets/configs/<ENV>/<WORLD GROUP>/`
+- <sub>The base paths can be configured in `env/<ENV>.env`</sub>
+
+We define our "enabled" world groups in our Environment Configurations..
+
+### `docker-compose.yml` Generation
+
+Using our configured enabled world groups, we dynamically generate a `gen/docker-compose-{ENV}.yml` to run only the enabled groups.
+- <sub>Sourcecode can be found under `src/generator/docker_compose_gen.py`</sub>
+
+As a consequence, we encourage you to run things using `Makefile` commands. See [Running Containers](#running-containers). We are also in the works of creating [YakumoDash](https://github.com/Yukkuricraft/YakumoDash) to make server/env management easier.
+
+### Proxy, Config Generation, and Container Setup
+
+We utilize the Velocity (TBD) Minecraft proxy. Our individual servers are run in containers, each of which represents a world group.
+
+The Velocity config is likewise dynamically generated as per enabled world groups.
+- <sub>Sourcecode can be found under `src/generator/velocity_config_gen.py`</sub>
 
 We also utilize a custom `scripts/start.sh` script to do some filesystem setup for us prior to starting the server. As such, we also create a short `yukkuricraft/minecraft-server` image as defined in `images/minecraft-server/Dockerfile`.
 
-## Environments
 
-The `prod` and `dev` environment **types** have a special relationship with each other.
+## Environments and Containers
+
+We configure our individual environments using appropriately named configs found under `env/<ENV>.toml`. The config currently consists of the following sections:
+1. The `runtime-environment-variables` section which defines ENV VARS passed into `docker-compose` invocations. We use this TOML definition to dynamically generate a valid `.env` file for `docker-compose`.
+  - Note: We inject some ENV VARS into this generated `.env` file, such as the `ENV` value which takes the ENV specified by the TOML filename.
+2. The `world_groups` section which contains our "enabled world groups" config.
+
+Conceptually, the `prod` and `dev` environment **types** have a special relationship with each other.
 
 Our production world data currently resides on the container host's filesystem as configured in the `env/prod.env` file. More specifically, our `docker-compose.yml` bind mounts this world data to the `/worlds-bindmount` directory inside the container. This is regardless of environment type.
 
 Additionally, we configure the minecraft server to treat `/yc-worlds` as the path for all world data.
 
 From here, behavior diverges based on environment type:
+
+# EVERYTHING BELOW IS CONSIDERED OUTDATED
 
 #### Prod
 We simply symlink `/worlds-bindmount` to `/yc-worlds`. This effectively bindmounts the container host's production world data to the server world data path within the container. Thus, anytime the world data is saved on the production server, the world state should be written back to the host FS.
