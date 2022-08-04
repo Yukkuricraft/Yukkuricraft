@@ -2,7 +2,7 @@
 Containerized Yukkuricraft
 
 ## Architecture (WIP)
-![Architecture Draft](https://lucid.app/publicSegments/view/822c5fcf-e707-4a4b-abea-79d6c8e0de78/image.png)
+![Architecture Draft](https://lucid.app/publicSegments/view/4d5fdc42-0ea1-41f1-80fe-168e8fee5277/image.png)
 
 ## Description
 
