@@ -2,7 +2,7 @@
 Containerized Yukkuricraft
 
 ## Architecture (WIP)
-![Architecture Draft](https://lucid.app/publicSegments/view/4d5fdc42-0ea1-41f1-80fe-168e8fee5277/image.png)
+![Architecture Draft](docs/img/architecture_diagram.png)
 
 ## Description
 
@@ -81,7 +81,7 @@ This roundabout setup is necessary as we want to effectively use `/yc-worlds` as
 #### Filesystem Diagram
 Below is a diagram illustrating the paragraphs above pertaining to filesystem layouts
 
-![Filesystem Layout](https://lucid.app/publicSegments/view/8cbe134b-8d15-4081-a8b3-d83f9b2ea5d7/image.png)
+![Filesystem Layout](docs/img/filesystem_layout.png)
 
 ### Creating New Environments
 
