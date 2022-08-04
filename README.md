@@ -2,7 +2,7 @@
 Containerized Yukkuricraft
 
 ## Architecture (WIP)
-![Architecture Draft](docs/img/architecture_diagram.png)
+![Architecture Draft](docs/img/architecture_diagram.jpeg)
 
 ## Description
 
