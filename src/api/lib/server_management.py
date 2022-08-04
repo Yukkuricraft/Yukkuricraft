@@ -27,8 +27,9 @@ class ServerManagement:
                 "--format",
                 "{{ json . }}",
                 "--no-trunc",
+                "--filter",
+                f"label=net.yukkuricraft.env={env}",
             ],
-            ["grep", env],
         ]
         out = Runner.run(cmds)
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]

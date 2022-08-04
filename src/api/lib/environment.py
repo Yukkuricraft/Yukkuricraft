@@ -49,8 +49,8 @@ class Env:
     formatted: str
 
 
-def is_env_valid(env: Env):
-    env_file_path = ENV_FOLDER / f"{env.name}.toml"
+def is_env_valid(env_name: str):
+    env_file_path = ENV_FOLDER / f"{env_name}.toml"
     return env_file_path.exists()
 
 
@@ -59,8 +59,8 @@ def ensure_valid_env(func: Callable):
         if "env" not in kwargs:
             raise Exception("Must pass an 'env' arg to this function call!")
 
-        env = kwargs["env"]
-        if not is_env_valid(env):
+        env_name = kwargs["env"]
+        if not is_env_valid(env_name):
             raise Exception(
                 f"Tried to run a command on an environment that does not exist! Got: '{env}'"
             )
