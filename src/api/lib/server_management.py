@@ -8,13 +8,37 @@ from subprocess import Popen, PIPE
 
 from src.api.lib.environment import ensure_valid_env
 from src.api.lib.runner import Runner
+from src.generator.docker_compose_gen import DockerComposeGen
 from src.common.logger_setup import logger
+from src.common.config import load_yaml_config
 from src.common.decorators import serialize_tuple_out_as_dict
 
 
 class ServerManagement:
     @ensure_valid_env
-    def list_containers(self, env: str):
+    def list_defined_containers(self, env: str):
+        """
+        Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
+
+        We do this by parsing the generated `gen/docker-compose.{{ENV}}.yml` file.
+        This may have unforseen bugs in the future...? :-/
+        """
+
+        docker_compose_gen = DockerComposeGen(env)
+        filepath = docker_compose_gen.get_generated_docker_compose_path()
+        docker_compose = load_yaml_config(filepath)
+
+        container_names = []
+        for service in docker_compose["services"]:
+            if "labels" in service:
+                container_names.append(
+                    service["labels"][docker_compose_gen.container_name_label]
+                )
+
+        return container_names
+
+    @ensure_valid_env
+    def list_active_containers(self, env: str):
         """
         Eh, the @Environment.ensure_valid_env decorator might be confusing
         as this func needs 'env=env' in the calling sig vs just 'env' for up/up_one/down/down_one
@@ -34,11 +58,8 @@ class ServerManagement:
         out = Runner.run(cmds)
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
 
-        logger.warning(pformat(out))
-
         containers: List[Dict] = []
         for line in stdout.splitlines():
-            logger.warning(f"PARSING:\n{line}")
             if len(line.strip()) == 0:
                 continue
             container = json.loads(line)
