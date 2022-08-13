@@ -45,6 +45,9 @@ class ServerManagement:
             labels = []
             if "labels" in svc_data:
                 for key, val in svc_data.labels.items():
+                    # TODO: Make this more robust. What else can be substituted?
+                    if val == "${ENV}":
+                        val = env
                     labels.append(f"{key}={val}")
             container["labels"] = labels
 
