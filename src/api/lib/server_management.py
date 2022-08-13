@@ -28,7 +28,7 @@ class ServerManagement:
         filepath = docker_compose_gen.get_generated_docker_compose_path()
         docker_compose = load_yaml_config(filepath)
 
-        defined_containers: Dict[str, List] = {}
+        defined_containers: List = []
         logger.info("+++++++++++ DEFINED CONTAINERS")
         logger.info(repr(docker_compose.services))
         for svc_name, svc_data in docker_compose.services.items():
@@ -42,16 +42,12 @@ class ServerManagement:
             container["ports"] = svc_data.get_or_default("ports", [])
 
             labels = []
-            target_label = docker_compose_gen.container_type_label
             if "labels" in svc_data:
-                container_type = svc_data.labels.get_or_default(target_label, "unknown")
                 for key, val in svc_data.labels.items():
                     labels.append(f"{key}={val}")
             container["labels"] = labels
 
-            if container_type not in defined_containers:
-                defined_containers[container_type] = []
-            defined_containers[container_type].append(container)
+            defined_containers.append(container)
 
         logger.warning("FOUND DEFINED CONTAINERS:")
         logger.warning(pformat(defined_containers))
