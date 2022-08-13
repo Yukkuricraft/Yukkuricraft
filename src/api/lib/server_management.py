@@ -30,6 +30,7 @@ class ServerManagement:
 
         defined_containers: List = []
         logger.info("+++++++++++ DEFINED CONTAINERS")
+        logger.info(filepath)
         logger.info(repr(docker_compose.services))
         for svc_name, svc_data in docker_compose.services.items():
             container = {}
