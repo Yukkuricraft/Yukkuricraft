@@ -23,6 +23,7 @@ from src.common.logger_setup import logger
 
 class DockerComposeGen(BaseGenerator):
     container_name_label = "net.yukkuricraft.container_name"
+    container_type_label = "net.yukkuricraft.container_type"
     docker_compose_template: YamlConfig
 
     generated_docker_compose_name: str

@@ -28,14 +28,34 @@ class ServerManagement:
         filepath = docker_compose_gen.get_generated_docker_compose_path()
         docker_compose = load_yaml_config(filepath)
 
-        container_names = []
-        for service in docker_compose["services"]:
-            if "labels" in service:
-                container_names.append(
-                    service["labels"][docker_compose_gen.container_name_label]
-                )
+        defined_containers: Dict[str, List] = {}
+        logger.info("+++++++++++ DEFINED CONTAINERS")
+        logger.info(repr(docker_compose.services))
+        for svc_name, svc_data in docker_compose.services.items():
+            container = {}
+            container["image"] = svc_data.get_or_default("image", "NO IMAGE")
+            container["names"] = (
+                [svc_name] if "name" not in svc_data else [svc_name, svc_data["name"]]
+            )
+            container["mounts"] = svc_data.get_or_default("mounts", [])
+            container["networks"] = svc_data.get_or_default("networks", [])
+            container["ports"] = svc_data.get_or_default("ports", [])
 
-        return container_names
+            labels = []
+            target_label = docker_compose_gen.container_type_label
+            if "labels" in svc_data:
+                container_type = svc_data.labels.get_or_default(target_label, "unknown")
+                for key, val in svc_data.labels.items():
+                    labels.append(f"{key}={val}")
+            container["labels"] = labels
+
+            if container_type not in defined_containers:
+                defined_containers[container_type] = []
+            defined_containers[container_type].append(container)
+
+        logger.warning("FOUND DEFINED CONTAINERS:")
+        logger.warning(pformat(defined_containers))
+        return defined_containers
 
     @ensure_valid_env
     def list_active_containers(self, env: str):
