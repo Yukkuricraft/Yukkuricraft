@@ -50,6 +50,9 @@ class EnvFileGen(BaseGenerator):
             Path(__file__).parent.parent.parent / "gen"
         )  # G w o s s
 
+    def get_generated_env_file_path(self):
+        return self.generated_env_file_path / self.generated_env_file_name
+
     def run(self):
         self.generate_env_file()
         self.dump_generated_env_file()
@@ -62,9 +65,7 @@ class EnvFileGen(BaseGenerator):
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
 
-        generated_env_file_path = (
-            self.generated_env_file_path / self.generated_env_file_name
-        )
+        generated_env_file_path = self.get_generated_env_file_path()
         with open(generated_env_file_path, "w") as f:
             f.write(
                 "#\n"

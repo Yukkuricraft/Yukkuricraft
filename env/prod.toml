@@ -19,6 +19,7 @@ YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
 
 [world-groups]
 # The values in the world-groups.enabled_groups array will be used to generate all dynamic configs.
+# Values must be alphanumeric or underscore. (NO HYPHENS)
 enabled_groups = [
     "survival",
     "creative",

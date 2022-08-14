@@ -31,11 +31,23 @@ ServerMgmtApi = ServerManagement()
 @docker_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
-def list_containers(env):
+def list_defined_containers(env):
+    """List all containers that are defined in the generated docker compose for this env"""
+    resp = make_cors_response()
+    resp.headers.add("Content-Type", "application/json")
+    resp.data = json.dumps(ServerMgmtApi.list_defined_containers(env=env))
+
+    return resp
+
+
+@docker_bp.route("/<env>/containers/active", methods=["GET", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def list_active_containers(env):
     """List all containers running"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp.data = json.dumps(ServerMgmtApi.list_containers(env=env))
+    resp.data = json.dumps(ServerMgmtApi.list_active_containers(env=env))
 
     return resp
 
