@@ -5,7 +5,7 @@ from src.common.config import load_env_config
 from src.api.constants import DB_ENV_FILE
 from src.api.db import db
 
-from src.api.blueprints.docker import docker_bp
+from src.api.blueprints.server import server_bp
 from src.api.blueprints.auth import auth_bp
 from src.api.blueprints.environment import envs_bp
 
@@ -16,7 +16,7 @@ app.config[
     "SQLALCHEMY_DATABASE_URI"
 ] = f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"
 
-app.register_blueprint(docker_bp, url_prefix="/docker")
+app.register_blueprint(server_bp, url_prefix="/server")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(envs_bp, url_prefix="/environments")
 

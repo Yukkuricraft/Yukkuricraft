@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Creates necessary files and folders to run a new environment.
-# For now just copies env/prod.env to the new env config file. Modify as needed.
-
 run_sudo() {
     log ">>> $@"
     sudo $@
@@ -19,8 +16,7 @@ fi
 
 if [ ${ENV} == 'prod' ]; then
     log ""
-    log "Are you dumb?"
-    log "Please don't delete prod."
+    log "Please don't delete prod. :("
     log ""
     exit 9
 fi
@@ -44,6 +40,18 @@ if [ -f ${ENV_FILE} ]; then
     run_sudo rm "${ENV_FILE}"
     log "Done."
 fi
+
+# Delete any generated files
+DOCKER_COMPOSE_FILE=gen/docker-compose-${ENV}.yml
+VELOCITY_FILE=gen/velocity-${ENV}.toml
+if [ -f ${DOCKER_COMPOSE_FILE} ]; then
+    log ""
+    log "Deleting generated files..."
+    run_sudo rm ${DOCKER_COMPOSE_FILE}
+    run_sudo rm ${VELOCITY_FILE}
+    log "Done."
+fi
+
 
 
 # Delete everything under secrets/configs/ENV (nginx + world group configs)

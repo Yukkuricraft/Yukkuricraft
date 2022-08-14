@@ -36,35 +36,34 @@ TODO: Configurable copying of certain folders/configs from a source env
 
 
 class NewDevEnvGen(BaseGenerator):
-    repo_root: Path
+    server_root: Path
 
     def __init__(self, base_env: str):
         super().__init__(base_env)
 
-        self.repo_root = Path(
-            self.env_config["runtime-environment-variables"].YC_REPO_ROOT
-        )
+        self.server_root = Path(__file__).parent.parent.parent  # G w o s s
 
-    def run(self, new_env: str, velocity_port: int):
+    def run(self, new_env: str, velocity_port: int, env_alias: str):
         logger.info("Generating New Environment Directories")
-        logger.info(f"- Repo Root: {self.repo_root}")
+        logger.info(f"- Repo Root: {self.server_root}")
         logger.info(f"- Base Env: {self.env}")
         logger.info(f"- New Env: {new_env}")
         logger.info("\n")
 
-        self.generate_env_config(new_env, velocity_port)
+        self.generate_env_config(new_env, velocity_port, env_alias)
         self.generate_secrets_config_dirs(new_env)
 
-    def generate_env_config(self, new_env: str, velocity_port: int):
+    def generate_env_config(self, new_env: str, velocity_port: int, env_alias: str):
         """
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
         """
 
         src_config = self.env_config.as_dict()
         src_config["runtime-environment-variables"]["ENV"] = new_env
+        src_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
         src_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port
 
-        new_config_path = self.repo_root / "env" / f"{new_env}.toml"
+        new_config_path = self.server_root / "env" / f"{new_env}.toml"
         with open(new_config_path, "wb") as f:
             f.write(
                 (
@@ -85,7 +84,7 @@ class NewDevEnvGen(BaseGenerator):
 
         # Nginx dir (Empty for now?)
         nginx_config_path = (
-            self.repo_root / self.SECRETS_CONFIG_RELPATH / new_env / "nginx"
+            self.server_root / self.SECRETS_CONFIG_RELPATH / new_env / "nginx"
         )
         if not nginx_config_path.exists():
             logger.info(f"Generating {nginx_config_path}...")
@@ -97,7 +96,7 @@ class NewDevEnvGen(BaseGenerator):
             logger.info(f"Generating dirs for {world}")
 
             secrets_world_config_path = (
-                self.repo_root
+                self.server_root
                 / self.SECRETS_CONFIG_RELPATH
                 / new_env
                 / "worlds"
@@ -118,7 +117,7 @@ class NewDevEnvGen(BaseGenerator):
                 worlds_path.mkdir(parents=True)
 
             src_server_properties_path = (
-                self.repo_root
+                self.server_root
                 / self.SECRETS_CONFIG_RELPATH
                 / self.env
                 / "worlds"
@@ -139,14 +138,14 @@ class NewDevEnvGen(BaseGenerator):
 
         # Copy default secret world configs from {self.env} to {new_env}
         src_default_path = (
-            self.repo_root
+            self.server_root
             / self.SECRETS_CONFIG_RELPATH
             / self.env
             / "worlds"
             / "default"
         )
         dst_default_path = (
-            self.repo_root
+            self.server_root
             / self.SECRETS_CONFIG_RELPATH
             / new_env
             / "worlds"

@@ -5,12 +5,13 @@
 #
 
 [runtime-environment-variables]
+ENV_ALIAS = "FOOBAR"
 MC_FS_ROOT = "/var/lib/yukkuricraft"
 MC_TYPE = "PAPER"
 MC_VERSION = "1.18.2"
 PAPER_BUILD = 318
 BINDMOUNT_RO = false
-VELOCITY_PORT = 25601
+VELOCITY_PORT = "25602"
 YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
 ENV = "dev1"
 
@@ -18,5 +19,4 @@ ENV = "dev1"
 enabled_groups = [
     "survival",
     "creative",
-    "lobby",
 ]

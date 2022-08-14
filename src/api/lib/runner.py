@@ -14,6 +14,19 @@ class Runner:
     def run(
         cmds: List[List[str]], env_vars: Optional[Dict[str, str]] = None
     ) -> Tuple[str, str, int]:
+        """
+        run() can take multiple "sets" of commands and pass the stdout
+        from one command to the stdin of the next. Hence, cmds is a List[List[str]]
+
+        Eg,
+        cmds = [
+          ["cat", "foo.txt"],
+          ["echo"],
+        ]
+        is equivalent to `cat foo.txt > echo`
+
+        stderr is discarded as far as passing to the next stdin goes.
+        """
         env = os.environ.copy()
         if env_vars is not None:
             for key, value in env_vars.items():

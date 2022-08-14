@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable, List, Optional
 
 from src.api.constants import ENV_FOLDER
+from src.common.config import load_toml_config
 from src.common.logger_setup import logger
 
 
@@ -49,9 +50,12 @@ class Env:
     formatted: str
 
 
-def is_env_valid(env_name: str):
-    env_file_path = ENV_FOLDER / f"{env_name}.toml"
-    return env_file_path.exists()
+def env_str_to_toml_path(env_str: str):
+    return ENV_FOLDER / f"{env_str}.toml"
+
+
+def is_env_valid(env_str: str):
+    return env_str_to_toml_path(env_str).exists()
 
 
 def ensure_valid_env(func: Callable):
@@ -71,8 +75,32 @@ def ensure_valid_env(func: Callable):
     return wrapper
 
 
-def get_env_alias_from_config(env: str):
-    return env
+def get_env_alias_from_config(env_str: str):
+    config = load_toml_config(env_str_to_toml_path(env_str))
+    env_vars = config["runtime-environment-variables"]
+    if not env_vars:
+        raise Exception("Invalid Env Config...?")
+
+    return env_vars["ENV_ALIAS"] if "ENV_ALIAS" in env_vars else env_str
+
+
+def get_next_valid_dev_env_number():
+    """
+    Starts checking from dev1, dev2, etc.
+    Returns the next valid int.
+
+    Will not check for any numbers that skip
+    Eg having dev1, dev2, dev666 will return dev3.
+    """
+
+    next_valid_dev_env_number = 1
+    dev_envs = list(filter(lambda env: env.type == "dev", list_valid_envs()))
+    dev_envs.sort(key=lambda env: env.num)
+    for env in dev_envs:
+        if env.num == next_valid_dev_env_number:
+            next_valid_dev_env_number += 1
+
+    return next_valid_dev_env_number
 
 
 def list_valid_envs() -> List[Env]:
