@@ -21,6 +21,7 @@ from src.api.lib.auth import (
     make_cors_response,
 )
 from src.api.lib.server_management import ServerManagement
+from src.api.lib.environment import Env
 
 
 server_bp: Blueprint = Blueprint("server", __name__)
@@ -28,7 +29,7 @@ server_bp: Blueprint = Blueprint("server", __name__)
 
 ServerMgmtApi = ServerManagement()
 
-# def create_new_env(self, env: str, proxy_port: int, env_alias: str = ""):
+
 @server_bp.route("/create-env", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
@@ -45,10 +46,21 @@ def create_env():
 
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp.data = json.dumps(
-        ServerMgmtApi.create_new_env(proxy_port=proxy_port, env_alias=env_alias)
-    )
 
+    resp_data, new_env_name = ServerMgmtApi.create_new_env(
+        proxy_port=proxy_port, env_alias=env_alias
+    )
+    logger.warning("????????????")
+    logger.warning([resp_data, new_env_name])
+
+    resp_data["created_env"] = {
+        "env": Env.from_env_string(new_env_name).toJson(),
+        "alias": env_alias,
+        "port": proxy_port,
+    }
+
+    resp.data = json.dumps(resp_data)
+    logger.warning(resp)
     return resp
 
 
@@ -56,10 +68,14 @@ def create_env():
 @intercept_cors_preflight
 @validate_access_token
 def delete_dev_env(env):
+    env_dict = Env.from_env_string(env).toJson()
+
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp.data = json.dumps(ServerMgmtApi.delete_dev_env(env=env))
+    resp_data = ServerMgmtApi.delete_dev_env(env=env)
+    resp_data["env"] = env_dict
 
+    resp.data = json.dumps(resp_data)
     return resp
 
 
@@ -92,8 +108,10 @@ def list_active_containers(env):
 @validate_access_token
 def up_containers(env):
     resp = make_cors_response()
-    resp.data = json.dumps(ServerMgmtApi.up_containers(env=env))
+    resp_data = ServerMgmtApi.up_containers(env=env)
+    resp_data["env"] = Env.from_env_string(env).toJson()
 
+    resp.data = json.dumps(resp_data)
     return resp
 
 
@@ -104,9 +122,12 @@ def up_containers(env):
 @validate_access_token
 def up_one_container(env, container_name):
     resp = make_cors_response()
-    resp.data = json.dumps(
-        ServerMgmtApi.up_one_container(env=env, container_name=container_name)
-    )
+
+    resp_data = ServerMgmtApi.up_one_container(env=env, container_name=container_name)
+    resp_data["env"] = Env.from_env_string(env).toJson()
+    resp_data["container_name"] = container_name
+
+    resp.data = json.dumps(resp_data)
 
     return resp
 
@@ -116,7 +137,10 @@ def up_one_container(env, container_name):
 @validate_access_token
 def down_containers(env):
     resp = make_cors_response()
-    resp.data = json.dumps(ServerMgmtApi.down_containers(env=env))
+    resp_data = ServerMgmtApi.down_containers(env=env)
+    resp_data["env"] = Env.from_env_string(env).toJson()
+
+    resp.data = json.dumps(resp_data)
 
     return resp
 
@@ -128,8 +152,11 @@ def down_containers(env):
 @validate_access_token
 def down_one_container(env, container_name):
     resp = make_cors_response()
-    resp.data = json.dumps(
-        ServerMgmtApi.down_one_container(env=env, container_name=container_name)
-    )
+
+    resp_data = ServerMgmtApi.down_one_container(env=env, container_name=container_name)
+    resp_data["env"] = Env.from_env_string(env).toJson()
+    resp_data["container_name"] = container_name
+
+    resp.data = json.dumps(resp_data)
 
     return resp

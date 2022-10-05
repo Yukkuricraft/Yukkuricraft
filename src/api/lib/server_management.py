@@ -98,7 +98,8 @@ class ServerManagement:
         cmd = ["make", "create_new_env", env_name, str(proxy_port), env_alias]
 
         logger.warning(cmd)
-        return Runner.run([cmd])
+        rtn = Runner.run([cmd])
+        return rtn, env_name
 
     @ensure_valid_env
     def delete_dev_env(self, env: str):

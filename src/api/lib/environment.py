@@ -13,6 +13,15 @@ from src.common.logger_setup import logger
 
 @total_ordering
 class Env:
+    @classmethod
+    def from_env_string(cls, env_str: str):
+        envs = list_valid_envs()
+        for env in envs:
+            if env.name == env_str:
+                return env
+
+        return None
+
     def __eq__(self, other):
         return self.name == other.name
 
@@ -76,7 +85,7 @@ def ensure_valid_env(func: Callable):
 
 
 def get_env_alias_from_config(env_str: str):
-    config = load_toml_config(env_str_to_toml_path(env_str))
+    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
     env_vars = config["runtime-environment-variables"]
     if not env_vars:
         raise Exception("Invalid Env Config...?")
