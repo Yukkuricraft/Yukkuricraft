@@ -128,5 +128,10 @@ def list_valid_envs() -> List[Env]:
 
         envs.append(env)
 
-    # Doesn't matter in backend world but does in frontend.
-    return sorted(envs)
+    # Sorting doesn't matter in backend world but does in frontend.
+    rtn = sorted(envs, key=lambda d: d.name)
+    if rtn[-1].name == "prod":
+        # We really shouldn't ever have anything other than one prod and n dev_n's with aliases.
+        rtn.insert(0, rtn.pop(-1))
+    logger.info(f"??? SORTED ENVS: {rtn}")
+    return rtn

@@ -101,6 +101,12 @@ class ServerManagement:
         return Runner.run([cmd])
 
     @ensure_valid_env
+    def delete_dev_env(self, env: str):
+        cmd = ["make", "delete_env", env]
+
+        return Runner.run_make_cmd(cmd, env=env)
+
+    @ensure_valid_env
     def up_containers(self, env: str) -> Tuple[str, str, int]:
         cmd = [
             "make",

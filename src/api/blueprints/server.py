@@ -52,6 +52,17 @@ def create_env():
     return resp
 
 
+@server_bp.route("/<env>", methods=["DELETE", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def delete_dev_env(env):
+    resp = make_cors_response()
+    resp.headers.add("Content-Type", "application/json")
+    resp.data = json.dumps(ServerMgmtApi.delete_dev_env(env=env))
+
+    return resp
+
+
 @server_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token

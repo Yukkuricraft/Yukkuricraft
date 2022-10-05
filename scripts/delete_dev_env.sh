@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-run_sudo() {
+run() {
     log ">>> $@"
-    sudo $@
+    $@
 }
 
 log() {
@@ -27,7 +27,7 @@ BASE=/var/lib/yukkuricraft/env/${ENV}
 if [ -d ${BASE} ]; then
     log ""
     log "Deleting ${BASE}..."
-    run_sudo rm -r ${BASE}
+    run rm -r ${BASE}
     log "Done."
 fi
 
@@ -37,7 +37,7 @@ ENV_FILE=env/${ENV}.toml
 if [ -f ${ENV_FILE} ]; then
     log ""
     log "Deleting env file..."
-    run_sudo rm "${ENV_FILE}"
+    run rm "${ENV_FILE}"
     log "Done."
 fi
 
@@ -47,8 +47,8 @@ VELOCITY_FILE=gen/velocity-${ENV}.toml
 if [ -f ${DOCKER_COMPOSE_FILE} ]; then
     log ""
     log "Deleting generated files..."
-    run_sudo rm ${DOCKER_COMPOSE_FILE}
-    run_sudo rm ${VELOCITY_FILE}
+    run rm ${DOCKER_COMPOSE_FILE}
+    run rm ${VELOCITY_FILE}
     log "Done."
 fi
 
@@ -59,7 +59,7 @@ SECRETS_DIR=secrets/configs/${ENV}
 if [ -d ${SECRETS_DIR} ]; then
     log ""
     log "Deleting config secrets..."
-    run_sudo rm -r "${SECRETS_DIR}"
+    run rm -r "${SECRETS_DIR}"
     log "Done."
 fi
 
