@@ -107,8 +107,11 @@ create_new_env:
 	# Do we want to do based on current active env or always use prod as BASE_ENV?
 	BASE_ENV=prod \
 	NEW_ENV=$(word 1,$(ARGS)) \
-	VELOCITY_PORT=$(word 2, $(ARGS)) \
+	VELOCITY_PORT=$(word 2,$(ARGS)) \
+	ENV_ALIAS=$(word 3,$(ARGS)) \
 	./generate-new-dev-env
+	ENV=$(word 1,$(ARGS)) ./generate-docker-compose
+	ENV=$(word 1,$(ARGS)) ./generate-velocity-config
 
 .PHONY: test
 test:

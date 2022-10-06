@@ -3,21 +3,39 @@
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 sys.path.append(Path(__file__).parent.as_posix())
 
 from src.generator.generator import GeneratorType, get_generator
 
-if __name__ == "__main__":
-    base_env = os.getenv("BASE_ENV")
-    new_env = os.getenv("NEW_ENV")
-    velocity_port = os.getenv("VELOCITY_PORT")
+
+def generate_new_env(*kargs, **kwargs):
+    base_env = kwargs["base_env"] if "base_env" in kwargs else os.getenv("BASE_ENV")
+    new_env = kwargs["new_env"] if "new_env" in kwargs else os.getenv("NEW_ENV")
+    velocity_port = kwargs["velocity_port"] if "velocity_port" in kwargs else os.getenv("VELOCITY_PORT")
+    env_alias = kwargs["env_alias"] if "env_alias" in kwargs else os.getenv("ENV_ALIAS")
+    description = kwargs["description"] if "description" in kwargs else ""
+
     if base_env is None:
-        raise Exception("Environment variable 'BASE_ENV' was not set. Must be set to know what env to copy configs from.\n    Use Makefile targets ('make create_new_env') instead of invoking manually.")
+        if 'base_env' in kwargs:
+            raise ValueError("Invalid value 'None' passed in for 'base_env' arg.")
+        else:
+            raise Exception(
+                "Environment variable 'BASE_ENV' was not set. Must be set to know what env to copy configs from.\n    Use Makefile targets ('make create_new_env') instead of invoking manually."
+            )
     elif new_env is None:
-        raise Exception("Environment variable 'NEW_ENV' was not set. Must be set to know what env we're creating.\n    Use Makefile targets ('make create_new_env') instead of invoking manually.")
+        if 'new_env' in kwargs:
+            raise ValueError("Invalid value 'None' passed in for 'new_env' arg.")
+        else:
+            raise Exception(
+                "Environment variable 'NEW_ENV' was not set. Must be set to know what env we're creating.\n    Use Makefile targets ('make create_new_env') instead of invoking manually."
+            )
     else:
 
         gen = get_generator(GeneratorType.NEW_DEV_ENV, base_env)
-        gen.run(new_env, velocity_port)
+        gen.run(new_env, velocity_port, env_alias, description)
 
+
+if __name__ == "__main__":
+    generate_new_env()

@@ -7,6 +7,8 @@
 # We also dynamically generate certain environment variables:
 # - 'ENV': This var is dynamically added based on the TOML config's filename. 'prod.toml` will generate 'ENV=prod', etc.
 
+# If empty or not set, any use of the alias will default to the true env name.
+ENV_ALIAS = "YC"
 MC_FS_ROOT = "/var/lib/yukkuricraft"
 MC_TYPE = "PAPER"
 MC_VERSION = "1.18.2"
@@ -24,3 +26,6 @@ enabled_groups = [
     "survival",
     "creative",
 ]
+
+[general]
+description="It's not actually prod."

@@ -6,9 +6,11 @@ from pprint import pformat
 from typing import List, Optional, Dict, Tuple
 from subprocess import Popen, PIPE
 
-from src.api.lib.environment import ensure_valid_env
+from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
+from src.api.lib.environment import ensure_valid_env, get_next_valid_dev_env_number
 from src.api.lib.runner import Runner
 from src.generator.docker_compose_gen import DockerComposeGen
+from src.generator.generator import GeneratorType, get_generator
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.decorators import serialize_tuple_out_as_dict
@@ -86,6 +88,27 @@ class ServerManagement:
             containers.append(container)
 
         return containers
+
+    def create_new_env(
+        self, proxy_port: int, env_alias: str = "", description: str = ""
+    ):
+        if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
+            raise Exception(
+                f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
+            )
+
+        env_name = f"dev{get_next_valid_dev_env_number()}"
+
+        gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?
+        gen.run(env_name, proxy_port, env_alias, description)
+
+        return {}, env_name
+
+    @ensure_valid_env
+    def delete_dev_env(self, env: str):
+        cmd = ["make", "delete_env", env]
+
+        return Runner.run_make_cmd(cmd, env=env)
 
     @ensure_valid_env
     def up_containers(self, env: str) -> Tuple[str, str, int]:
