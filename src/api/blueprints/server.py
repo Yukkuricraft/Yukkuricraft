@@ -26,7 +26,6 @@ from src.api.lib.environment import Env
 
 server_bp: Blueprint = Blueprint("server", __name__)
 
-
 ServerMgmtApi = ServerManagement()
 
 
@@ -43,12 +42,15 @@ def create_env():
     proxy_port = int(proxy_port)
 
     env_alias = post_data.get("ENV_ALIAS", "")
+    description = post_data.get("DESCRIPTION", "")
 
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
 
     resp_data, new_env_name = ServerMgmtApi.create_new_env(
-        proxy_port=proxy_port, env_alias=env_alias
+        proxy_port=proxy_port,
+        env_alias=env_alias,
+        description=description,
     )
     logger.warning("????????????")
     logger.warning([resp_data, new_env_name])

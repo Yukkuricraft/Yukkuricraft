@@ -43,22 +43,32 @@ class NewDevEnvGen(BaseGenerator):
 
         self.server_root = Path(__file__).parent.parent.parent  # G w o s s
 
-    def run(self, new_env: str, velocity_port: int, env_alias: str):
+    def run(self, new_env: str, velocity_port: int, env_alias: str, description: str):
         logger.info("Generating New Environment Directories")
         logger.info(f"- Repo Root: {self.server_root}")
         logger.info(f"- Base Env: {self.env}")
         logger.info(f"- New Env: {new_env}")
+        logger.info(f"- Description:\n{description}")
         logger.info("\n")
 
-        self.generate_env_config(new_env, velocity_port, env_alias)
+        self.generate_env_config(new_env, velocity_port, env_alias, description)
         self.generate_secrets_config_dirs(new_env)
 
-    def generate_env_config(self, new_env: str, velocity_port: int, env_alias: str):
+    def generate_env_config(
+        self, new_env: str, velocity_port: int, env_alias: str, description: str
+    ):
         """
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
         """
 
         src_config = self.env_config.as_dict()
+
+        if "general" not in src_config:
+            src_config["general"] = {}
+        src_config["general"]["description"] = description
+
+        if "runtime-environment-variables" not in src_config:
+            src_config["runtime-environment-variables"] = {}
         src_config["runtime-environment-variables"]["ENV"] = new_env
         src_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
         src_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port

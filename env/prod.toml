@@ -26,3 +26,6 @@ enabled_groups = [
     "survival",
     "creative",
 ]
+
+[general]
+description="It's not actually prod."
