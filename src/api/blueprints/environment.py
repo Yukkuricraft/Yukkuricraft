@@ -17,7 +17,7 @@ from src.api.lib.auth import (
     make_cors_response,
 )
 from src.api.db import db
-from src.api.lib.environment import list_valid_envs
+from src.api.lib.environment import Env, list_valid_envs, create_new_env, delete_dev_env
 from src.api.lib.runner import Runner
 
 from src.common.logger_setup import logger
@@ -25,21 +25,56 @@ from src.common.logger_setup import logger
 envs_bp: Blueprint = Blueprint("environment", __name__)
 
 
-# TODO: Take args for velocity port
-@envs_bp.route("/create-new-dev-env/<name>", methods=["OPTIONS", "POST"])
+@envs_bp.route("/create-env", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
-def create_new_dev_env(name: str):
-    if request.method == "POST":
-        resp = make_cors_response()
-        resp.status = 200
+@validate_access_token
+def create_env():
+    """List all containers running"""
+    post_data = request.get_json()
 
-        velocity_port = resp.data["velocity_port"]
+    proxy_port = post_data.get("PROXY_PORT", "")
+    if not proxy_port:
+        abort(400)
+    proxy_port = int(proxy_port)
 
-        cmds = ["make", "create_new_env", name]
+    env_alias = post_data.get("ENV_ALIAS", "")
+    description = post_data.get("DESCRIPTION", "")
 
-        resp.data = json.dumps(Runner.run_make_cmd(cmds))
+    resp = make_cors_response()
+    resp.headers.add("Content-Type", "application/json")
 
-        return resp
+    resp_data, new_env_name = create_new_env(
+        proxy_port=proxy_port,
+        env_alias=env_alias,
+        description=description,
+    )
+    logger.warning("????????????")
+    logger.warning([resp_data, new_env_name])
+
+    resp_data["created_env"] = {
+        "env": Env.from_env_string(new_env_name).toJson(),
+        "alias": env_alias,
+        "port": proxy_port,
+    }
+
+    resp.data = json.dumps(resp_data)
+    logger.warning(resp)
+    return resp
+
+
+@envs_bp.route("/<env>", methods=["DELETE", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def delete_env(env):
+    env_dict = Env.from_env_string(env).toJson()
+
+    resp = make_cors_response()
+    resp.headers.add("Content-Type", "application/json")
+    resp_data = delete_dev_env(env=env)
+    resp_data["env"] = env_dict
+
+    resp.data = json.dumps(resp_data)
+    return resp
 
 
 @envs_bp.route("/list-envs-with-configs", methods=["OPTIONS", "GET"])

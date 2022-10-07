@@ -4,9 +4,8 @@ from typing import Dict
 from pathlib import Path
 
 from src.generator.constants import WORLD_GROUP_CONFIG_NAME
-from src.common.yaml_config import YamlConfig
-from src.common.toml_config import TomlConfig
-from src.common.config import load_toml_config, load_yaml_config
+from src.common.config.toml_config import TomlConfig
+from src.common.config import load_toml_config
 
 
 class BaseGenerator:
