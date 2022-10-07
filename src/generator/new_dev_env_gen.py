@@ -1,5 +1,6 @@
 #!/bin/env python3
 
+from collections import OrderedDict
 import copy
 import yaml  # type: ignore
 import tomli_w
@@ -51,6 +52,30 @@ class NewDevEnvGen(BaseGenerator):
         self.generate_env_config(new_env, velocity_port, env_alias, description)
         self.generate_secrets_config_dirs(new_env)
 
+    ENV_CONFIG_SECTION_ORDER = [
+        "general",
+        "world-groups",
+        "runtime-environment-variables",
+    ]
+
+    def copy_env_config(self) -> Dict:
+        src_config = self.env_config.as_dict()
+        copied_config = OrderedDict()
+
+        # Copy configured/sorted sections first
+        for key in self.ENV_CONFIG_SECTION_ORDER:
+            if key in src_config:
+                copied_config[key] = src_config[key]
+            else:
+                copied_config[key] = {}
+
+        # Copy the rest at the end of the config
+        for key, values in src_config.items():
+            if key not in copied_config:
+                copied_config[key] = values
+
+        return copied_config
+
     def generate_env_config(
         self, new_env: str, velocity_port: int, env_alias: str, description: str
     ):
@@ -58,17 +83,17 @@ class NewDevEnvGen(BaseGenerator):
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
         """
 
-        src_config = self.env_config.as_dict()
+        copied_config = self.copy_env_config()
 
-        if "general" not in src_config:
-            src_config["general"] = {}
-        src_config["general"]["description"] = description
+        if "general" not in copied_config:
+            copied_config["general"] = {}
+        copied_config["general"]["description"] = description
 
-        if "runtime-environment-variables" not in src_config:
-            src_config["runtime-environment-variables"] = {}
-        src_config["runtime-environment-variables"]["ENV"] = new_env
-        src_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
-        src_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port
+        if "runtime-environment-variables" not in copied_config:
+            copied_config["runtime-environment-variables"] = {}
+        copied_config["runtime-environment-variables"]["ENV"] = new_env
+        copied_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
+        copied_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port
 
         new_config_path = self.server_root / "env" / f"{new_env}.toml"
         with open(new_config_path, "wb") as f:
@@ -81,7 +106,7 @@ class NewDevEnvGen(BaseGenerator):
                     "#\n\n"
                 ).encode("utf8")
             )
-            tomli_w.dump(src_config, f)
+            tomli_w.dump(copied_config, f, multiline_strings=True)
 
     PLUGINS_CONFIG_DIR = "plugins"
     WORLDS_CONFIG_DIR = "server"

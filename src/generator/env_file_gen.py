@@ -39,6 +39,8 @@ class EnvFileGen(BaseGenerator):
 
     generated_env_config: Dict[str, str]
 
+    env: str
+
     def __init__(self, env: str):
         super().__init__(env)
 
@@ -46,6 +48,7 @@ class EnvFileGen(BaseGenerator):
         self.generated_env_file_path = (
             Path(__file__).parent.parent.parent / "gen"
         )  # G w o s s
+        self.env = env
 
     def get_generated_env_file_path(self):
         return self.generated_env_file_path / self.generated_env_file_name
@@ -58,6 +61,8 @@ class EnvFileGen(BaseGenerator):
         self.generated_env_config = self.env_config[
             "runtime-environment-variables"
         ].as_dict()
+
+        self.generated_env_config["ENV"] = self.env
 
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
