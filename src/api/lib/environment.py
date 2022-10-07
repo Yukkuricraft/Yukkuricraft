@@ -206,5 +206,5 @@ def create_new_env(proxy_port: int, env_alias: str = "", description: str = ""):
 
 def delete_dev_env(env: str):
     cmd = ["make", "delete_env", env]
-
+    logger.info("DELETING ENV: ", env)
     return Runner.run_make_cmd(cmd, env=env)
