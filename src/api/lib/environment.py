@@ -208,3 +208,8 @@ def delete_dev_env(env: str):
     cmd = ["make", "delete_env", env]
     logger.info("DELETING ENV: ", env)
     return Runner.run_make_cmd(cmd, env=env)
+
+def generate_env_configs(env: str):
+    cmd = ["make", "generate"]
+    logger.info("REGENERATING CONFIGS: ", env)
+    return Runner.run_make_cmd(cmd, env=env)

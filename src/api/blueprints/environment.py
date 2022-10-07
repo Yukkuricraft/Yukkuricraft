@@ -17,7 +17,13 @@ from src.api.lib.auth import (
     make_cors_response,
 )
 from src.api.db import db
-from src.api.lib.environment import Env, list_valid_envs, create_new_env, delete_dev_env
+from src.api.lib.environment import (
+    Env,
+    list_valid_envs,
+    create_new_env,
+    delete_dev_env,
+    generate_env_configs,
+)
 from src.api.lib.runner import Runner
 
 from src.common.logger_setup import logger
@@ -76,9 +82,24 @@ def delete_env(env):
     resp.data = json.dumps(resp_data)
     return resp
 
+@envs_bp.route("/<env>/generate-configs", methods=["POST", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def generate_configs(env):
+    env_dict = Env.from_env_string(env).toJson()
+
+    resp = make_cors_response()
+    resp.headers.add("Content-Type", "application/json")
+    resp_data = generate_env_configs(env=env)
+    resp_data["env"] = env_dict
+
+    resp.data = json.dumps(resp_data)
+    return resp
+
 
 @envs_bp.route("/list-envs-with-configs", methods=["OPTIONS", "GET"])
 @intercept_cors_preflight
+@validate_access_token
 def list_envs_with_configs():
     if request.method == "GET":
         resp = make_cors_response()

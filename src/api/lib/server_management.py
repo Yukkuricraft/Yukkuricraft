@@ -28,7 +28,7 @@ class ServerManagement:
 
         docker_compose_gen = DockerComposeGen(env)
         filepath = docker_compose_gen.get_generated_docker_compose_path()
-        docker_compose = load_yaml_config(filepath)
+        docker_compose = load_yaml_config(filepath, no_cache=True)
 
         defined_containers: List = []
         logger.info("+++++++++++ DEFINED CONTAINERS")
