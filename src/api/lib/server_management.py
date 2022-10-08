@@ -28,7 +28,7 @@ class ServerManagement:
 
         docker_compose_gen = DockerComposeGen(env)
         filepath = docker_compose_gen.get_generated_docker_compose_path()
-        docker_compose = load_yaml_config(filepath)
+        docker_compose = load_yaml_config(filepath, no_cache=True)
 
         defined_containers: List = []
         logger.info("+++++++++++ DEFINED CONTAINERS")
@@ -88,27 +88,6 @@ class ServerManagement:
             containers.append(container)
 
         return containers
-
-    def create_new_env(
-        self, proxy_port: int, env_alias: str = "", description: str = ""
-    ):
-        if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
-            raise Exception(
-                f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
-            )
-
-        env_name = f"dev{get_next_valid_dev_env_number()}"
-
-        gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?
-        gen.run(env_name, proxy_port, env_alias, description)
-
-        return {}, env_name
-
-    @ensure_valid_env
-    def delete_dev_env(self, env: str):
-        cmd = ["make", "delete_env", env]
-
-        return Runner.run_make_cmd(cmd, env=env)
 
     @ensure_valid_env
     def up_containers(self, env: str) -> Tuple[str, str, int]:

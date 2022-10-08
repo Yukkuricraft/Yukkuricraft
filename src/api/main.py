@@ -8,6 +8,7 @@ from src.api.db import db
 from src.api.blueprints.server import server_bp
 from src.api.blueprints.auth import auth_bp
 from src.api.blueprints.environment import envs_bp
+from src.api.blueprints.files import files_bp
 
 db_config = load_env_config(DB_ENV_FILE)
 
@@ -19,6 +20,7 @@ app.config[
 app.register_blueprint(server_bp, url_prefix="/server")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(envs_bp, url_prefix="/environments")
+app.register_blueprint(files_bp, url_prefix="/files")
 
 db.init_app(app)
 

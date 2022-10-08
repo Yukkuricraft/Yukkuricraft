@@ -6,9 +6,11 @@ from functools import total_ordering
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from src.api.constants import ENV_FOLDER
+from src.api.constants import ENV_FOLDER, MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
+from src.api.lib.runner import Runner
 from src.common.config import load_toml_config
 from src.common.logger_setup import logger
+from src.generator.generator import GeneratorType, get_generator
 
 
 @total_ordering
@@ -106,15 +108,13 @@ def get_proxy_port_from_config(env_str: str):
 
 
 def get_config_dict_from_config(env_str: str):
-    d = {
+    return {
         "proxy_port": _load_runtime_env_var(env_str, "VELOCITY_PORT"),
         "server_type": _load_runtime_env_var(env_str, "MC_TYPE"),
         "server_build": _load_runtime_env_var(env_str, "PAPER_BUILD"),
         "mc_version": _load_runtime_env_var(env_str, "MC_VERSION"),
         "fs_root": _load_runtime_env_var(env_str, "MC_FS_ROOT"),
     }
-
-    return d
 
 
 def get_env_desc_from_config(env_str: str):
@@ -179,3 +179,37 @@ def list_valid_envs() -> List[Env]:
         rtn.insert(0, rtn.pop(-1))
     logger.info(f"??? SORTED ENVS: {rtn}")
     return rtn
+
+
+def create_new_env(proxy_port: int, env_alias: str = "", description: str = ""):
+    if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
+        raise Exception(
+            f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
+        )
+
+    env_name = f"dev{get_next_valid_dev_env_number()}"
+
+    # Generate env toml config
+    gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?
+    gen.run(env_name, proxy_port, env_alias, description)
+
+    # Generate docker compose file
+    gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_name)
+    gen.run()
+
+    # Generate velocity file
+    gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_name)
+    gen.run()
+
+    return {}, env_name
+
+
+def delete_dev_env(env: str):
+    cmd = ["make", "delete_env", env]
+    logger.info("DELETING ENV: ", env)
+    return Runner.run_make_cmd(cmd, env=env)
+
+def generate_env_configs(env: str):
+    cmd = ["make", "generate"]
+    logger.info("REGENERATING CONFIGS: ", env)
+    return Runner.run_make_cmd(cmd, env=env)

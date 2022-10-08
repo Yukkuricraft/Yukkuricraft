@@ -29,58 +29,6 @@ server_bp: Blueprint = Blueprint("server", __name__)
 ServerMgmtApi = ServerManagement()
 
 
-@server_bp.route("/create-env", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
-@validate_access_token
-def create_env():
-    """List all containers running"""
-    post_data = request.get_json()
-
-    proxy_port = post_data.get("PROXY_PORT", "")
-    if not proxy_port:
-        abort(400)
-    proxy_port = int(proxy_port)
-
-    env_alias = post_data.get("ENV_ALIAS", "")
-    description = post_data.get("DESCRIPTION", "")
-
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
-
-    resp_data, new_env_name = ServerMgmtApi.create_new_env(
-        proxy_port=proxy_port,
-        env_alias=env_alias,
-        description=description,
-    )
-    logger.warning("????????????")
-    logger.warning([resp_data, new_env_name])
-
-    resp_data["created_env"] = {
-        "env": Env.from_env_string(new_env_name).toJson(),
-        "alias": env_alias,
-        "port": proxy_port,
-    }
-
-    resp.data = json.dumps(resp_data)
-    logger.warning(resp)
-    return resp
-
-
-@server_bp.route("/<env>", methods=["DELETE", "OPTIONS"])
-@intercept_cors_preflight
-@validate_access_token
-def delete_dev_env(env):
-    env_dict = Env.from_env_string(env).toJson()
-
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
-    resp_data = ServerMgmtApi.delete_dev_env(env=env)
-    resp_data["env"] = env_dict
-
-    resp.data = json.dumps(resp_data)
-    return resp
-
-
 @server_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token

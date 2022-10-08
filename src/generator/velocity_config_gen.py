@@ -17,7 +17,7 @@ from src.generator.constants import (
 )
 
 from src.generator.base_generator import BaseGenerator
-from src.common.toml_config import TomlConfig
+from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
 
 
