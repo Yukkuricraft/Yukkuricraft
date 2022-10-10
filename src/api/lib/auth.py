@@ -1,4 +1,4 @@
-from flask import request, make_response
+from flask import request, make_response, current_app
 
 from pprint import pformat
 from functools import wraps

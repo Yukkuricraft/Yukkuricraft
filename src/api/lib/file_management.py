@@ -13,11 +13,11 @@ from src.common.logger_setup import logger
 from src.generator.generator import GeneratorType, get_generator
 
 class FileManager:
-    ALLOWED_PATHS = [
+    ALLOWED_PATHS: List[Path] = [
         Path("env/"),
         Path("secrets/configs"),
     ]
-    ALLOWED_FILES = [
+    ALLOWED_FILES: List[Path] = [
     ]
 
     @classmethod
