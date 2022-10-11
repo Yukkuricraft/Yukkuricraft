@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY ./env/ /app/env
 COPY ./src/ /app/src
 
-ENTRYPOINT ["python3", "src/api/main.py"]
+ENTRYPOINT ["gunicorn", "--log-file=-", "-w", "4", "-b", "0.0.0.0:5001", "src.api:create_app()"]
