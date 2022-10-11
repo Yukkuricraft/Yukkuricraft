@@ -1,5 +1,5 @@
-from flask import Blueprint
-from flask_socketio import emit
+from flask import Blueprint # type: ignore
+from flask_socketio import emit # type: ignore
 
 from src.api.lib.sockets import socketio
 from src.api.lib.server_console import listen_to_server_console
@@ -14,14 +14,14 @@ def connect(*args, **kwargs):
     logger.info(kwargs)
 
 @socketio.on('connect to console')
-def connect_to_console(msg):
+def connect_to_console(data):
+    env, world_group_name = data.get("env", None), data.get("world_group_name", None)
     logger.info("SOCKET GOT CONSOLE CONNECT REQUEST")
-    logger.info(msg)
-    logger.info(list(listen_to_server_console(None, 'YC-lobby-prod')))
-    for item in listen_to_server_console(None, "YC-lobby-prod"):
-        logger.info(item)
+    logger.info(data)
+    for item in listen_to_server_console(env, world_group_name):
+        logger.info(f"#> {item}")
         emit('log from console', item)
-    emit('log from console', '0123456789'*25)
+    # emit('log from console', '0123456789'*25)
 
 @socketio.on('poop')
 def get_socket_poop(msg):

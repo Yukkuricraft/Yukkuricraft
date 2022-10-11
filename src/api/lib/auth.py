@@ -1,4 +1,4 @@
-from flask import request, make_response, current_app
+from flask import request, make_response, current_app # type: ignore
 
 from pprint import pformat
 from functools import wraps

@@ -31,9 +31,6 @@ class ServerManagement:
         docker_compose = load_yaml_config(filepath, no_cache=True)
 
         defined_containers: List = []
-        logger.info("+++++++++++ DEFINED CONTAINERS")
-        logger.info(filepath)
-        logger.info(repr(docker_compose.services))
         for svc_name, svc_data in docker_compose.services.items():
             container = {}
             container["image"] = svc_data.get_or_default("image", "NO IMAGE")
@@ -55,8 +52,6 @@ class ServerManagement:
 
             defined_containers.append(container)
 
-        logger.warning("FOUND DEFINED CONTAINERS:")
-        logger.warning(pformat(defined_containers))
         return defined_containers
 
     @ensure_valid_env

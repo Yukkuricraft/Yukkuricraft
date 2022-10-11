@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask # type: ignore
 
 from src.common.config import load_env_config
 from src.api.constants import DB_ENV_FILE

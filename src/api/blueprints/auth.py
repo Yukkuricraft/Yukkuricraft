@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, request # type: ignore
 
 from datetime import datetime
 from pprint import pformat, pprint

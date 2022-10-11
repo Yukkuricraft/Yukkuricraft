@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from flask import Flask, Blueprint, request, abort
+from flask import Flask, Blueprint, request, abort # type: ignore
 
 from pprint import pformat
 from subprocess import check_output, Popen, PIPE

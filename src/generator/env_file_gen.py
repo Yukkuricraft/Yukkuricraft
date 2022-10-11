@@ -2,7 +2,7 @@
 
 import copy
 import yaml  # type: ignore
-import tomli_w
+import tomli_w # type: ignore
 import shutil
 
 yaml.SafeDumper.add_representer(

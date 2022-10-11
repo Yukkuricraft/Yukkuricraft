@@ -3,7 +3,7 @@
 from collections import OrderedDict
 import copy
 import yaml  # type: ignore
-import tomli_w
+import tomli_w # type: ignore
 import shutil
 
 yaml.SafeDumper.add_representer(
@@ -160,6 +160,8 @@ class NewDevEnvGen(BaseGenerator):
             dst_server_properties_path = worlds_path / "server.properties"
 
             if not dst_server_properties_path.exists():
+                if not src_server_properties_path.exists():
+                    pass
                 logger.info(
                     f">> Copying world server.properties from {src_server_properties_path} to {dst_server_properties_path}..."
                 )
