@@ -3,13 +3,22 @@ from flask_socketio import emit # type: ignore
 
 from src.api.lib.sockets import socketio
 from src.api.lib.server_console import listen_to_server_console
+from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
+
+DockerMgmtApi = DockerManagement()
 
 sockets_bp = Blueprint('sockets', __name__)
 
 @socketio.on('connect')
 def connect(*args, **kwargs):
     logger.info("CLIENT CONNECTED")
+    logger.info(args)
+    logger.info(kwargs)
+
+@socketio.on('disconnect')
+def disconnect(*args, **kwargs):
+    logger.info("CLIENT disconnectED")
     logger.info(args)
     logger.info(kwargs)
 
@@ -22,6 +31,17 @@ def connect_to_console(data):
         logger.info(f"#> {item}")
         emit('log from console', item)
     # emit('log from console', '0123456789'*25)
+
+@socketio.on('exec server command')
+def exec_server_command(data):
+    container_name, command = data.get('container_name', None), data.get('command', None)
+
+    if container_name is None or command is None:
+        raise ValueError(f"Got no value for one or more arguments: container_name='{container_name}', command='{command}'")
+
+    logger.info(f"EXECUTING COMMAND ON SERVER CONTAINER: container_name='{container_name}' - cmd='{command}'")
+    DockerMgmtApi.send_command_to_container(container_name, command)
+
 
 @socketio.on('poop')
 def get_socket_poop(msg):

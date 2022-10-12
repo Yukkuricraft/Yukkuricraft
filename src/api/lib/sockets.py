@@ -14,8 +14,12 @@ from src.common.config import load_toml_config
 from src.common.logger_setup import logger
 from src.generator.generator import GeneratorType, get_generator
 
-#socketio = SocketIO(cors_allowed_origins = [CORS_ORIGIN], logger=True, engineio_logger = True)
-socketio = SocketIO(cors_allowed_origins = [CORS_ORIGIN], async_mode="gevent")
+socketio = SocketIO(
+    cors_allowed_origins = [CORS_ORIGIN],
+    async_mode="gevent",
+    logger=True,
+    engineio_logger=True
+)
 
 class ConsoleSocketMessage:
     env: Env
