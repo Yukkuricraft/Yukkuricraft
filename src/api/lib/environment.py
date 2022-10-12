@@ -177,7 +177,6 @@ def list_valid_envs() -> List[Env]:
     if rtn[-1].name == "prod":
         # We really shouldn't ever have anything other than one prod and n dev_n's with aliases.
         rtn.insert(0, rtn.pop(-1))
-    logger.info(f"??? SORTED ENVS: {rtn}")
     return rtn
 
 

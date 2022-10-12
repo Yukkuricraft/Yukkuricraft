@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY ./env/ /app/env
 COPY ./src/ /app/src
 
-ENTRYPOINT ["gunicorn", "--log-file=-", "-w", "4", "-b", "0.0.0.0:5001", "src.api:create_app()"]
+ENTRYPOINT ["gunicorn", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "--log-file=-", "-w", "1", "-b", "0.0.0.0:5001", "src.api:create_app()"]

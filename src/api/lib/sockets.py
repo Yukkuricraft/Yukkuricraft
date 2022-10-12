@@ -15,7 +15,7 @@ from src.common.logger_setup import logger
 from src.generator.generator import GeneratorType, get_generator
 
 #socketio = SocketIO(cors_allowed_origins = [CORS_ORIGIN], logger=True, engineio_logger = True)
-socketio = SocketIO(cors_allowed_origins = [CORS_ORIGIN])
+socketio = SocketIO(cors_allowed_origins = [CORS_ORIGIN], async_mode="gevent")
 
 class ConsoleSocketMessage:
     env: Env
