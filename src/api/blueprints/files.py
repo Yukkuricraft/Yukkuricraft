@@ -26,6 +26,25 @@ from src.common.logger_setup import logger
 
 files_bp: Blueprint = Blueprint("files", __name__)
 
+
+@files_bp.route("/list", methods=["POST", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+def list_files():
+    post_data = request.get_json()
+
+    path = post_data.get("PATH", "")
+    if not path:
+        abort(400)
+    path = Path(path)
+    resp_data = FileManager.ls(path)
+
+    resp = make_cors_response()
+    resp.data = json.dumps(resp_data)
+    logger.info(resp.data)
+    return resp
+
+
 @files_bp.route("/read", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
@@ -36,12 +55,7 @@ def read_file():
     if not file_path:
         abort(400)
     file_path = Path(file_path)
-
-    # TODO: Validators
-
     resp_data = FileManager.read(file_path)
-    logger.info("#### FILES BP - READ_FILE()")
-    logger.info(pformat(resp_data));
 
     resp = make_cors_response()
     resp.data = json.dumps(resp_data)
@@ -57,11 +71,7 @@ def write_file():
     if not file_path:
         abort(400)
     file_path = Path(file_path)
-
     content = post_data.get("CONTENT", "")
-
-    # TODO: Validators
-
     resp_data = FileManager.write(file_path, content)
 
     resp = make_cors_response()
