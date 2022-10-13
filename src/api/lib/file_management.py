@@ -83,6 +83,7 @@ class FileManager:
     @staticmethod
     def convert_stat_to_file_mode_obj(mode: int):
         mode_str = stat.filemode(mode)
+        logger.info(f"mode: '{mode}' -> mode_str: '{mode_str}'")
 
         return {
             'file_type': FileManager.stat_to_file_type(mode),
@@ -104,11 +105,12 @@ class FileManager:
             stat_obj = item.stat()
             rtn.append({
                 'name': str(item),
-                'owner_user': stat_obj.st_uid,
-                'owner_group': stat_obj.st_gid,
+                'uid': stat_obj.st_uid,
+                'gid': stat_obj.st_gid,
                 'file_mode': FileManager.convert_stat_to_file_mode_obj(stat_obj.st_mode),
                 'children': [],
-                'modified': 1665644257,
+                'modified': stat_obj.st_mtime,
+                'created': stat_obj.st_ctime,
             })
 
         return {
