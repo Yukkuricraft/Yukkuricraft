@@ -90,7 +90,7 @@ class FileManager:
             'file_type': FileManager.stat_to_file_type(mode),
             'global': FileManager.stat_to_mode_bits(mode_str[1:4]),
             'group': FileManager.stat_to_mode_bits(mode_str[4:7]),
-            'owner': FileManager.stat_to_mode_bits(mode_str[7:10]),
+            'user': FileManager.stat_to_mode_bits(mode_str[7:10]),
         }
 
     @staticmethod
