@@ -32,6 +32,7 @@ class FileManager:
         """
         Hm, do we want to separate valid write vs valid read paths?
         """
+
         for path in cls.ALLOWED_PATHS:
             try:
                 file.relative_to(path)
@@ -104,7 +105,8 @@ class FileManager:
             # Follow symlink? Do we want to account for symlinks?
             stat_obj = item.stat()
             rtn.append({
-                'name': str(item),
+                'basename': item.name,
+                'dirname': str(item.parent),
                 'uid': stat_obj.st_uid,
                 'gid': stat_obj.st_gid,
                 'file_mode': FileManager.convert_stat_to_file_mode_obj(stat_obj.st_mode),
