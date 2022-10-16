@@ -2,7 +2,11 @@
 
 from collections import OrderedDict
 import copy
-import yaml  # type: ignore
+import os
+import stat
+import yaml # type: ignore
+from src.generator.constants import DEFAULT_CHMOD_MODE
+from src.common.helpers import recursive_chmod  # type: ignore
 import tomli_w # type: ignore
 import shutil
 
@@ -110,6 +114,8 @@ class NewDevEnvGen(BaseGenerator):
             )
             tomli_w.dump(copied_config, f, multiline_strings=True)
 
+        os.chmod(new_config_path, DEFAULT_CHMOD_MODE)
+
     PLUGINS_CONFIG_DIR = "plugins"
     WORLDS_CONFIG_DIR = "server"
     SECRETS_CONFIG_RELPATH: str = "secrets/configs/"
@@ -171,6 +177,7 @@ class NewDevEnvGen(BaseGenerator):
                 if not parent_path.exists():
                     parent_path.mkdir(parents=True)
                 shutil.copy(src_server_properties_path, dst_server_properties_path)
+                os.chmod(dst_server_properties_path, DEFAULT_CHMOD_MODE)
 
         # Copy default secret world configs from {self.env} to {new_env}
         src_default_path = (
@@ -192,6 +199,7 @@ class NewDevEnvGen(BaseGenerator):
                 f"Copying default config files from {src_default_path} to {dst_default_path}..."
             )
             shutil.copytree(src_default_path, dst_default_path)
+            recursive_chmod(dst_default_path, DEFAULT_CHMOD_MODE)
         else:
             logger.info(
                 f"Skipped copying files from {src_default_path} to {dst_default_path} as destination directory already existed."

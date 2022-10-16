@@ -15,6 +15,7 @@ from pprint import pformat
 
 from src.generator.constants import (
     DOCKER_COMPOSE_TEMPLATE_NAME,
+    DEFAULT_CHMOD_MODE,
 )
 
 from src.generator.base_generator import BaseGenerator
@@ -60,8 +61,8 @@ class DockerComposeGen(BaseGenerator):
 
             logger.info(f"CREATING PREREQ DIRECTORY {world_log_path}")
             world_log_path.mkdir(parents=True, exist_ok=True)
-        # Recursively chown the base path for container logs to minecraft:minecraft
-        recursive_chown(container_logs_path, self.MINECRAFT_UID, self.MINECRAFT_GID)
+        # Recursively chown the base path for container logs to group minecraft
+        recursive_chown(container_logs_path, None, self.MINECRAFT_GID)
 
     def get_generated_docker_compose_path(self):
         return self.generated_docker_compose_folder / self.generated_docker_compose_name
@@ -148,6 +149,7 @@ class DockerComposeGen(BaseGenerator):
                     sort_keys=False,
                 )
             )
+        os.chmod(generated_docker_compose_path, DEFAULT_CHMOD_MODE)
         print("Done.")
 
     def run(self):
