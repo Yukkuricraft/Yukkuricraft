@@ -7,7 +7,6 @@ import time
 
 from src.api.lib.environment import Env
 from src.common.logger_setup import logger
-from src.common.tail import follow
 from sh import tail # type: ignore
 
 

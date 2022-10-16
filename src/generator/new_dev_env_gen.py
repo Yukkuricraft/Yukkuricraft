@@ -41,15 +41,16 @@ class NewDevEnvGen(BaseGenerator):
 
         self.server_root = Path(__file__).parent.parent.parent  # G w o s s
 
-    def run(self, new_env: str, velocity_port: int, env_alias: str, description: str):
+    def run(self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str):
         logger.info("Generating New Environment Directories")
         logger.info(f"- Repo Root: {self.server_root}")
         logger.info(f"- Base Env: {self.env}")
         logger.info(f"- New Env: {new_env}")
+        logger.info(f"- Enable Env Protection: {enable_env_protection}")
         logger.info(f"- Description:\n{description}")
         logger.info("\n")
 
-        self.generate_env_config(new_env, velocity_port, env_alias, description)
+        self.generate_env_config(new_env, velocity_port, env_alias, enable_env_protection, description)
         self.generate_secrets_config_dirs(new_env)
 
     ENV_CONFIG_SECTION_ORDER = [
@@ -77,7 +78,7 @@ class NewDevEnvGen(BaseGenerator):
         return copied_config
 
     def generate_env_config(
-        self, new_env: str, velocity_port: int, env_alias: str, description: str
+        self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str
     ):
         """
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
@@ -88,6 +89,7 @@ class NewDevEnvGen(BaseGenerator):
         if "general" not in copied_config:
             copied_config["general"] = {}
         copied_config["general"]["description"] = description
+        copied_config["general"]["enable_env_protection"] = enable_env_protection
 
         if "runtime-environment-variables" not in copied_config:
             copied_config["runtime-environment-variables"] = {}
