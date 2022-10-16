@@ -1,7 +1,9 @@
 # Yukkuricraft
+
 Containerized Yukkuricraft
 
 ## Architecture (WIP)
+
 ![Architecture Draft](docs/img/architecture_diagram.jpeg)
 
 ## Description
@@ -9,6 +11,7 @@ Containerized Yukkuricraft
 This is our attempt at containerizing the Yukkuricraft minecraft server utilizing `itzg/minecraft-server` and `itzg/bungeecord`.
 
 We support two "types" of environments - `prod` and `dev`.
+
 - The `prod` type env is a singular environment - ie only one prod.
 - There can however be multiple `dev` type envs. We standardize our names as `dev#` where # is an int starting at 1.
 - Eg, we can have environments named: `prod`, `dev1`, `dev2`
@@ -18,9 +21,11 @@ We support two "types" of environments - `prod` and `dev`.
 To organize our worlds into individual servers, we do so using "world groups".
 
 A "world group" represents a group of Minecraft worlds that are thematically related.
+
 - Eg, 'survival', 'creative', and 'neo-gensokyo' worlds.
 
 On the filesystem, a world group is represented as:
+
 - `/var/lib/yukkuricraft/<ENV>/<WORLD GROUP>/...`
 - `./secrets/configs/<ENV>/<WORLD GROUP>/`
 - <sub>The base paths can be configured in `env/<ENV>.env`</sub>
@@ -30,6 +35,7 @@ We define our "enabled" world groups in our Environment Configurations..
 ### `docker-compose.yml` Generation
 
 Using our configured enabled world groups, we dynamically generate a `gen/docker-compose-{ENV}.yml` to run only the enabled groups.
+
 - <sub>Sourcecode can be found under `src/generator/docker_compose_gen.py`</sub>
 
 As a consequence, we encourage you to run things using `Makefile` commands. See [Running Containers](#running-containers). We are also in the works of creating [YakumoDash](https://github.com/Yukkuricraft/YakumoDash) to make server/env management easier.
@@ -39,16 +45,19 @@ As a consequence, we encourage you to run things using `Makefile` commands. See 
 We utilize the Velocity (TBD) Minecraft proxy. Our individual servers are run in containers, each of which represents a world group.
 
 The Velocity config is likewise dynamically generated as per enabled world groups.
+
 - <sub>Sourcecode can be found under `src/generator/velocity_config_gen.py`</sub>
 
 We also utilize a custom `scripts/start.sh` script to do some filesystem setup for us prior to starting the server. As such, we also create a short `yukkuricraft/minecraft-server` image as defined in `images/minecraft-server/Dockerfile`.
 
-
 ## Environments and Containers
 
 We configure our individual environments using appropriately named configs found under `env/<ENV>.toml`. The config currently consists of the following sections:
+
 1. The `runtime-environment-variables` section which defines ENV VARS passed into `docker-compose` invocations. We use this TOML definition to dynamically generate a valid `.env` file for `docker-compose`.
-  - Note: We inject some ENV VARS into this generated `.env` file, such as the `ENV` value which takes the ENV specified by the TOML filename.
+
+- Note: We inject some ENV VARS into this generated `.env` file, such as the `ENV` value which takes the ENV specified by the TOML filename.
+
 2. The `world_groups` section which contains our "enabled world groups" config.
 
 Conceptually, the `prod` and `dev` environment **types** have a special relationship with each other.
@@ -59,19 +68,50 @@ Additionally, we configure the minecraft server to treat `/yc-worlds` as the pat
 
 From here, behavior diverges based on environment type:
 
+# API Docs
+
+### This should probably be its own dedicated file/doc
+
+## Server API
+
+- Containers, interacting with servers
+
+## Environment API
+
+- Managing, creating, deleting, editing environments (which contain containers)
+
+## Files API
+
+- API for read/writing files on the server and within containers.
+
+## Socket IO API
+
+- API for two-way communication between frontend/backend.
+- Used primarily for webconsole.
+  - Can be used for other "real time" stuff like more realtime container status updates.
+
+### Current Design
+
+- Environments are separated by namespace
+- Containers/servers are rooms
+
 # EVERYTHING BELOW IS CONSIDERED OUTDATED
 
 #### Prod
+
 We simply symlink `/worlds-bindmount` to `/yc-worlds`. This effectively bindmounts the container host's production world data to the server world data path within the container. Thus, anytime the world data is saved on the production server, the world state should be written back to the host FS.
 
 We recommend running the `make save_world` command for convenience when needing to immediately write world state to disk.
 
 #### Dev
+
 For development environments, we introduce two new "features".
+
 - First, the world data used for dev environments are stored on a docker volume rather than binding to host FS.
 - Second, we introduce the ability to toggle "Copy production world data" on startup with the correct flags set.
 
 To accomplish this, we setup our volumes and mounts slightly differently from production:
+
 - First, we bind mount the production world data to `/worlds-bindmount` same as production.
 - Next, we create a docker volume mounted to `/worlds-volume`. This volume will contain all our world data used by the minecraft server.
 - Finally, we create a symlink so `/yc-worlds` points to `/worlds-volume`.
@@ -79,6 +119,7 @@ To accomplish this, we setup our volumes and mounts slightly differently from pr
 This roundabout setup is necessary as we want to effectively use `/yc-worlds` as both a bind mount for production and a docker volume for development. Since we cannot configure docker-compose to use both, we instead use the `scripts/start.sh` script to setup our symlinks based on environment type.
 
 #### Filesystem Diagram
+
 Below is a diagram illustrating the paragraphs above pertaining to filesystem layouts
 
 ![Filesystem Layout](docs/img/filesystem_layout.png)
@@ -93,7 +134,7 @@ To create new dev environments, simply create a corresponding `env/dev#.env` fil
 
 - All containers are named with the environment added as a suffix. Eg, `YC-prod`, `MySQL-prod`, `YC-dev`, etc
 - All container management should generally be done using `Makefile` targets. **All commands by default will target the `dev1` environment.**
-    - You may prepend an ENV var declaration to any `make` target to change the environment. Eg, `make ENV=prod up` or `make ENV=prod save_world`
+  - You may prepend an ENV var declaration to any `make` target to change the environment. Eg, `make ENV=prod up` or `make ENV=prod save_world`
 
 Below are the commonly used commands:
 |Command|Description|
@@ -108,14 +149,17 @@ Below are the commonly used commands:
 |`make save_world`|Runs `save-all` inside the console of the `YC-${ENV}` container. **Writes the world to disk.**|
 
 There are `_prod` suffixed variants for most targets which simply sets `ENV=prod` for each target.
+
 - Eg, `make up_prod`, `make down_prod`
 
 See the contents of `Makefile` for a full list of valid targets.
 
 ## Outstanding Questions
+
 - Logs?
 - Plugins and configs?
 
 ## See Also
+
 - [Initial Thoughts - First Draft README](docs/initial_thoughts.md)
 - [Thoughts on Plugin Management VCS](docs/plugin_vcs_management_thoughts.md)

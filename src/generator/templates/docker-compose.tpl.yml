@@ -18,26 +18,25 @@ custom_extensions:
     environment:
       YC_ENV: ${ENV_TYPE}
       MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
-      DEBUG: 'true'
-      EULA: 'true'
+      DEBUG: "true"
+      EULA: "true"
       COPY_PROD_WORLD: ${COPY_PROD_WORLD}
+      COPY_PROD_PLUGINS: ${COPY_PROD_PLUGINS}
       VERSION: ${MC_VERSION}
       TYPE: ${MC_TYPE}
       PAPER_BUILD: ${PAPER_BUILD}
       STOP_SERVER_ANNOUNCE_DELAY: 5
       COPY_CONFIG_DEST: /data
-      EXEC_DIRECTLY: 'true'
+      EXEC_DIRECTLY: "true"
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
     volumes:
-      -
-        type: bind
+      - type: bind
         source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/worlds # This should always mount prod
         target: /worlds-bindmount-prod
         read_only: ${BINDMOUNT_RO}
-      -
-        type: bind
+      - type: bind
         source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/plugins # This should always mount prod
         target: /plugins-bindmount-prod
         read_only: ${BINDMOUNT_RO}
@@ -45,6 +44,7 @@ custom_extensions:
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/default:/yc-default-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
+      - ${YC_REPO_ROOT}/container_logs/${ENV}/worlds/<<WORLDGROUP>>/:/data/logs
       - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
 
@@ -65,10 +65,9 @@ custom_extensions:
       - ${YC_REPO_ROOT}/gen/velocity-${ENV}.toml:/config/velocity.toml
       - ${YC_REPO_ROOT}/secrets/velocity/forwarding.secret:/config/forwarding.secret
     ports:
-      - '${VELOCITY_PORT}:25577'
+      - "${VELOCITY_PORT}:25577"
     networks:
       - ycnet
-
 
 # "Static" services
 services:
@@ -84,7 +83,6 @@ services:
       net.yukkuricraft.container_name: mysql
     networks:
       - ycnet
-
 
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:

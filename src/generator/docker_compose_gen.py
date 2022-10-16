@@ -1,5 +1,6 @@
 #!/bin/env python3
 
+import os
 import copy
 import yaml  # type: ignore
 
@@ -14,14 +15,19 @@ from pprint import pformat
 
 from src.generator.constants import (
     DOCKER_COMPOSE_TEMPLATE_NAME,
+    DEFAULT_CHMOD_MODE,
 )
 
 from src.generator.base_generator import BaseGenerator
 from src.common.config import YamlConfig, load_yaml_config
 from src.common.logger_setup import logger
+from src.common.helpers import recursive_chown
 
 
 class DockerComposeGen(BaseGenerator):
+    MINECRAFT_UID = 1000 # Hm...
+    MINECRAFT_GID = 1000
+
     container_name_label = "net.yukkuricraft.container_name"
     container_type_label = "net.yukkuricraft.container_type"
     docker_compose_template: YamlConfig
@@ -45,6 +51,18 @@ class DockerComposeGen(BaseGenerator):
         self.docker_compose_template = load_yaml_config(
             DOCKER_COMPOSE_TEMPLATE_NAME, curr_dir
         )
+
+    def generate_prereqs(self):
+        container_logs_path = Path("container_logs")
+
+        # Generate log paths to mount into containers
+        for world in self.env_config["world-groups"].enabled_groups:
+            world_log_path = container_logs_path / self.env / "worlds" / world
+
+            logger.info(f"CREATING PREREQ DIRECTORY {world_log_path}")
+            world_log_path.mkdir(parents=True, exist_ok=True)
+        # Recursively chown the base path for container logs to group minecraft
+        recursive_chown(container_logs_path, None, self.MINECRAFT_GID)
 
     def get_generated_docker_compose_path(self):
         return self.generated_docker_compose_folder / self.generated_docker_compose_name
@@ -131,8 +149,10 @@ class DockerComposeGen(BaseGenerator):
                     sort_keys=False,
                 )
             )
+        os.chmod(generated_docker_compose_path, DEFAULT_CHMOD_MODE)
         print("Done.")
 
     def run(self):
+        self.generate_prereqs()
         self.generate_docker_compose()
         self.dump_generated_docker_compose()

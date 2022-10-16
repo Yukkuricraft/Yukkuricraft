@@ -1,4 +1,4 @@
-from flask import request, make_response
+from flask import request, make_response, current_app # type: ignore
 
 from pprint import pformat
 from functools import wraps
@@ -205,7 +205,7 @@ def intercept_cors_preflight(func: Callable):
     return decorated_function
 
 
-def make_cors_response():
-    resp = make_response()
+def make_cors_response(status_code=200):
+    resp = make_response('', status_code)
     resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
     return resp

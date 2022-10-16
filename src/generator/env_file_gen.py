@@ -1,8 +1,10 @@
 #!/bin/env python3
 
+import os
 import copy
-import yaml  # type: ignore
-import tomli_w
+import yaml # type: ignore
+
+import tomli_w # type: ignore
 import shutil
 
 yaml.SafeDumper.add_representer(
@@ -13,6 +15,7 @@ yaml.SafeDumper.add_representer(
 from typing import Dict
 from pathlib import Path
 
+from src.generator.constants import DEFAULT_CHMOD_MODE
 from src.generator.base_generator import BaseGenerator
 
 import logging
@@ -78,4 +81,5 @@ class EnvFileGen(BaseGenerator):
             )
             for key, value in self.generated_env_config.items():
                 f.write(f'{key}="{value}"\n')
+        os.chmod(generated_env_file_path, DEFAULT_CHMOD_MODE)
         print("Done.")

@@ -15,16 +15,8 @@ from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.decorators import serialize_tuple_out_as_dict
 
-class ServerManagement:
-    """
-    We should deprecate this class.
 
-    This class acts as a holdover from the "Makefile days" where we ran all management commands through Makefile targets.
-    We should port these methods to docker_management using native python code to execute our Docker related commands.
-
-    New functionality should be written with python and not Makefiles.
-    """
-
+class DockerManagement:
     @ensure_valid_env
     def list_defined_containers(self, env: str):
         """
@@ -92,51 +84,21 @@ class ServerManagement:
 
         return containers
 
-    @ensure_valid_env
-    def up_containers(self, env: str) -> Tuple[str, str, int]:
-        cmd = [
-            "make",
-            "up",
+    def send_command_to_container(self, container_name: str, command: str):
+        # -echo '$(word 1,$(ARGS))' | socat EXEC:"docker attach $(word 2,$(ARGS))",pty STDIN
+
+        cmds = [
+            [
+                "echo",
+                command,
+            ],
+            [
+                "socat",
+                f"EXEC:\"docker attach {container_name}\",pty",
+                "STDIN",
+            ]
         ]
 
-        return Runner.run_make_cmd(cmd, env=env)
-
-    @ensure_valid_env
-    def down_containers(self, env: str) -> Tuple[str, str, int]:
-        cmd = [
-            "make",
-            "down",
-        ]
-
-        return Runner.run_make_cmd(cmd, env=env)
-
-    @ensure_valid_env
-    def up_one_container(self, env: str, container_name: str) -> Tuple[str, str, int]:
-        cmd = [
-            "make",
-            "up_one",
-            container_name,
-        ]
-
-        return Runner.run_make_cmd(cmd, env=env)
-
-    @ensure_valid_env
-    def restart_containers(self, env: str) -> Tuple[str, str, int]:
-        cmd = [
-            "make",
-            "restart",
-        ]
-
-        return Runner.run_make_cmd(cmd, env=env)
-
-    @ensure_valid_env
-    def restart_one_container(
-        self, env: str, container_name: str
-    ) -> Tuple[str, str, int]:
-        cmd = [
-            "make",
-            "restart_one",
-            container_name,
-        ]
-
-        return Runner.run_make_cmd(cmd, env=env)
+        out = Runner.run(cmds)
+        stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
+        logger.info([stdout, stderr, exit_code])

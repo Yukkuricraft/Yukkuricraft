@@ -1,8 +1,9 @@
 #!/bin/env python3
 
+import os
 import copy
 import yaml  # type: ignore
-import tomli_w
+import tomli_w  # type: ignore
 
 yaml.SafeDumper.add_representer(
     type(None),
@@ -14,6 +15,7 @@ from pathlib import Path
 
 from src.generator.constants import (
     VELOCITY_CONFIG_TEMPLATE_NAME,
+    DEFAULT_CHMOD_MODE,
 )
 
 from src.generator.base_generator import BaseGenerator
@@ -86,6 +88,7 @@ class VelocityConfigGen(BaseGenerator):
                 self.generated_velocity_config,
                 f
             )
+        os.chmod(generated_velocity_config_path, DEFAULT_CHMOD_MODE)
         print("Done.")
 
     def run(self):

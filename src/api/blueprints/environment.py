@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, request # type: ignore
 
 from pprint import pformat, pprint
 from typing import Callable, Dict, Tuple
@@ -19,12 +19,14 @@ from src.api.lib.auth import (
 from src.api.db import db
 from src.api.lib.environment import (
     Env,
+    env_str_to_toml_path,
     list_valid_envs,
     create_new_env,
     delete_dev_env,
     generate_env_configs,
 )
 from src.api.lib.runner import Runner
+from src.common.config import load_toml_config
 
 from src.common.logger_setup import logger
 
@@ -45,6 +47,7 @@ def create_env():
 
     env_alias = post_data.get("ENV_ALIAS", "")
     description = post_data.get("DESCRIPTION", "")
+    enable_env_protection = post_data.get("ENABLE_ENV_PROTECTION", False)
 
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
@@ -52,6 +55,7 @@ def create_env():
     resp_data, new_env_name = create_new_env(
         proxy_port=proxy_port,
         env_alias=env_alias,
+        enable_env_protection=enable_env_protection,
         description=description,
     )
     logger.warning("????????????")
@@ -74,12 +78,23 @@ def create_env():
 def delete_env(env):
     env_dict = Env.from_env_string(env).toJson()
 
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
-    resp_data = delete_dev_env(env=env)
-    resp_data["env"] = env_dict
 
-    resp.data = json.dumps(resp_data)
+    env_config = load_toml_config(env_str_to_toml_path(env))
+    if env_config["general"].enable_env_protection:
+        resp = make_cors_response(status_code=403)
+        resp.headers.add("Content-Type", "application/json")
+        resp.data = json.dumps({
+            'error': True,
+            'message': f"You can't delete an environment that has env protection enabled. Disable it before trying to delete {env}",
+        })
+    else:
+        resp = make_cors_response(status_code=200)
+        resp.headers.add("Content-Type", "application/json")
+
+        resp_data = delete_dev_env(env=env)
+        resp_data["env"] = env_dict
+
+        resp.data = json.dumps(resp_data)
     return resp
 
 @envs_bp.route("/<env>/generate-configs", methods=["POST", "OPTIONS"])

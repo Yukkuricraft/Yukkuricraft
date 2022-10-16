@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from flask import Flask, Blueprint, request, abort
+from flask import Flask, Blueprint, request, abort # type: ignore
 
 from pprint import pformat
 from subprocess import check_output, Popen, PIPE
@@ -21,13 +21,14 @@ from src.api.lib.auth import (
     make_cors_response,
 )
 from src.api.lib.server_management import ServerManagement
+from src.api.lib.docker_management import DockerManagement
 from src.api.lib.environment import Env
 
 
 server_bp: Blueprint = Blueprint("server", __name__)
 
 ServerMgmtApi = ServerManagement()
-
+DockerMgmtApi = DockerManagement()
 
 @server_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
@@ -36,7 +37,7 @@ def list_defined_containers(env):
     """List all containers that are defined in the generated server compose for this env"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp.data = json.dumps(ServerMgmtApi.list_defined_containers(env=env))
+    resp.data = json.dumps(DockerMgmtApi.list_defined_containers(env=env))
 
     return resp
 
@@ -48,7 +49,7 @@ def list_active_containers(env):
     """List all containers running"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp.data = json.dumps(ServerMgmtApi.list_active_containers(env=env))
+    resp.data = json.dumps(DockerMgmtApi.list_active_containers(env=env))
 
     return resp
 

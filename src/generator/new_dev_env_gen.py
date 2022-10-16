@@ -2,8 +2,12 @@
 
 from collections import OrderedDict
 import copy
-import yaml  # type: ignore
-import tomli_w
+import os
+import stat
+import yaml # type: ignore
+from src.generator.constants import DEFAULT_CHMOD_MODE
+from src.common.helpers import recursive_chmod  # type: ignore
+import tomli_w # type: ignore
 import shutil
 
 yaml.SafeDumper.add_representer(
@@ -41,15 +45,16 @@ class NewDevEnvGen(BaseGenerator):
 
         self.server_root = Path(__file__).parent.parent.parent  # G w o s s
 
-    def run(self, new_env: str, velocity_port: int, env_alias: str, description: str):
+    def run(self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str):
         logger.info("Generating New Environment Directories")
         logger.info(f"- Repo Root: {self.server_root}")
         logger.info(f"- Base Env: {self.env}")
         logger.info(f"- New Env: {new_env}")
+        logger.info(f"- Enable Env Protection: {enable_env_protection}")
         logger.info(f"- Description:\n{description}")
         logger.info("\n")
 
-        self.generate_env_config(new_env, velocity_port, env_alias, description)
+        self.generate_env_config(new_env, velocity_port, env_alias, enable_env_protection, description)
         self.generate_secrets_config_dirs(new_env)
 
     ENV_CONFIG_SECTION_ORDER = [
@@ -77,7 +82,7 @@ class NewDevEnvGen(BaseGenerator):
         return copied_config
 
     def generate_env_config(
-        self, new_env: str, velocity_port: int, env_alias: str, description: str
+        self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str
     ):
         """
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
@@ -88,6 +93,7 @@ class NewDevEnvGen(BaseGenerator):
         if "general" not in copied_config:
             copied_config["general"] = {}
         copied_config["general"]["description"] = description
+        copied_config["general"]["enable_env_protection"] = enable_env_protection
 
         if "runtime-environment-variables" not in copied_config:
             copied_config["runtime-environment-variables"] = {}
@@ -107,6 +113,8 @@ class NewDevEnvGen(BaseGenerator):
                 ).encode("utf8")
             )
             tomli_w.dump(copied_config, f, multiline_strings=True)
+
+        os.chmod(new_config_path, DEFAULT_CHMOD_MODE)
 
     PLUGINS_CONFIG_DIR = "plugins"
     WORLDS_CONFIG_DIR = "server"
@@ -160,6 +168,8 @@ class NewDevEnvGen(BaseGenerator):
             dst_server_properties_path = worlds_path / "server.properties"
 
             if not dst_server_properties_path.exists():
+                if not src_server_properties_path.exists():
+                    pass
                 logger.info(
                     f">> Copying world server.properties from {src_server_properties_path} to {dst_server_properties_path}..."
                 )
@@ -167,6 +177,7 @@ class NewDevEnvGen(BaseGenerator):
                 if not parent_path.exists():
                     parent_path.mkdir(parents=True)
                 shutil.copy(src_server_properties_path, dst_server_properties_path)
+                os.chmod(dst_server_properties_path, DEFAULT_CHMOD_MODE)
 
         # Copy default secret world configs from {self.env} to {new_env}
         src_default_path = (
@@ -188,6 +199,7 @@ class NewDevEnvGen(BaseGenerator):
                 f"Copying default config files from {src_default_path} to {dst_default_path}..."
             )
             shutil.copytree(src_default_path, dst_default_path)
+            recursive_chmod(dst_default_path, DEFAULT_CHMOD_MODE)
         else:
             logger.info(
                 f"Skipped copying files from {src_default_path} to {dst_default_path} as destination directory already existed."

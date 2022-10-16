@@ -82,6 +82,11 @@ save_devdata_to_disk:
 save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
+.PHONY: run_cmd_on_container
+run_cmd_on_container:
+	# TODO: This should prob be made more robust with python eventually
+	-echo '$(word 1,$(ARGS))' | socat EXEC:"docker attach $(word 2,$(ARGS))",pty STDIN
+
 # It's 'make generate' but it's more 'make generate_runtime_configs_for_envs'
 .PHONY: generate
 generate: generate_velocity_config

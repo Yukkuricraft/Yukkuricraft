@@ -52,6 +52,7 @@ class Env:
         "description",
         "alias",
         "formatted",
+        "enable_env_protection",
     ]
 
     type: str
@@ -63,6 +64,7 @@ class Env:
     description: str
     alias: str
     formatted: str
+    enable_env_protection: bool
 
 
 def env_str_to_toml_path(env_str: str):
@@ -123,6 +125,12 @@ def get_env_desc_from_config(env_str: str):
 
     return general["description"] if "description" in general else ""
 
+def get_env_protection_status(env_str: str):
+    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
+    general = config["general"] if "general" in config else {}
+
+    return general["enable_env_protection"] if "enable_env_protection" in general else False
+
 
 def get_next_valid_dev_env_number():
     """
@@ -165,8 +173,9 @@ def list_valid_envs() -> List[Env]:
         env.name = name
         env.description = get_env_desc_from_config(name)
         env.alias = get_env_alias_from_config(name)
-        env.formatted = f"{env.type.capitalize()}"
+        env.enable_env_protection = get_env_protection_status(name)
 
+        env.formatted = f"{env.type.capitalize()}"
         if env.num is not None:
             env.formatted += f" {env.num}"
 
@@ -177,11 +186,10 @@ def list_valid_envs() -> List[Env]:
     if rtn[-1].name == "prod":
         # We really shouldn't ever have anything other than one prod and n dev_n's with aliases.
         rtn.insert(0, rtn.pop(-1))
-    logger.info(f"??? SORTED ENVS: {rtn}")
     return rtn
 
 
-def create_new_env(proxy_port: int, env_alias: str = "", description: str = ""):
+def create_new_env(proxy_port: int, env_alias: str, enable_env_protection: bool, description: str = ""):
     if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
         raise Exception(
             f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
@@ -191,7 +199,7 @@ def create_new_env(proxy_port: int, env_alias: str = "", description: str = ""):
 
     # Generate env toml config
     gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?
-    gen.run(env_name, proxy_port, env_alias, description)
+    gen.run(env_name, proxy_port, env_alias, enable_env_protection, description)
 
     # Generate docker compose file
     gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_name)
