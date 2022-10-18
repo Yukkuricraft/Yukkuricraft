@@ -86,6 +86,8 @@ class DockerManagement:
 
     def send_command_to_container(self, container_name: str, command: str):
         # -echo '$(word 1,$(ARGS))' | socat EXEC:"docker attach $(word 2,$(ARGS))",pty STDIN
+        # Note, this method of messaging the container inherently has limitations.
+        # https://github.com/Yukkuricraft/YakumoDash/issues/19
 
         cmds = [
             [

@@ -84,7 +84,6 @@ class FileManager:
     @staticmethod
     def convert_stat_to_file_mode_obj(mode: int):
         mode_str = stat.filemode(mode)
-        logger.info(f"mode: '{mode}' -> mode_str: '{mode_str}'")
 
         return {
             'file_type': FileManager.stat_to_file_type(mode),
@@ -111,6 +110,7 @@ class FileManager:
                 'gid': stat_obj.st_gid,
                 'file_mode': FileManager.convert_stat_to_file_mode_obj(stat_obj.st_mode),
                 'children': [],
+                'size_bytes': stat_obj.st_size,
                 'modified': stat_obj.st_mtime,
                 'created': stat_obj.st_ctime,
             })

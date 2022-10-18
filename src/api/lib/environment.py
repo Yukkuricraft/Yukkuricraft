@@ -125,11 +125,16 @@ def get_env_desc_from_config(env_str: str):
 
     return general["description"] if "description" in general else ""
 
+
 def get_env_protection_status(env_str: str):
     config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
-    return general["enable_env_protection"] if "enable_env_protection" in general else False
+    return (
+        general["enable_env_protection"]
+        if "enable_env_protection" in general
+        else False
+    )
 
 
 def get_next_valid_dev_env_number():
@@ -189,7 +194,9 @@ def list_valid_envs() -> List[Env]:
     return rtn
 
 
-def create_new_env(proxy_port: int, env_alias: str, enable_env_protection: bool, description: str = ""):
+def create_new_env(
+    proxy_port: int, env_alias: str, enable_env_protection: bool, description: str = ""
+):
     if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
         raise Exception(
             f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
@@ -217,7 +224,8 @@ def delete_dev_env(env: str):
     logger.info("DELETING ENV: ", env)
     return Runner.run_make_cmd(cmd, env=env)
 
+
 def generate_env_configs(env: str):
     cmd = ["make", "generate"]
-    logger.info("REGENERATING CONFIGS: ", env)
+    logger.info(f"REGENERATING CONFIGS: {env}")
     return Runner.run_make_cmd(cmd, env=env)

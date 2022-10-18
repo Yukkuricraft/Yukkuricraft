@@ -189,15 +189,15 @@ def validate_access_token(func: Callable):
 def intercept_cors_preflight(func: Callable):
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        logger.info(request.method)
+        # logger.info(request.method)
         if request.method == "OPTIONS":
             resp = make_response()
             resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
             resp.headers.add("Access-Control-Allow-Headers", "*")
             resp.headers.add("Access-Control-Allow-Methods", "*")
 
-            logger.info(f"RETURNING INTERCEPTED CORS PREFLIGHT:")
-            logger.info(pformat(resp))
+            # logger.info(f"RETURNING INTERCEPTED CORS PREFLIGHT:")
+            # logger.info(pformat(resp))
             return resp
 
         return func(*args, **kwargs)
