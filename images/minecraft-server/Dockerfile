@@ -23,7 +23,6 @@ RUN ln -s /worlds-bindmount-prod /yc-worlds
 RUN sed -i 's/\r$//' /scripts/start.sh  && \
     chmod +x /scripts/start.sh
 
-
 USER minecraft
 RUN mkfifo /tmp/minecraft-console-in
 ENTRYPOINT "/scripts/start.sh"
