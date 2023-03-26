@@ -157,7 +157,7 @@ build_api:
 up_web: ENV=prod
 up_web:
 	docker compose -f $(WEB_COMPOSE_FILE) \
-		--env-file=gen/$(ENV).env \
+		--env-file gen/$(ENV).env \
 		up \
 		-d
 
