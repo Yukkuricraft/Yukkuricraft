@@ -13,8 +13,6 @@ services:
       VIRTUAL_PORT: 5001
       LETSENCRYPT_HOST: "api.yukkuricraft.net"
     volumes:
-      - /usr/bin/docker:/usr/bin/docker
-      - /usr/bin/docker-compose:/usr/bin/docker-compose
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - yc-web-dev
@@ -36,8 +34,8 @@ services:
     container_name: nginx-proxy
     image: nginxproxy/nginx-proxy
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "444:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
