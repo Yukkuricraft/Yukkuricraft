@@ -104,3 +104,102 @@ class DockerManagement:
         out = Runner.run(cmds)
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
         logger.info([stdout, stderr, exit_code])
+
+    """
+    ARGS=$(filter-out $@,$(MAKECMDGOALS))
+    PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
+    COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
+
+    .PHONY: up
+    up: generate
+    up: __pre_ensure
+    up:
+        @if [[ -z "$(ENV)" ]]; then \
+            echo 'Must pass ENV: make ENV=(prod|dev1) <target>. Aborting.'; \
+            echo ''; \
+            exit 1; \
+        fi
+        @if ! [[ "$(ENV_TYPE)" =~ ^(dev|prod)$$ ]]; then \
+            echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_TYPE). Aborting."; \
+            echo ''; \
+            exit 1; \
+        fi
+        @if ! [[ -f "gen/$(ENV).env" ]]; then \
+            echo "Got '$(ENV)' for ENV but could not find 'gen/$(ENV).env'! Was ./generate-env-file run first? Aborting."; \
+            echo ''; \
+            exit 1; \
+        fi
+        $(PRE) ./generate-velocity-config
+        $(PRE) ./generate-env-file
+        $(PRE) ./generate-docker-compose
+        $(PRE) docker-compose -f "gen/docker-compose-$(ENV).yml" \
+            --project-name $(ENV) \
+            --project-directory $(shell pwd) \
+            --env-file gen/$(ENV).env \
+            up -d
+
+    """
+
+    @ensure_valid_env
+    def up_containers(self, env: str) -> Tuple[str, str, int]:
+        """
+        REFACTOR TO NOT USE MAKE
+        """
+        cmd = [
+            "make",
+            "up",
+        ]
+
+        return Runner.run([cmd], env_vars={ 'ENV': env, 'COPY_PROD_WORLD': '1', 'COPY_PROD_PLUGINS': '1' })
+
+    @ensure_valid_env
+    def down_containers(self, env: str) -> Tuple[str, str, int]:
+        """
+        REFACTOR TO NOT USE MAKE
+        """
+        cmd = [
+            "make",
+            "down",
+        ]
+
+        return Runner.run_make_cmd(cmd, env=env)
+
+    @ensure_valid_env
+    def up_one_container(self, env: str, container_name: str) -> Tuple[str, str, int]:
+        """
+        REFACTOR TO NOT USE MAKE
+        """
+        cmd = [
+            "make",
+            "up_one",
+            container_name,
+        ]
+
+        return Runner.run_make_cmd(cmd, env=env)
+
+    @ensure_valid_env
+    def restart_containers(self, env: str) -> Tuple[str, str, int]:
+        """
+        REFACTOR TO NOT USE MAKE
+        """
+        cmd = [
+            "make",
+            "restart",
+        ]
+
+        return Runner.run_make_cmd(cmd, env=env)
+
+    @ensure_valid_env
+    def restart_one_container(
+        self, env: str, container_name: str
+    ) -> Tuple[str, str, int]:
+        """
+        REFACTOR TO NOT USE MAKE
+        """
+        cmd = [
+            "make",
+            "restart_one",
+            container_name,
+        ]
+
+        return Runner.run_make_cmd(cmd, env=env)

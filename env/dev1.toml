@@ -4,6 +4,15 @@
 # SEE prod.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS
 #
 
+[general]
+description = """
+Stuff
+Aaaaa
+Gggooooaaaaffdaa
+"""
+
+enable_env_protection = false
+
 [runtime-environment-variables]
 ENV_ALIAS = "FOOBAR"
 MC_FS_ROOT = "/var/lib/yukkuricraft"
@@ -13,7 +22,6 @@ PAPER_BUILD = 318
 BINDMOUNT_RO = false
 VELOCITY_PORT = "25602"
 YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
-ENV = "dev1"
 
 [world-groups]
 enabled_groups = [
