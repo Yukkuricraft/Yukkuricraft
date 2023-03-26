@@ -44,7 +44,7 @@ COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
 WEB_COMPOSE_FILE="docker-compose.web.yml"
 
 YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
-YC_ROOT?=/var/lib/yukkuricraft/env
+YC_FS_ROOT?=/var/lib/yukkuricraft
 
 ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
@@ -53,7 +53,8 @@ COMPOSE_ARGS=--project-name $(ENV) \
 			 --env-file gen/$(ENV).env
 
 COPY_PROD_WORLD?=
-PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD)
+COPY_PROD_PLUGINS?=
+PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
 
 .PHONY: save_devdata_to_disk
 save_devdata_to_disk: __pre_ensure
@@ -62,17 +63,17 @@ save_devdata_to_disk:
 		echo "You ran the 'save_devdata_to_disk' target with an ENV_TYPE of prod! Aborting."; \
 		exit 1; \
 	fi
-	@if [[ ! -d "${YC_ROOT}/${ENV}/worlds" ]]; then \
-		echo "Please create the '${YC_ROOT}/${ENV}/worlds' directory owned by minecraft:minecraft to continue. Aborting"; \
+	@if [[ ! -d "${YC_FS_ROOT}/env/${ENV}/worlds" ]]; then \
+		echo "Please create the '${YC_FS_ROOT}/${ENV}/worlds' directory owned by minecraft:minecraft to continue. Aborting"; \
 		exit 1; \
-	elif [[ ! -d "${YC_ROOT}/${ENV}/plugins" ]]; then \
-		echo "Please create the '${YC_ROOT}/${ENV}/plugins' directory owned by minecraft:minecraft to continue. Aborting"; \
+	elif [[ ! -d "${YC_FS_ROOT}/env/${ENV}/plugins" ]]; then \
+		echo "Please create the '${YC_FS_ROOT}/${ENV}/plugins' directory owned by minecraft:minecraft to continue. Aborting"; \
 		exit 1; \
 	fi
 	@docker run \
 		--rm \
-		--mount type=bind,source=${YC_ROOT}/${ENV}/worlds,target=/worlds-data \
-		--mount type=bind,source=${YC_ROOT}/${ENV}/plugins,target=/plugins-data \
+		--mount type=bind,source=${YC_FS_ROOT}/env/${ENV}/worlds,target=/worlds-data \
+		--mount type=bind,source=${YC_FS_ROOT}/env/${ENV}/plugins,target=/plugins-data \
 		--volume $(PWD)/scripts/rsync.sh:/rsync.sh \
 		--volumes-from YC-${ENV} \
 		eeacms/rsync \
@@ -118,6 +119,11 @@ create_new_env:
 	ENV=$(word 1,$(ARGS)) ./generate-docker-compose
 	ENV=$(word 1,$(ARGS)) ./generate-velocity-config
 
+.PHONY: chownmod_container_logs
+chownmod_container_logs:
+	sudo chown -R minecraft:minecraft container_logs
+	sudo chmod -R 775 container_logs
+
 .PHONY: test
 test:
 	echo $(word 2,$(ARGS))
@@ -135,6 +141,7 @@ build: build_api
 .PHONY: build_minecraft_server
 build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
+		--no-cache \
 		--tag='yukkuricraft/minecraft-server' \
 		.
 
@@ -148,10 +155,9 @@ build_api:
 
 .PHONY: up_web
 up_web: ENV=prod
-up_web: generate_env_file
 up_web:
 	docker-compose -f $(WEB_COMPOSE_FILE) \
-		--env=gen/$(ENV).env \
+		--env-file gen/$(ENV).env \
 		up \
 		-d
 

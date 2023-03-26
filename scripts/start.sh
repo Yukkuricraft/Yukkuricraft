@@ -1,4 +1,5 @@
 #!/bin/bash
+
 function debuglog {
     if [[ ! -z "$DEBUG" && ( "$DEBUG" == "1" || "$DEBUG" == "true" ) ]]; then echo $@; fi
 }
@@ -10,9 +11,14 @@ function run {
 
 declare -A symlinkmap
 function create_symlinks {
+    debuglog "@@@@@@ ATTEMPTING TO CREATE SYMLINKS"
     local -n data=$1
     for src in "${!data[@]}"; do
+        debuglog $src
+        debuglog "${data[$src]}"
         if [[ ! -s "${data[$src]}" ]]; then
+            debuglog "Listing src"
+            ls -al ${src}
             run ln -s ${src} ${data[$src]}
         fi
     done
@@ -26,8 +32,18 @@ function copy_configs {
     run cp /yc-server-configs/* /data/
 }
 
+# START FLOW
+debuglog "RUNNING AS: $(whoami)"
 debuglog "YC_ENV: $YC_ENV"
 debuglog "MOTD: $MOTD"
+debuglog "COPY_PROD_WORLD: $COPY_PROD_WORLD"
+debuglog "COPY_PROD_PLUGINS: $COPY_PROD_PLUGINS"
+
+echo "################################################"
+echo "STARTING CUSTOM YC/MINECRAFT-SERVER START SCRIPT"
+
+run mkdir /data/logs
+run touch /data/logs/latest.log
 
 if [[ "$YC_ENV" == "prod" ]]; then
     symlinkmap["/worlds-bindmount-prod"]="/yc-worlds"
@@ -48,7 +64,9 @@ fi
 
 if [[ "$YC_ENV" == "dev" ]]; then
     ## Symlinks
-    symlinkmap["/worlds-volume-dev"]="/yc-worlds"
+    #symlinkmap["/worlds-volume-dev"]="/yc-worlds"
+
+    run rm /data/plugins # Please refactor this...
     symlinkmap["/plugins-volume-dev"]="/data/plugins"
 
     debuglog "WE DEV";
@@ -62,12 +80,10 @@ if [[ "$YC_ENV" == "dev" ]]; then
     done
 
     ## Copying prod data
-    debuglog "COPY_PROD_WORLD: $COPY_PROD_WORLD"
     if [[ ! -z "$COPY_PROD_WORLD" ]]; then
-        run rsync -arP /worlds-bindmount-prod/ /worlds-volume-dev
+        run rsync -arP /worlds-bindmount-prod/ /yc-worlds
     fi
 
-    debuglog "COPY_PROD_PLUGINS: $COPY_PROD_PLUGINS"
     if [[ ! -z "$COPY_PROD_PLUGINS" ]]; then
         ignored_plugins=(
             --exclude='dynmap'
@@ -94,5 +110,9 @@ function warn_ctrl_c {
 }
 
 trap '' TERM INT # Don't let ctrl+c stop the server. Use ctrl+p, then ctrl+q. Standard docker "detach" sequence.
+
+echo "###########################################################"
+echo "STARTING ORIGINAL ITZG/DOCKER-MINECRAFT-SERVER START SCRIPT"
+echo $(whoami)
 
 /start

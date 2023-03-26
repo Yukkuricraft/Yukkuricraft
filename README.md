@@ -70,6 +70,9 @@ From here, behavior diverges based on environment type:
 
 # API Docs
 
+- Flask for API
+- Flask-SocketIO for websockets/socketio
+
 ### This should probably be its own dedicated file/doc
 
 ## Server API
