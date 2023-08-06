@@ -2,9 +2,9 @@
 
 import os
 import copy
-import yaml # type: ignore
+import yaml  # type: ignore
 
-import tomli_w # type: ignore
+import tomli_w  # type: ignore
 import shutil
 
 yaml.SafeDumper.add_representer(
@@ -71,6 +71,7 @@ class EnvFileGen(BaseGenerator):
         print(f"Generating new {self.generated_env_file_path}...")
 
         generated_env_file_path = self.get_generated_env_file_path()
+        generated_env_file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(generated_env_file_path, "w") as f:
             f.write(
                 "#\n"
