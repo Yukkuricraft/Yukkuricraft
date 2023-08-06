@@ -156,24 +156,24 @@ build_api:
 .PHONY: up_web
 up_web: ENV=prod
 up_web:
-	docker-compose -f $(WEB_COMPOSE_FILE) \
-		--env-file gen/$(ENV).env \
+	docker compose -f $(WEB_COMPOSE_FILE) \
+		--env-file=gen/$(ENV).env \
 		up \
 		-d
 
 .PHONY: down_web
 down_web:
-	docker-compose -f docker-compose.web.yml down
+	docker compose -f docker-compose.web.yml down
 
 .PHONY: restart_web
 restart_web:
-	docker-compose -f docker-compose.web.yml restart
+	docker compose -f docker-compose.web.yml restart
 
 .PHONY: up
 up: generate
 up: __pre_ensure
 up:
-	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		up -d
 
@@ -181,7 +181,7 @@ up:
 up_one: generate
 up_one: __pre_ensure
 up_one:
-	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		up \
 		-d \
@@ -191,7 +191,7 @@ up_one:
 down: __pre_ensure
 down: save_world
 down:
-	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		down
 
@@ -199,7 +199,7 @@ down:
 restart: generate
 restart: __pre_ensure
 restart:
-	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		restart
 
@@ -207,7 +207,7 @@ restart:
 restart_one: generate
 restart_one: __pre_ensure
 restart_one:
-	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		restart \
 		$(ARGS)
@@ -230,7 +230,7 @@ purgestart: down purge up
 .PHONY: logs
 logs: __pre_ensure
 logs:
-	$(PRE) docker-compose -f $(COMPOSE_FILE) \
+	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
 		logs --follow
 
