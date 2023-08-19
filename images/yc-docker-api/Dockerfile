@@ -24,7 +24,9 @@ RUN ls /app/*
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY --chown=yc-api:yc-api env/ /app/env
+COPY --chown=yc-api:yc-api gen/ /app/gen
 COPY --chown=yc-api:yc-api src/ /app/src
+COPY --chown=yc-api:yc-api secrets/ /app/secrets
 
 WORKDIR /app
 USER yc-api
