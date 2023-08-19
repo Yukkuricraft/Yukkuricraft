@@ -16,7 +16,6 @@ services:
       - /usr/bin/docker:/usr/bin/docker
       - /usr/bin/docker-compose:/usr/bin/docker-compose
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/app
     networks:
       - yc-web-dev
 
