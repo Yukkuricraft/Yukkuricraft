@@ -40,7 +40,7 @@ jobs:
 
       - name: Deploy
         if: steps.extract_branch.outputs.branch == 'main'
-        uses: bash
+        shell: bash
         run: ./deploy_repo.sh
         env:
           ORG_NAME_TO_DEPLOY: ${GITHUB_REPOSITORY#*/}
