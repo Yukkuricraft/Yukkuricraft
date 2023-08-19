@@ -1,0 +1,50 @@
+# Note: This is a first iteration deployment pipeline. It's not particularly secure or robust.
+# - Future iterations should consider a solution that doesn't require SSH'ing into the prod host, even if the
+#   ssh'd user doesn't have sudo perms.
+# - This might (probably) requires writing a deployer service that runs on the prod host, but that has its own
+#   concerns such as bootstrapping, service failure recovery, complexity, etc.
+name: Deploy YC Backend to prod host
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**'
+      - '!README.md'
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Install Prereqs
+        shell: bash
+        run: apt install -y openssh-client
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.DEPLOYMENT_TARGET_SSH_KEY }}
+          known_hosts: ${{ secrets.DEPLOYMENT_TARGET_KNOWN_HOSTS }}
+
+      - name: Checkout
+        uses: actions/checkout@master
+        with:
+          repo: 'Yukkuricraft/yc-deployer'
+
+      - name: Deploy
+        if: steps.extract_branch.outputs.branch == 'main'
+        uses: bash
+        run: ./deploy_repo.sh
+        env:
+          ORG_NAME_TO_DEPLOY: ${GITHUB_REPOSITORY#*/}
+          REPO_NAME_TO_DEPLOY: $GITHUB_REPOSITORY_OWNER
+          TARGET_HOST: ${{ secrets.DEPLOYMENT_TARGET_HOST }}
+          TARGET_PORT: ${{ secrets.DEPLOYMENT_TARGET_PORT }}
+          TARGET_USER: ${{ secrets.DEPLOYMENT_TARGET_USER }}
