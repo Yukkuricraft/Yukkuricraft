@@ -23,10 +23,6 @@ jobs:
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
 
-      - name: Install Prereqs
-        shell: bash
-        run: apt install -y openssh-client
-
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
