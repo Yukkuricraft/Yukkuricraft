@@ -44,8 +44,8 @@ jobs:
         shell: bash
         run: ./deploy_repo.sh
         env:
-          ORG_NAME_TO_DEPLOY: ${{ steps.set_repo_name.outputs.REPO_NAME }}
-          REPO_NAME_TO_DEPLOY: ${{ github.repository_owner }}
+          REPO_NAME_TO_DEPLOY: ${{ steps.set_repo_name.outputs.REPO_NAME }}
+          ORG_NAME_TO_DEPLOY: ${{ github.repository_owner }}
           TARGET_HOST: ${{ secrets.DEPLOYMENT_TARGET_HOST }}
           TARGET_PORT: ${{ secrets.DEPLOYMENT_TARGET_PORT }}
           TARGET_USER: ${{ secrets.DEPLOYMENT_TARGET_USER }}
