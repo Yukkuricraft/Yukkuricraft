@@ -9,9 +9,9 @@ services:
     depends_on:
       - yc-api-mysql
     environment:
-      VIRTUAL_HOST: "api2.yukkuricraft.net"
+      VIRTUAL_HOST: "api.yukkuricraft.net"
       VIRTUAL_PORT: 5001
-      LETSENCRYPT_HOST: "api2.yukkuricraft.net"
+      LETSENCRYPT_HOST: "api.yukkuricraft.net"
     volumes:
       - /usr/bin/docker:/usr/bin/docker
       - /usr/bin/docker-compose:/usr/bin/docker-compose
