@@ -33,7 +33,7 @@ enabled_groups = [
 ENV_ALIAS = "YC"
 MC_FS_ROOT = "/var/lib/yukkuricraft"
 MC_TYPE = "PAPER"
-MC_VERSION = "1.19.1"
+MC_VERSION = "1.20.1"
 PAPER_BUILD = 318
 BINDMOUNT_RO = false
 
