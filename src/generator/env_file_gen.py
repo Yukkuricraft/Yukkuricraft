@@ -62,8 +62,8 @@ class EnvFileGen(BaseGenerator):
         self.generate_env_file()
         self.dump_generated_env_file()
 
-    prod_api_host = "https://api.yukkuricraft.net"
-    dev_api_host = "https://dev.api.yukkuricraft.net"
+    prod_api_host = "api.yukkuricraft.net"
+    dev_api_host = "dev.api.yukkuricraft.net"
     def generate_env_file(self):
         self.generated_env_config = self.env_config[
             "runtime-environment-variables"
@@ -83,6 +83,8 @@ class EnvFileGen(BaseGenerator):
                 "# THIS FILE WAS AUTOMATICALLY GENERATED\n"
                 "# DO NOT MODIFY MANUALLY\n"
                 "# CHANGES WILL BE OVERWRITTEN ON RESTART\n"
+                "#"
+                f"# MODIFY `env/{self.env}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
             )
             for key, value in self.generated_env_config.items():
