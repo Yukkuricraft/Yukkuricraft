@@ -52,7 +52,8 @@ def create_env():
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
 
-    resp_data, new_env_name = create_new_env(
+    resp_data = {}
+    new_env_name = create_new_env(
         proxy_port=proxy_port,
         env_alias=env_alias,
         enable_env_protection=enable_env_protection,

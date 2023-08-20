@@ -216,7 +216,7 @@ def create_new_env(
     gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_name)
     gen.run()
 
-    return {}, env_name
+    return env_name
 
 
 def delete_dev_env(env: str):
@@ -226,6 +226,20 @@ def delete_dev_env(env: str):
 
 
 def generate_env_configs(env: str):
-    cmd = ["make", "generate"]
-    logger.info(f"REGENERATING CONFIGS: {env}")
-    return Runner.run_make_cmd(cmd, env=env)
+    generate_all(env)
+
+    return {}
+
+def generate_all(env_name: str):
+    # Generate env file
+    gen = get_generator(GeneratorType.ENV_FILE, env_name)
+    gen.run()
+
+    # Generate docker compose file
+    gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_name)
+    gen.run()
+
+    # Generate velocity file
+    gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_name)
+    gen.run()
+
