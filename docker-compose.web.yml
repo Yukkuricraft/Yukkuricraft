@@ -9,11 +9,12 @@ services:
     depends_on:
       - yc-api-mysql
     environment:
-      VIRTUAL_HOST: "api.yukkuricraft.net"
+      VIRTUAL_HOST: ${API_HOST}
       VIRTUAL_PORT: 5001
-      LETSENCRYPT_HOST: "api.yukkuricraft.net"
+      LETSENCRYPT_HOST: ${API_HOST}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/app
     networks:
       - yc-web-dev
 
@@ -48,7 +49,7 @@ services:
     container_name: letsencrypt-nginx-proxy
     image: nginxproxy/acme-companion
     environment:
-      - DEFAULT_EMAIL=remi@yukkuricraft.net
+      - DEFAULT_EMAIL=remilia@scarl.et
       - ACME_CA_URI=https://acme-v02.api.letsencrypt.org/directory
       - NGINX_PROXY_CONTAINER=nginx-proxy
     volumes:

@@ -1,10 +1,14 @@
 from pathlib import Path
+import socket
 
 G_CLIENT_ID = (
     "1084736521175-2b5rrrpcs422qdc5458dhisdsj8auo0p.apps.googleusercontent.com"
 )
 
-CORS_ORIGIN = "https://yakumo.yukkuricraft.net"
+PROD_HOSTNAME = "neo-yukkuricraft"
+IS_PROD_HOST = (PROD_HOSTNAME in socket.gethostname())
+
+CORS_ORIGIN = "https://yakumo.yukkuricraft.net" if IS_PROD_HOST else "https://dev.yakumo.yukkuricraft.net"
 
 DB_ENV_FILE = "secrets/db.env"
 

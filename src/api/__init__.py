@@ -1,17 +1,17 @@
 from flask import Flask # type: ignore
 
-from src.common.config import load_env_config
-from src.api.constants import DB_ENV_FILE
-from src.api.db import db
-from src.api.lib.sockets import socketio
-
-from src.api.blueprints.server import server_bp
-from src.api.blueprints.auth import auth_bp
-from src.api.blueprints.environment import envs_bp
-from src.api.blueprints.files import files_bp
-from src.api.blueprints.sockets import sockets_bp
-
 def create_app():
+  from src.common.config import load_env_config
+  from src.api.constants import DB_ENV_FILE
+  from src.api.db import db
+  from src.api.lib.sockets import socketio
+
+  from src.api.blueprints.server import server_bp
+  from src.api.blueprints.auth import auth_bp
+  from src.api.blueprints.environment import envs_bp
+  from src.api.blueprints.files import files_bp
+  from src.api.blueprints.sockets import sockets_bp
+
   db_config = load_env_config(DB_ENV_FILE)
   app = Flask("YC API")
   app.config[

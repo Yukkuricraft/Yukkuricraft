@@ -36,10 +36,14 @@ custom_extensions:
         source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/worlds # This should always mount prod
         target: /worlds-bindmount-prod
         read_only: ${BINDMOUNT_RO}
+        bind:
+          create_host_path: true
       - type: bind
         source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/plugins # This should always mount prod
         target: /plugins-bindmount-prod
         read_only: ${BINDMOUNT_RO}
+        bind:
+          create_host_path: true
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/default:/yc-default-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
@@ -72,7 +76,7 @@ custom_extensions:
 # "Static" services
 services:
   mysql:
-    image: mysql/mysql-server:5.7
+    image: mysql:5.7
     env_file:
       - ./secrets/db.env
     volumes:
