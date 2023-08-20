@@ -15,6 +15,8 @@ yaml.SafeDumper.add_representer(
 from typing import Dict
 from pathlib import Path
 
+from src.api.constants import IS_PROD_HOST
+
 from src.generator.constants import DEFAULT_CHMOD_MODE
 from src.generator.base_generator import BaseGenerator
 
@@ -60,12 +62,15 @@ class EnvFileGen(BaseGenerator):
         self.generate_env_file()
         self.dump_generated_env_file()
 
+    prod_api_host = "https://api.yukkuricraft.net"
+    dev_api_host = "https://dev.api.yukkuricraft.net"
     def generate_env_file(self):
         self.generated_env_config = self.env_config[
             "runtime-environment-variables"
         ].as_dict()
 
         self.generated_env_config["ENV"] = self.env
+        self.generated_env_config["API_HOST"] = self.prod_api_host if IS_PROD_HOST else self.dev_api_host
 
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
