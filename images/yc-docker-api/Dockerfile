@@ -27,6 +27,8 @@ COPY --chown=yc-api:yc-api env/ /app/env
 COPY --chown=yc-api:yc-api gen/ /app/gen
 COPY --chown=yc-api:yc-api src/ /app/src
 COPY --chown=yc-api:yc-api secrets/ /app/secrets
+COPY --chown=yc-api:yc-api scripts/ /app/scripts
+COPY --chown=yc-api:yc-api Makefile /app
 
 WORKDIR /app
 USER yc-api
