@@ -5,8 +5,20 @@ ENV PYTHONPATH="/app:${PYTHONPATH}"
 
 # Root stuff
 RUN apt-get update && apt-get install --no-install-recommends --assume-yes \
-    socat
+    socat ca-certificates curl gnupg
 
+# Install docker binaries
+RUN install -m 0755 -d /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+RUN chmod a+r /etc/apt/keyrings/docker.gpg
+
+RUN echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+RUN apt-get update
+RUN apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin --assume-yes
 
 # Non-root stuff
 ARG UID=1000
@@ -23,12 +35,18 @@ COPY requirements.txt /app
 RUN ls /app/*
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY --chown=yc-api:yc-api env/ /app/env
-COPY --chown=yc-api:yc-api gen/ /app/gen
-COPY --chown=yc-api:yc-api src/ /app/src
-COPY --chown=yc-api:yc-api secrets/ /app/secrets
-COPY --chown=yc-api:yc-api scripts/ /app/scripts
+# COPY --chown=yc-api:yc-api env/ /app/env
+# COPY --chown=yc-api:yc-api gen/ /app/gen
+# COPY --chown=yc-api:yc-api src/ /app/src
+# COPY --chown=yc-api:yc-api secrets/ /app/secrets
+# COPY --chown=yc-api:yc-api scripts/ /app/scripts
+
+# Eventually remove these 
 COPY --chown=yc-api:yc-api Makefile /app
+COPY --chown=yc-api:yc-api generate-docker-compose /app
+COPY --chown=yc-api:yc-api generate-env-file /app
+COPY --chown=yc-api:yc-api generate-new-dev-env /app
+COPY --chown=yc-api:yc-api generate-velocity-config /app
 
 WORKDIR /app
 USER yc-api
