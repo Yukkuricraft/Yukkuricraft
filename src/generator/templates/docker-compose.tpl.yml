@@ -2,6 +2,14 @@
 # We do this because copypasting this seven times is gross when everything is the same minus worldgroup name.
 #
 # We also get the benefit of being able to effectively "enable" and "disable" world groups due to the dynamic nature.
+#
+# Variable Interpolations:
+# - We have two layers of interpolations in this file.
+#   - One is Docker's env var subs. These are denoted by the ${} syntax. These substitute values from the running context's env vars.
+#   - The second is our own value injection system. We programatically inject our values in the BaseGenerator class.
+#
+#
+
 
 version: "3.4"
 
@@ -87,6 +95,11 @@ services:
       net.yukkuricraft.container_name: mysql
     networks:
       - ycnet
+
+#  redis:
+#    image: redis:7.2-rc2
+#    volumes:
+#      -
 
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:

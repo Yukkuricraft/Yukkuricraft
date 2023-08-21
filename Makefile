@@ -3,7 +3,7 @@
 ###########
 SHELL=/bin/bash
 ENV?=dev1
-
+DOCKER_GID=$(shell getent group docker | cut -d: -f3)
 
 .PHONY: __pre_ensure
 __pre_ensure: __ensure_env
@@ -148,6 +148,7 @@ build_minecraft_server:
 .PHONY: build_api
 build_api:
 	docker build -f images/yc-docker-api/Dockerfile \
+		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/yc-docker-api' \
 		.
 
