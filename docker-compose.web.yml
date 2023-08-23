@@ -40,7 +40,7 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
+        #- ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
       - ${MC_FS_ROOT}/nginx/html:/usr/share/nginx/html
       - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
     networks:

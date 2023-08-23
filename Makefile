@@ -148,6 +148,7 @@ build_minecraft_server:
 .PHONY: build_api
 build_api:
 	docker build -f images/yc-docker-api/Dockerfile \
+		--no-cache \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/yc-docker-api' \
 		.
