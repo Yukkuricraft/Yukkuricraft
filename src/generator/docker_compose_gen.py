@@ -78,7 +78,9 @@ class DockerComposeGen(BaseGenerator):
             self.docker_compose_template.custom_extensions.velocity_template.as_dict()
         )
         for world in self.env_config["world-groups"].enabled_groups:
-            velocity_service["depends_on"].append(f"mc_{world}")
+            velocity_service["depends_on"][f"mc_{world}"] = {
+                'condition': 'service_started'
+            }
 
         services["velocity"] = velocity_service
 

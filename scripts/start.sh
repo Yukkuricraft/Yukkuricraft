@@ -54,8 +54,8 @@ if [[ "$YC_ENV" == "prod" ]]; then
 
     copy_configs
 
-    debuglog "Chown /data to minecraft:minecraft:"
-    run chown -R minecraft:minecraft /data
+    debuglog "Chown /data to ${UID}:${GID}:"
+    run chown -R ${UID}:${GID} /data
 
     echo "==============="
     ls -al /

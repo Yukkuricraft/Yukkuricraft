@@ -1,8 +1,8 @@
 FROM itzg/minecraft-server:java17 AS base
 COPY scripts/ /scripts
 
-ARG UID=1000
-ARG GID=1000
+ENV UID=1000
+ENV GID=1000
 
 # Create and set ownership of all mount endpoints
 RUN mkdir /plugins-bindmount-prod

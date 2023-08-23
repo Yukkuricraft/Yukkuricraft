@@ -72,10 +72,13 @@ class EnvFileGen(BaseGenerator):
 
         self.generated_env_config["ENV"] = self.env
         self.generated_env_config["API_HOST"] = self.prod_api_host if IS_PROD_HOST else self.dev_api_host
+        self.generated_env_config["UID"] = os.getuid()
+        self.generated_env_config["GID"] = os.getgid()
 
         # yc-api relies on hostname to determine prod vs non-prod envs. Docker containers
         # will always return the container id for hostname so we configure the hostname in the compose file.
         self.generated_env_config["HOST_HOSTNAME"] = socket.gethostname()
+        
 
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
