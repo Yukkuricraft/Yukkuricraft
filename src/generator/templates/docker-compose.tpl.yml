@@ -17,7 +17,9 @@ custom_extensions:
   mc_service_template: # Config used to run all world group containers.
     image: yukkuricraft/minecraft-server
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+
     tty: true
     stdin_open: true
     restart: unless-stopped
@@ -93,6 +95,11 @@ services:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: mysql
       net.yukkuricraft.container_name: mysql
+    healthcheck: # Using healthchecks to make sure db is up and usable.
+        test: ["CMD", "curl", "-f", "http://localhost:3306"]
+        interval: 30s
+        timeout: 10s
+        retries: 10 # Try for ~7 minutes. Really shouldn't take more than 2-3 minutes though.
     networks:
       - ycnet
 
