@@ -35,8 +35,8 @@ services:
     container_name: nginx-proxy
     image: nginxproxy/nginx-proxy
     ports:
-      - "${NGINX_PROXY_HTTP_PORT}:80"
-      - "${NGINX_PROXY_HTTPS_PORT}:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
@@ -45,23 +45,26 @@ services:
     networks:
       - yc-web-dev
 
-  letsencrypt-nginx-proxy:
-    container_name: letsencrypt-nginx-proxy
-    image: nginxproxy/acme-companion
-    environment:
-      - DEFAULT_EMAIL=remilia@scarl.et
-      - ACME_CA_URI=https://acme-v02.api.letsencrypt.org/directory
-      - NGINX_PROXY_CONTAINER=nginx-proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
-      - ${MC_FS_ROOT}/nginx/html:/usr/share/nginx/html
-      - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
-      - ${MC_FS_ROOT}/nginx/acme:/etc/acme.sh
-    depends_on:
-      - nginx-proxy
-    networks:
-      - yc-web-dev
+  # Homelab setup currently has an independent nginx reverse proxy with SSL certs serving traffic to both prod and dev hosts.
+  # Leaving this in incase development work is done outside these two hosts. To re-enable local SSL cert generation, should be
+  # as simple as uncommenting the following block. You will also need to adjust the VIRTUAL_HOST values to a valid domain.
+  # letsencrypt-nginx-proxy:
+  #   container_name: letsencrypt-nginx-proxy
+  #   image: nginxproxy/acme-companion
+  #   environment:
+  #     - DEFAULT_EMAIL=remilia@scarl.et
+  #     - ACME_CA_URI=https://acme-v02.api.letsencrypt.org/directory
+  #     - NGINX_PROXY_CONTAINER=nginx-proxy
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
+  #     - ${MC_FS_ROOT}/nginx/html:/usr/share/nginx/html
+  #     - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
+  #     - ${MC_FS_ROOT}/nginx/acme:/etc/acme.sh
+  #   depends_on:
+  #     - nginx-proxy
+  #   networks:
+  #     - yc-web-dev
 
 volumes:
   api-mysql-data:

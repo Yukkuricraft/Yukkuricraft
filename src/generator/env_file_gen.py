@@ -63,11 +63,7 @@ class EnvFileGen(BaseGenerator):
         self.dump_generated_env_file()
 
     prod_api_host = "api.yukkuricraft.net"
-    prod_nginx_http_port = "80"
-    prod_nginx_https_port = "443"
     dev_api_host = "dev.api.yukkuricraft.net"
-    dev_nginx_http_port = "8080"
-    dev_nginx_https_port = "444"
     def generate_env_file(self):
         self.generated_env_config = self.env_config[
             "runtime-environment-variables"
@@ -75,8 +71,6 @@ class EnvFileGen(BaseGenerator):
 
         self.generated_env_config["ENV"] = self.env
         self.generated_env_config["API_HOST"] = self.prod_api_host if IS_PROD_HOST else self.dev_api_host
-        self.generated_env_config["NGINX_PROXY_HTTP_PORT"] = self.prod_nginx_http_port if IS_PROD_HOST else self.dev_nginx_http_port
-        self.generated_env_config["NGINX_PROXY_HTTPS_PORT"] = self.prod_nginx_https_port if IS_PROD_HOST else self.dev_nginx_https_port
 
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
