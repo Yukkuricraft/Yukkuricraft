@@ -3,6 +3,7 @@
 import os
 import copy
 import yaml  # type: ignore
+import socket
 
 import tomli_w  # type: ignore
 import shutil
@@ -71,6 +72,10 @@ class EnvFileGen(BaseGenerator):
 
         self.generated_env_config["ENV"] = self.env
         self.generated_env_config["API_HOST"] = self.prod_api_host if IS_PROD_HOST else self.dev_api_host
+
+        # yc-api relies on hostname to determine prod vs non-prod envs. Docker containers
+        # will always return the container id for hostname so we configure the hostname in the compose file.
+        self.generated_env_config["HOST_HOSTNAME"] = socket.gethostname()
 
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")

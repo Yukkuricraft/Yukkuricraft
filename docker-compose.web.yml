@@ -4,6 +4,7 @@ services:
   # For yakumo-dash, run yakumo-dash-dev from yakumo-dash repo.
   yc-api:
     container_name: yc-api
+    hostname: ${HOST_HOSTNAME}
     image: yukkuricraft/yc-docker-api
     restart: 'on-failure'
     depends_on:
