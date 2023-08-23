@@ -3,6 +3,8 @@
 ###########
 SHELL=/bin/bash
 ENV?=dev1
+CURRENT_UID=$(shell id -u)
+CURRENT_GID=$(shell id -g)
 DOCKER_GID=$(shell getent group docker | cut -d: -f3)
 
 .PHONY: __pre_ensure
@@ -64,10 +66,10 @@ save_devdata_to_disk:
 		exit 1; \
 	fi
 	@if [[ ! -d "${YC_FS_ROOT}/env/${ENV}/worlds" ]]; then \
-		echo "Please create the '${YC_FS_ROOT}/${ENV}/worlds' directory owned by minecraft:minecraft to continue. Aborting"; \
+		echo "Please create the '${YC_FS_ROOT}/${ENV}/worlds' directory owned by ${CURRENT_UID}:${CURRENT_GID} to continue. Aborting"; \
 		exit 1; \
 	elif [[ ! -d "${YC_FS_ROOT}/env/${ENV}/plugins" ]]; then \
-		echo "Please create the '${YC_FS_ROOT}/${ENV}/plugins' directory owned by minecraft:minecraft to continue. Aborting"; \
+		echo "Please create the '${YC_FS_ROOT}/${ENV}/plugins' directory owned by ${CURRENT_UID}:${CURRENT_GID} to continue. Aborting"; \
 		exit 1; \
 	fi
 	@docker run \
@@ -142,6 +144,8 @@ build: build_api
 build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
 		--no-cache \
+		--build-arg UID=${CURRENT_UID} \
+		--build-arg GID=${CURRENT_GID} \
 		--tag='yukkuricraft/minecraft-server' \
 		.
 
@@ -149,6 +153,8 @@ build_minecraft_server:
 build_api:
 	docker build -f images/yc-docker-api/Dockerfile \
 		--no-cache \
+		--build-arg UID=${CURRENT_UID} \
+		--build-arg GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/yc-docker-api' \
 		.
