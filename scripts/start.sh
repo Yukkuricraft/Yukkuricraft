@@ -48,6 +48,8 @@ echo "STARTING CUSTOM YC/MINECRAFT-SERVER START SCRIPT"
 run mkdir /data/logs
 run touch /data/logs/latest.log
 
+run find /yc-worlds/ -name session.lock -type f -delete
+
 if [[ "$YC_ENV" == "prod" ]]; then
     symlinkmap["/worlds-bindmount-prod"]="/yc-worlds"
     symlinkmap["/plugins-bindmount-prod"]="/data/plugins"
@@ -60,7 +62,7 @@ if [[ "$YC_ENV" == "prod" ]]; then
     debuglog "Chown /data to ${UID}:${GID}"
     run chown -R ${UID}:${GID} /data
 
-    run chown -R ${UID}:${GID} /yc-worlds/
+    run chown -R ${UID}:${GID} /worlds-bindmount-prod
 
     echo "==============="
     ls -al /
