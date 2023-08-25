@@ -38,6 +38,9 @@ debuglog "YC_ENV: $YC_ENV"
 debuglog "MOTD: $MOTD"
 debuglog "COPY_PROD_WORLD: $COPY_PROD_WORLD"
 debuglog "COPY_PROD_PLUGINS: $COPY_PROD_PLUGINS"
+debuglog "UID: $UID"
+debuglog "GID: $GID"
+
 
 echo "################################################"
 echo "STARTING CUSTOM YC/MINECRAFT-SERVER START SCRIPT"
@@ -54,8 +57,10 @@ if [[ "$YC_ENV" == "prod" ]]; then
 
     copy_configs
 
-    debuglog "Chown /data to ${UID}:${GID}:"
+    debuglog "Chown /data to ${UID}:${GID}"
     run chown -R ${UID}:${GID} /data
+
+    run chown -R ${UID}:${GID} /yc-worlds/
 
     echo "==============="
     ls -al /
@@ -76,7 +81,7 @@ if [[ "$YC_ENV" == "dev" ]]; then
 
     ## Chowns
     for vol in ${!symlinkmap[@]}; do
-        run chown -R minecraft:minecraft ${vol}
+        run chown -R $UID:$GID ${vol}
     done
 
     ## Copying prod data

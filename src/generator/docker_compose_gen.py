@@ -79,7 +79,7 @@ class DockerComposeGen(BaseGenerator):
         )
         for world in self.env_config["world-groups"].enabled_groups:
             velocity_service["depends_on"][f"mc_{world}"] = {
-                'condition': 'service_started'
+                'condition': 'service_healthy'
             }
 
         services["velocity"] = velocity_service

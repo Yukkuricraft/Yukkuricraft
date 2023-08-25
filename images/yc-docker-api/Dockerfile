@@ -8,8 +8,11 @@ RUN apt-get update && apt-get install --no-install-recommends --assume-yes \
     socat ca-certificates curl gnupg
 
 # Set up UID/GID - particularly for docker GID to match host docker GID
-ENV UID=1000
-ENV GID=i000
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+ENV UID=$HOST_UID
+ENV GID=$HOST_GID
+
 ARG DOCKER_GID=117
 RUN groupadd --force --gid $DOCKER_GID docker \
     && groupadd --force --gid $GID yc-api \

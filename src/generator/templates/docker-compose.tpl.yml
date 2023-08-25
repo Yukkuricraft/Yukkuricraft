@@ -19,12 +19,11 @@ custom_extensions:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
-    healthcheck: # Using healthchecks to make sure db is up and usable.
-        test: ["CMD", "curl", "-f", "http://localhost:25565"]
-        interval: 10s
-        timeout: 10s
-        retries: 15 # Try for 5 minutes. Really shouldn't take more than 2-3 minutes though.
+    # Healthchecks are done by default in the itzg/minecraft-server image
+    # https://docker-minecraft-server.readthedocs.io/en/latest/misc/healthcheck/
 
     tty: true
     stdin_open: true
@@ -44,6 +43,8 @@ custom_extensions:
       STOP_SERVER_ANNOUNCE_DELAY: 5
       COPY_CONFIG_DEST: /data
       EXEC_DIRECTLY: "true"
+      UID: ${UID}
+      GID: ${GID}
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
@@ -71,6 +72,8 @@ custom_extensions:
   velocity_template:
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     image: itzg/bungeecord
     environment:
@@ -102,22 +105,34 @@ services:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: mysql
       net.yukkuricraft.container_name: mysql
-    healthcheck: # Using healthchecks to make sure db is up and usable.
+    healthcheck:
         test: ["CMD", "curl", "-f", "http://localhost:3306"]
         interval: 10s
         timeout: 10s
-        retries: 15 # Try for 5 minutes. Really shouldn't take more than 2-3 minutes though.
+        retries: 15
     networks:
       - ycnet
 
-#  redis:
-#    image: redis:7.2-rc2
-#    volumes:
-#      -
+  redis:
+    image: redis:7.2-rc2
+    volumes:
+        - redisdata:/data
+    labels:
+      net.yukkuricraft.env: ${ENV}
+      net.yukkuricraft.container_type: redis 
+      net.yukkuricraft.container_name: redis
+    healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 10s
+        retries: 15
+    networks:
+      - ycnet
 
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:
   dbdata:
+  redisdata:
 
 # Networks will be automatically generated as ycnet-${ENV}
 networks:

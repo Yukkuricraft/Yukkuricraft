@@ -144,8 +144,9 @@ build: build_api
 build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
 		--no-cache \
-		--build-arg UID=${CURRENT_UID} \
-		--build-arg GID=${CURRENT_GID} \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
+		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/minecraft-server' \
 		.
 
@@ -153,8 +154,8 @@ build_minecraft_server:
 build_api:
 	docker build -f images/yc-docker-api/Dockerfile \
 		--no-cache \
-		--build-arg UID=${CURRENT_UID} \
-		--build-arg GID=${CURRENT_GID} \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/yc-docker-api' \
 		.

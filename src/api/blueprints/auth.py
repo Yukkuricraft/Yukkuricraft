@@ -84,6 +84,7 @@ def me():
 # @intercept_cors_preflight
 # @validate_access_token
 def createdb():
+    from src.api.models import create_db_tables
     logger.warning("?? CREATEDB")
     create_db_tables()
     return "Aaaa"
