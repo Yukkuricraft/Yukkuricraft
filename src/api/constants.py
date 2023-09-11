@@ -19,7 +19,7 @@ DB_ENV_FILE = "secrets/db.env"
 
 WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"
 
-ACCESS_TOKEN_DUR_MINS = 1
+ACCESS_TOKEN_DUR_MINS = 30
 
 YC_TOKEN_AUTH_SCHEME = "YC-Token"
 

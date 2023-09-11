@@ -65,7 +65,7 @@ custom_extensions:
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/default:/yc-default-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
-      - ${YC_REPO_ROOT}/container_logs/${ENV}/worlds/<<WORLDGROUP>>/:/data/logs
+      - ${MC_FS_ROOT}/logs/${ENV}/worlds/<<WORLDGROUP>>/:/data/logs
       - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
 

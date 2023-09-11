@@ -1,6 +1,7 @@
 #!/bin/env python3
 
 import os
+import pwd
 import copy
 import yaml  # type: ignore
 
@@ -25,8 +26,8 @@ from src.common.helpers import recursive_chown
 
 
 class DockerComposeGen(BaseGenerator):
-    MINECRAFT_UID = 1000 # Hm...
-    MINECRAFT_GID = 1000
+    MINECRAFT_UID = None
+    MINECRAFT_GID = None
 
     container_name_label = "net.yukkuricraft.container_name"
     container_type_label = "net.yukkuricraft.container_type"
@@ -36,8 +37,12 @@ class DockerComposeGen(BaseGenerator):
     generated_docker_compose: dict = {}
 
     def __init__(self, env: str):
-
         super().__init__(env)
+
+        uid = os.getuid()
+        user = pwd.getpwuid(uid)
+        self.MINECRAFT_UID = user.pw_name
+        self.MINECRAFT_GID = user.pw_gid
 
         self.generated_docker_compose_name = f"docker-compose-{self.env}.yml"
         self.generated_docker_compose_folder = (
