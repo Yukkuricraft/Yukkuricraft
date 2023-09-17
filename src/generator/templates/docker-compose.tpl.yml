@@ -6,13 +6,16 @@
 # Variable Interpolations:
 # - We have two layers of interpolations in this file.
 #   - One is Docker's env var subs. These are denoted by the ${} syntax. These substitute values from the running context's env vars.
-#   - The second is our own value injection system. We programatically inject our values in the BaseGenerator class.
+#   - The second is our own value injection system. We programatically inject our values in the BaseGenerator class. These use the <<var>> syntax.
 #
 #
 
 
 version: "3.4"
 
+
+# These custom_extensions are read by docker_compose_gen.py and used as templates for generating
+# the full service definition.
 custom_extensions:
   mc_service_template: # Config used to run all world group containers.
     image: yukkuricraft/minecraft-server
@@ -45,6 +48,7 @@ custom_extensions:
       EXEC_DIRECTLY: "true"
       UID: ${UID}
       GID: ${GID}
+      RCON_PASSWORD_FILE: /rcon.password
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
@@ -62,6 +66,7 @@ custom_extensions:
         bind:
           create_host_path: true
       - mcdata_<<WORLDGROUP>>:/data
+      - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/default:/yc-default-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
@@ -69,12 +74,36 @@ custom_extensions:
       - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
 
+  mc_backups_sidecar_template:
+    image: itzg/mc-backup
+    environment:
+      BACKUP_NAME: <<WORLDGROUP>>
+      BACKUP_INTERVAL: "3h"
+      BACKUP_METHOD: restic
+      SRC_DIR: /worlds-bindmount-prod
+      RCON_HOST: set-by-generator
+      RCON_PASSWORD_FILE: /rcon.password
+      RESTIC_REPOSITORY: /backups
+      RESTIC_PASSWORD_FILE: /restic.password
+      PRUNE_RESTIC_RETENTION: --keep-last 16 --keep-daily 14 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
+      PAUSE_IF_NO_PLAYERS: true
+      # since this service waits for mc to be healthy, no initial delay is needed
+      INITIAL_DELAY: 0
+    depends_on: {}
+    networks:
+      - ycnet
+    labels:
+      net.yukkuricraft.env: ${ENV}
+      net.yukkuricraft.container_type: minecraft_backup_sidecar
+    volumes:
+      - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
+      - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
+      - /media/backups-primary/restic-<<WORLDGROUP>>:/backups
+    volumes_from:
+      - mc_<<WORLDGROUP>>:ro
+
   velocity_template:
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    depends_on: {}
     image: itzg/bungeecord
     environment:
       DEBUG: "false"

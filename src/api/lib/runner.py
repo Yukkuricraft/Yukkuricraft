@@ -40,7 +40,7 @@ class Runner:
             stdout_b, stderr_b = proc.communicate(prev_stdout.encode("utf8"))
 
             prev_stdout, prev_stderr = stdout_b.decode("utf8"), stderr_b.decode("utf8")
-            logger.info("Completed proc (pid:{proc.pid}) and got stdout/stderr")
+            logger.info(f"Completed proc (pid:{proc.pid}) and got stdout/stderr")
             logger.warning(prev_stderr)
 
         return prev_stdout, prev_stderr, proc.returncode

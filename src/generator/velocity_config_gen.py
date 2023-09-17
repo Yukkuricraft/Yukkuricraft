@@ -19,6 +19,7 @@ from src.generator.constants import (
 )
 
 from src.generator.base_generator import BaseGenerator
+from src.generator.docker_compose_gen import DockerComposeGen
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
 
@@ -63,10 +64,12 @@ class VelocityConfigGen(BaseGenerator):
 
             # Using the generated name (when no container_name is supplied) or config object name (eg, "mc_survival"), Velocity isn't able to
             #     resolve the supplied alias. For whatever reason, explicitly declared container_names do work, however.
-            servers[world_underscored] = f"YC-{world}-{self.env}:25565"
+            container_name = DockerComposeGen.container_name_format.format(env=self.env, name=world)
+            servers[world_underscored] = f"{container_name}:25565"
             try_servers.append(world_underscored)
 
             if world == "lobby":
+                # Allow both lobby.yukkuricraft.net as well as mc.yukkuricraft.net connect to the lobby.
                 forced_hosts["mc.yukkuricraft.net"] = [ world_underscored ]
             forced_hosts[f"{world}.yukkuricraft.net"] = [ world_underscored ]
 

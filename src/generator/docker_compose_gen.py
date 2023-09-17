@@ -36,6 +36,8 @@ class DockerComposeGen(BaseGenerator):
     generated_docker_compose_name: str
     generated_docker_compose: dict = {}
 
+    container_name_format = "YC-{env}-{name}"
+
     def __init__(self, env: str):
         super().__init__(env)
 
@@ -72,13 +74,19 @@ class DockerComposeGen(BaseGenerator):
     def get_generated_docker_compose_path(self):
         return self.generated_docker_compose_folder / self.generated_docker_compose_name
 
-    def generate_docker_compose(self):
-        services = self.docker_compose_template.services.as_dict()
+    def add_host_and_container_names(self):
+        for service_key, service in self.generated_docker_compose["services"].items():
+            name = service["labels"][self.container_name_label]
+            container_name = self.container_name_format.format(env=self.env, name=name)
 
-        # Add version
-        self.generated_docker_compose["version"] = self.docker_compose_template.version
+            logger.info(container_name)
+            service["container_name"] = container_name
+            service["hostname"] = container_name
 
-        # Add velocity service
+            self.generated_docker_compose["services"][service_key] = service
+            logger.info(service)
+
+    def generate_velocity_service_config(self):
         velocity_service = (
             self.docker_compose_template.custom_extensions.velocity_template.as_dict()
         )
@@ -86,25 +94,35 @@ class DockerComposeGen(BaseGenerator):
             velocity_service["depends_on"][f"mc_{world}"] = {
                 'condition': 'service_healthy'
             }
+        self.generated_docker_compose["services"]["velocity"] = velocity_service
 
-        services["velocity"] = velocity_service
 
+    def generate_minecraft_service_config(self):
+        services = self.generated_docker_compose["services"]
         # Add minecraft services
-
         for world in self.env_config["world-groups"].enabled_groups:
-            service_template = copy.deepcopy(
+            mc_service_template = copy.deepcopy(
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
-            service_template = self.replace_interpolations(service_template, world)
+            mc_service_template = self.replace_interpolations(mc_service_template, world)
+            mc_service_template["labels"][self.container_name_label] = world
+            mc_service_key = f"mc_{world}"
+            services[mc_service_key] = mc_service_template
 
-            # Using the generated name (when no container_name is supplied) or config object name (eg, "mc_survival"), Velocity isn't able to
-            #     resolve the supplied alias. For whatever reason, explicitly declared container_names do work, however.
-            service_template["container_name"] = f"YC-{world}-{self.env}"
-            service_template["labels"][self.container_name_label] = world
+            if self.is_prod():
+                backup_service_template = copy.deepcopy(
+                    self.docker_compose_template.custom_extensions.mc_backups_sidecar_template.as_dict()
+                )
+                backup_service_template = self.replace_interpolations(backup_service_template, world)
+                backup_service_template["environment"]["RCON_HOST"] = self.container_name_format.format(env=self.env, name=world)
+                backup_service_template["labels"][self.container_name_label] = f"{world}_backup"
+                backup_service_template["depends_on"][mc_service_key] = {
+                    'condition': 'service_healthy'
+                }
+                backup_service_template["volumes_from"] = [f"{mc_service_key}:ro"]
+                services[f"mc_{world}_backup"] = backup_service_template
 
-            services[f"mc_{world}"] = service_template
-        self.generated_docker_compose["services"] = services
-
+    def generate_volumes(self):
         # Add volumes
         volumes = (
             self.docker_compose_template.volumes.as_dict()
@@ -133,15 +151,29 @@ class DockerComposeGen(BaseGenerator):
 
         self.generated_docker_compose["volumes"] = volumes
 
+
+    def generate_networks(self):
         # Add networks
         networks = (
             self.docker_compose_template.networks.as_dict()
             if self.docker_compose_template.networks is not None
             else {}
         )
-        # networks[f"ycnet-{self.env}"] = None
 
         self.generated_docker_compose["networks"] = networks
+
+
+    def generate_docker_compose(self):
+        # Add version
+        self.generated_docker_compose["version"] = self.docker_compose_template.version
+
+        self.generated_docker_compose["services"] = self.docker_compose_template.services.as_dict()
+        self.generate_velocity_service_config()
+        self.generate_minecraft_service_config()
+
+        self.generate_volumes()
+        self.generate_networks()
+
 
     def dump_generated_docker_compose(self):
         generated_docker_compose_path = self.get_generated_docker_compose_path()
@@ -162,4 +194,5 @@ class DockerComposeGen(BaseGenerator):
     def run(self):
         self.generate_prereqs()
         self.generate_docker_compose()
+        self.add_host_and_container_names()
         self.dump_generated_docker_compose()

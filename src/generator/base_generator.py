@@ -17,6 +17,9 @@ class BaseGenerator:
         curr_dir = Path(__file__).parent
         self.env_config = load_toml_config(f"env/{env}.toml", curr_dir)
 
+    def is_prod(self):
+        return self.env == "prod"
+
     def replace_interpolations(self, inp, replace_value: str):
         """
         Please for the love of god refactor me in the future.
