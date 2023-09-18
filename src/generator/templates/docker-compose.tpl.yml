@@ -77,7 +77,7 @@ custom_extensions:
     image: yukkuricraft/mc-backup-restic
     environment:
       BACKUP_NAME: <<WORLDGROUP>>
-      BACKUP_INTERVAL: "1h"
+      BACKUP_INTERVAL: "3h"
       BACKUP_METHOD: restic
       SRC_DIR: /worlds-bindmount-prod
       RCON_HOST: set-by-generator
@@ -168,7 +168,7 @@ services:
       PRUNE_RESTIC_RETENTION: --keep-last 8 --keep-daily 7 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
       MYSQLDUMP_OPTS: --quick --single-transaction
       ENTRYPOINT_TARGET: /entrypoint
-      DB_DUMP_CRON: "0 0/6 * * *"
+      DB_DUMP_FREQ: 360 # Minutes
     volumes:
       - /mysqldump
       - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
