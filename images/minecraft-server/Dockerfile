@@ -5,6 +5,9 @@ ARG HOST_UID=1000
 ARG HOST_GID=1000
 ARG DOCKER_GID=117
 
+ENV UID=$HOST_UID
+ENV GID=$HOST_GID
+
 RUN usermod -u $HOST_UID minecraft
 RUN groupmod -o -g "$HOST_GID" minecraft
 # Make docker group and add minecraft to it

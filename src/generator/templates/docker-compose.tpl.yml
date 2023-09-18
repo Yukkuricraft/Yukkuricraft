@@ -13,7 +13,6 @@
 
 version: "3.4"
 
-
 # These custom_extensions are read by docker_compose_gen.py and used as templates for generating
 # the full service definition.
 custom_extensions:
@@ -75,10 +74,10 @@ custom_extensions:
       - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
 
   mc_backups_sidecar_template:
-    image: itzg/mc-backup
+    image: yukkuricraft/mc-backup-restic
     environment:
       BACKUP_NAME: <<WORLDGROUP>>
-      BACKUP_INTERVAL: "3h"
+      BACKUP_INTERVAL: "1h"
       BACKUP_METHOD: restic
       SRC_DIR: /worlds-bindmount-prod
       RCON_HOST: set-by-generator
@@ -86,7 +85,8 @@ custom_extensions:
       RESTIC_REPOSITORY: /backups
       RESTIC_PASSWORD_FILE: /restic.password
       PRUNE_RESTIC_RETENTION: --keep-last 16 --keep-daily 14 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
-      PAUSE_IF_NO_PLAYERS: true
+      PAUSE_IF_NO_PLAYERS: false
+      ENTRYPOINT_TARGET: /usr/bin/backup loop
       # since this service waits for mc to be healthy, no initial delay is needed
       INITIAL_DELAY: 0
     depends_on: {}
@@ -94,11 +94,11 @@ custom_extensions:
       - ycnet
     labels:
       net.yukkuricraft.env: ${ENV}
-      net.yukkuricraft.container_type: minecraft_backup_sidecar
+      net.yukkuricraft.container_type: backup
     volumes:
       - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
-      - /media/backups-primary/restic-<<WORLDGROUP>>:/backups
+      - ${BACKUPS_ROOT}/restic-<<WORLDGROUP>>:/backups
     volumes_from:
       - mc_<<WORLDGROUP>>:ro
 
@@ -125,6 +125,7 @@ custom_extensions:
 # "Static" services
 services:
   mysql:
+    container_name: YC-${ENV}-mysql
     image: mysql:5.7
     env_file:
       - ./secrets/db.env
@@ -135,26 +136,59 @@ services:
       net.yukkuricraft.container_type: mysql
       net.yukkuricraft.container_name: mysql
     healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:3306"]
-        interval: 10s
-        timeout: 10s
-        retries: 15
+      test: ["CMD", "curl", "-f", "http://localhost:3306"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+    networks:
+      - ycnet
+
+  mysql_backup:
+    image: yukkuricraft/mysql-backup-restic
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ./secrets/mysql_backup_restic_config
+    labels:
+      net.yukkuricraft.env: ${ENV}
+      net.yukkuricraft.container_type: backup
+      net.yukkuricraft.container_name: mysql_backup
+    environment:
+      DB_SERVER: YC-${ENV}-mysql
+      DB_USER: root
+      DB_PORT: 3306
+      DB_DUMP_TARGET: /mysqldump
+      SRC_DIR: /mysqldump
+      DEST_DIR: /backups
+      RESTIC_HOSTNAME: YC-${ENV}-mysql_backup
+      PRUNE_BACKUPS_DAYS: 7
+      RESTIC_REPOSITORY: /backups
+      RESTIC_PASSWORD_FILE: /restic.password
+      PRUNE_RESTIC_RETENTION: --keep-last 8 --keep-daily 7 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
+      MYSQLDUMP_OPTS: --quick --single-transaction
+      ENTRYPOINT_TARGET: /entrypoint
+      DB_DUMP_CRON: "0 0/6 * * *"
+    volumes:
+      - /mysqldump
+      - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
+      - ${BACKUPS_ROOT}/restic-mysql:/backups
     networks:
       - ycnet
 
   redis:
     image: redis:7.2-rc2
     volumes:
-        - redisdata:/data
+      - redisdata:/data
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: redis 
       net.yukkuricraft.container_name: redis
     healthcheck:
-        test: ["CMD", "redis-cli", "ping"]
-        interval: 10s
-        timeout: 10s
-        retries: 15
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
     networks:
       - ycnet
 

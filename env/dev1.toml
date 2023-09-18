@@ -22,6 +22,7 @@ PAPER_BUILD = 318
 BINDMOUNT_RO = false
 VELOCITY_PORT = "25602"
 YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
+BACKUPS_ROOT = "/media/backups-primary"
 
 [world-groups]
 enabled_groups = [

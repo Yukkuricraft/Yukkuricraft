@@ -139,6 +139,8 @@ delete_env:
 .PHONY: build
 build: build_minecraft_server
 build: build_api
+build: build_mysql_backup
+build: build_mc_backup
 
 .PHONY: build_minecraft_server
 build_minecraft_server:
@@ -158,6 +160,24 @@ build_api:
 		--build-arg HOST_GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/yc-docker-api' \
+		.
+
+.PHONY: build_mc_backup
+build_mc_backup:
+	docker build -f images/mc-backup-restic/Dockerfile \
+		--no-cache \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
+		--tag='yukkuricraft/mc-backup-restic' \
+		.
+
+.PHONY: build_mysql_backup
+build_mysql_backup:
+	docker build -f images/mysql-backup-restic/Dockerfile \
+		--no-cache \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
+		--tag='yukkuricraft/mysql-backup-restic' \
 		.
 
 # UP DOWN RESTARTS
