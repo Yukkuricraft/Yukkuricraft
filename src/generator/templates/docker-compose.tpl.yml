@@ -48,6 +48,8 @@ custom_extensions:
       UID: ${UID}
       GID: ${GID}
       RCON_PASSWORD_FILE: /rcon.password
+      MAX_MEMORY: 4G
+      USE_AIKAR_FLAGS: true
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
