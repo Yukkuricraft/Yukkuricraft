@@ -11,6 +11,8 @@ But what if it is.
 aaaa
 """
 
+hostname="yukkuricraft.net"
+
 [world-groups]
 # World groups represent each group of thematically-linked worlds. In effect, this corresponds to the number of minecraft servers we have running.
 # The values in the world-groups.enabled_groups array will be used to generate all dynamic configs.
@@ -37,7 +39,7 @@ MC_VERSION = "1.20.1"
 PAPER_BUILD = 318
 BINDMOUNT_RO = false
 
-VELOCITY_PORT = 25605
+VELOCITY_PORT = 26605
 
 YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
 BACKUPS_ROOT = "/media/backups-primary"

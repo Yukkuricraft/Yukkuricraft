@@ -50,7 +50,7 @@ class VelocityConfigGen(BaseGenerator):
             VELOCITY_CONFIG_TEMPLATE_NAME, curr_dir
         )
 
-    def generate_velocity_config(self):
+    def generate_velocity_config(self, hostname: str):
 
         # Copy baseline velocity config
         self.generated_velocity_config = self.velocity_config_template.as_dict()
@@ -70,8 +70,8 @@ class VelocityConfigGen(BaseGenerator):
 
             if world == "lobby":
                 # Allow both lobby.yukkuricraft.net as well as mc.yukkuricraft.net connect to the lobby.
-                forced_hosts["mc.yukkuricraft.net"] = [ world_underscored ]
-            forced_hosts[f"{world}.yukkuricraft.net"] = [ world_underscored ]
+                forced_hosts[f"mc.{hostname}"] = [ world_underscored ]
+            forced_hosts[f"{world}.{hostname}"] = [ world_underscored ]
 
         servers["try"] = try_servers
         self.generated_velocity_config["servers"] = servers
@@ -94,6 +94,6 @@ class VelocityConfigGen(BaseGenerator):
         os.chmod(generated_velocity_config_path, DEFAULT_CHMOD_MODE)
         print("Done.")
 
-    def run(self):
-        self.generate_velocity_config()
+    def run(self, hostname: str):
+        self.generate_velocity_config(hostname)
         self.dump_generated_velocity_config()

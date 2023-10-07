@@ -11,6 +11,8 @@ Aaaaa
 Gggooooaaaaffdaa
 """
 
+hostname="yukkuricraft.net"
+
 enable_env_protection = false
 
 [runtime-environment-variables]
@@ -20,7 +22,7 @@ MC_TYPE = "PAPER"
 MC_VERSION = "1.18.2"
 PAPER_BUILD = 318
 BINDMOUNT_RO = false
-VELOCITY_PORT = "25602"
+VELOCITY_PORT = "26602"
 YC_REPO_ROOT = "/home/remi/development/Yukkuricraft"
 BACKUPS_ROOT = "/media/backups-primary"
 

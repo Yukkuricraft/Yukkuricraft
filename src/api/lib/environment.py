@@ -49,6 +49,7 @@ class Env:
         "num",
         "config",
         "name",
+        "hostname",
         "description",
         "alias",
         "formatted",
@@ -61,6 +62,7 @@ class Env:
     config: dict
 
     name: str
+    hostname: str
     description: str
     alias: str
     formatted: str
@@ -125,6 +127,11 @@ def get_env_desc_from_config(env_str: str):
 
     return general["description"] if "description" in general else ""
 
+def get_env_hostname_from_config(env_str: str):
+    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
+    general = config["general"] if "general" in config else {}
+
+    return general["hostname"] if "hostname" in general else ""
 
 def get_env_protection_status(env_str: str):
     config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
@@ -176,6 +183,7 @@ def list_valid_envs() -> List[Env]:
         env.config = get_config_dict_from_config(name)
 
         env.name = name
+        env.hostname = get_env_hostname_from_config(name)
         env.description = get_env_desc_from_config(name)
         env.alias = get_env_alias_from_config(name)
         env.enable_env_protection = get_env_protection_status(name)
@@ -208,13 +216,7 @@ def create_new_env(
     gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?
     gen.run(env_name, proxy_port, env_alias, enable_env_protection, description)
 
-    # Generate docker compose file
-    gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_name)
-    gen.run()
-
-    # Generate velocity file
-    gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_name)
-    gen.run()
+    generate_velocity_and_docker(env_name)
 
     return env_name
 
@@ -234,12 +236,15 @@ def generate_all(env_name: str):
     # Generate env file
     gen = get_generator(GeneratorType.ENV_FILE, env_name)
     gen.run()
+    generate_velocity_and_docker(env_name)
 
+def generate_velocity_and_docker(env_name: str):
     # Generate docker compose file
     gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_name)
     gen.run()
 
+
+    hostname = get_env_hostname_from_config(env_name)
     # Generate velocity file
     gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_name)
-    gen.run()
-
+    gen.run(hostname)
