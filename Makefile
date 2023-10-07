@@ -241,6 +241,50 @@ restart_one:
 		restart \
 		$(ARGS)
 
+.PHONY: run_entrypoint_target_on_mysql_backup_restic
+run_entrypoint_target_on_mysql_backup_restic:
+	$(PRE) docker run \
+		--env-file=secrets/db.env \
+		-e DB_SERVER=YC-$(ENV)-mysql \
+		-e DB_USER=root \
+		-e BACKUP_DEST_PATH=/tmp_backup_path \
+		-e RESTIC_REPOSITORY=/backup \
+		-e ENTRYPOINT_TARGET="$(ENTRYPOINT_TARGET)" \
+		-v /tmp_backup_path \
+		-v /media/backups-primary/restic-mysql:/backup \
+		--network="prod_ycnet" \
+		yukkuricraft/mysql-backup-restic
+
+.PHONY: restore_mysql_from_backup
+restore_mysql_from_backup:
+	$(PRE) docker run \
+		--env-file=secrets/db.env \
+		-e DB_SERVER=YC-$(ENV)-mysql \
+		-e DB_USER=root \
+		-e BACKUP_DEST_PATH=/tmp_backup_path \
+		-e RESTIC_REPOSITORY=/backups \
+		-e ENTRYPOINT_TARGET="/restic.sh restore 2>&1 /foo.out" \
+		-v /tmp_backup_path \
+		-v /media/backups-primary/restic-mysql:/backups \
+		--network="prod_ycnet" \
+		yukkuricraft/mysql-backup-restic
+
+.PHONY: get_snapshots_for_repo
+get_snapshots_for_repo:
+	$(PRE) docker run \
+		-e RESTIC_REPOSITORY=/backups \
+		-e RESTIC_PASSWORD_FILE=/restic.password \
+		-v /media/backups-primary/restic-$(REPO):/backups \
+		-v $(PWD)/secrets/restic.password:/restic.password \
+		--network="prod_ycnet" \
+		restic/restic \
+		snapshots
+
+.PHONY: restore_mc_from_backup
+restore_mc_from_backup:
+	echo "Implement me already"
+
+
 # COMPOUNDS
 
 .PHONY: purge
