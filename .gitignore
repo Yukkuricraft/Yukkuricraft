@@ -3,4 +3,5 @@ container_logs
 *.sw[a-z]
 *.DS_Store
 __pycache__
+env/
 gen/
