@@ -62,6 +62,7 @@ if [[ "$YC_ENV" == "prod" ]]; then
     debuglog "Chown /data to ${UID}:${GID}"
     run chown -R ${UID}:${GID} /data
 
+    run chown -R ${UID}:${GID} /plugins-bindmount-prod
     run chown -R ${UID}:${GID} /worlds-bindmount-prod
 
     echo "==============="

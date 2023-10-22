@@ -19,6 +19,8 @@ custom_extensions:
   mc_service_template: # Config used to run all world group containers.
     image: yukkuricraft/minecraft-server
     depends_on:
+      postgres:
+        condition: service_healthy
       mysql:
         condition: service_healthy
       redis:
@@ -128,7 +130,7 @@ custom_extensions:
 services:
   mysql:
     container_name: YC-${ENV}-mysql
-    image: mysql:5.7
+    image: mysql:8.1
     env_file:
       - ./secrets/db.env
     volumes:
@@ -178,6 +180,28 @@ services:
     networks:
       - ycnet
 
+  postgres:
+    container_name: YC-${ENV}-postgres
+    image: postgres:16.0
+    environment:
+      POSTGRES_PASSWORD_FILE: /secrets/postgres_pw
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ${YC_REPO_ROOT}/secrets/postgres_pw:/secrets/postgres_pw
+    labels:
+      net.yukkuricraft.env: ${ENV}
+      net.yukkuricraft.container_type: postgres
+      net.yukkuricraft.container_name: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "db_prod"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+    networks:
+      - ycnet
+
+  # TODO: Postgres backup. prodrigestivill/postgres-backup-local
+
   redis:
     image: redis:7.2-rc2
     volumes:
@@ -197,6 +221,7 @@ services:
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:
   dbdata:
+  pgdata:
   redisdata:
 
 # Networks will be automatically generated as ycnet-${ENV}
