@@ -50,11 +50,13 @@ run touch /data/logs/latest.log
 
 run find /yc-worlds/ -name session.lock -type f -delete
 
-if [[ "$YC_ENV" == "prod" ]]; then
-    symlinkmap["/worlds-bindmount-prod"]="/yc-worlds"
-    symlinkmap["/plugins-bindmount-prod"]="/data/plugins"
+run echo "YC_ENV=$YC_ENV"
+run echo "DEV_AS_PROD_OVERRIDE=$DEV_AS_PROD_OVERRIDE"
+if [[ "$YC_ENV" == "prod" || x"$DEV_AS_PROD_OVERRIDE" == x"true" ]]; then
+    symlinkmap["/worlds-bindmount"]="/yc-worlds"
+    symlinkmap["/plugins-bindmount"]="/data/plugins"
 
-    debuglog "WE PROD";
+    debuglog "WE PROD - $YC_ENV - $DEV_AS_PROD_OVERRIDE";
     create_symlinks symlinkmap
 
     copy_configs
@@ -62,15 +64,15 @@ if [[ "$YC_ENV" == "prod" ]]; then
     debuglog "Chown /data to ${UID}:${GID}"
     run chown -R ${UID}:${GID} /data
 
-    run chown -R ${UID}:${GID} /plugins-bindmount-prod
-    run chown -R ${UID}:${GID} /worlds-bindmount-prod
+    run chown -R ${UID}:${GID} /plugins-bindmount
+    run chown -R ${UID}:${GID} /worlds-bindmount
+    run chown -R ${UID}:${GID} /mods-bindmount
+    run chown -R ${UID}:${GID} /modsconfig-bindmount
 
     echo "==============="
     ls -al /
     ls -al /data
-fi
-
-if [[ "$YC_ENV" == "dev" ]]; then
+elif [[ "$YC_ENV" == "dev" ]]; then
     ## Symlinks
     #symlinkmap["/worlds-volume-dev"]="/yc-worlds"
 
@@ -89,14 +91,14 @@ if [[ "$YC_ENV" == "dev" ]]; then
 
     ## Copying prod data
     if [[ ! -z "$COPY_PROD_WORLD" ]]; then
-        run rsync -arP /worlds-bindmount-prod/ /yc-worlds
+        run rsync -arP /worlds-bindmount/ /yc-worlds
     fi
 
     if [[ ! -z "$COPY_PROD_PLUGINS" ]]; then
         ignored_plugins=(
             --exclude='dynmap'
         )
-        run rsync -arP  /plugins-bindmount-prod/ /plugins-volume-dev "${ignored_plugins[@]}"
+        run rsync -arP  /plugins-bindmount/ /plugins-volume-dev "${ignored_plugins[@]}"
     fi
 
     ## Configs

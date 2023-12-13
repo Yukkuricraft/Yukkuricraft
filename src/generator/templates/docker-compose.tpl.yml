@@ -39,32 +39,49 @@ custom_extensions:
       MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
       DEBUG: "true"
       EULA: "true"
+      DEV_AS_PROD_OVERRIDE: ${DEV_AS_PROD_OVERRIDE}
       COPY_PROD_WORLD: ${COPY_PROD_WORLD}
       COPY_PROD_PLUGINS: ${COPY_PROD_PLUGINS}
+      COPY_MODS_SRC: /mods-bindmount
+      COPY_CONFIG_SRC: /modsconfig-bindmount
+      COPY_CONFIG_DEST: /data/config
+      OVERRIDE_SERVER_PROPERTIES: true
       VERSION: ${MC_VERSION}
       TYPE: ${MC_TYPE}
       PAPER_BUILD: ${PAPER_BUILD}
       STOP_SERVER_ANNOUNCE_DELAY: 5
-      COPY_CONFIG_DEST: /data
       EXEC_DIRECTLY: "true"
       UID: ${UID}
       GID: ${GID}
       RCON_PASSWORD_FILE: /rcon.password
       MAX_MEMORY: 4G
       USE_AIKAR_FLAGS: true
+
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
     volumes:
       - type: bind
-        source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/worlds # This should always mount prod
-        target: /worlds-bindmount-prod
+        source: ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/worlds
+        target: /worlds-bindmount
         read_only: ${BINDMOUNT_RO}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MC_FS_ROOT}/env/prod/<<WORLDGROUP>>/plugins # This should always mount prod
-        target: /plugins-bindmount-prod
+        source: ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/plugins
+        target: /plugins-bindmount
+        read_only: ${BINDMOUNT_RO}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/mods
+        target: /mods-bindmount
+        read_only: ${BINDMOUNT_RO}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/modsconfig
+        target: /modsconfig-bindmount
         read_only: ${BINDMOUNT_RO}
         bind:
           create_host_path: true
@@ -74,8 +91,8 @@ custom_extensions:
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
       - ${MC_FS_ROOT}/logs/${ENV}/worlds/<<WORLDGROUP>>/:/data/logs
-      - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev # This volume is unused in prod. Only in dev.
-      - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev # Also unused in prod
+      - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev
+      - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev
 
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic
