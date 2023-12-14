@@ -45,6 +45,7 @@ custom_extensions:
       COPY_MODS_SRC: /mods-bindmount
       COPY_CONFIG_SRC: /modsconfig-bindmount
       COPY_CONFIG_DEST: /data/config
+      REMOVE_OLD_MODS: true
       OVERRIDE_SERVER_PROPERTIES: true
       VERSION: ${MC_VERSION}
       TYPE: ${MC_TYPE}
