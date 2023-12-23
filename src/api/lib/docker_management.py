@@ -85,25 +85,25 @@ class DockerManagement:
         return containers
 
     def send_command_to_container(self, container_name: str, command: str):
-        # -echo '$(word 1,$(ARGS))' | socat EXEC:"docker attach $(word 2,$(ARGS))",pty STDIN
-        # Note, this method of messaging the container inherently has limitations.
-        # https://github.com/Yukkuricraft/YakumoDash/issues/19
-
         cmds = [
             [
-                "echo",
+                "docker",
+                "exec",
+                container_name,
+                "rcon-cli",
                 command,
             ],
-            [
-                "socat",
-                f"EXEC:\"docker attach {container_name}\",pty",
-                "STDIN",
-            ]
         ]
 
         out = Runner.run(cmds)
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
-        logger.info([stdout, stderr, exit_code])
+        logger.info(["Original command", stdout, stderr, exit_code])
+
+        rtn_msg= stdout
+        if stderr:
+            rtn_msg += f"\n{stderr}"
+
+        return rtn_msg
 
     """
     ARGS=$(filter-out $@,$(MAKECMDGOALS))
@@ -203,3 +203,6 @@ class DockerManagement:
         ]
 
         return Runner.run_make_cmd(cmd, env=env)
+
+    def backup_container_volumes():
+        pass

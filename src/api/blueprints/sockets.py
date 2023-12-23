@@ -40,7 +40,8 @@ def exec_server_command(data):
         raise ValueError(f"Got no value for one or more arguments: container_name='{container_name}', command='{command}'")
 
     logger.info(f"EXECUTING COMMAND ON SERVER CONTAINER: container_name='{container_name}' - cmd='{command}'")
-    DockerMgmtApi.send_command_to_container(container_name, command)
+    message = DockerMgmtApi.send_command_to_container(container_name, command)
+    emit('log from console', message)
 
 
 @socketio.on('poop')
