@@ -16,9 +16,19 @@ function create_symlinks {
     for src in "${!data[@]}"; do
         debuglog $src
         debuglog "${data[$src]}"
+
+        debuglog "Checking if symlink ${data[$src]} exists already..."
+        if [[ -L "${data[$src]}" ]]; then
+            debuglog "Symlink exists - deleting."
+            run rm "${data[$src]}"
+        fi
+
+        debuglog "Ensuring symlink dest ${data[$src]} isn't a regular dir/file..."
         if [[ ! -s "${data[$src]}" ]]; then
             debuglog "Listing src"
             ls -al ${src}
+
+            debuglog "Symlinking ${src} to ${data[$src]}"
             run ln -s ${src} ${data[$src]}
         fi
     done
@@ -119,7 +129,9 @@ function warn_ctrl_c {
     fi
 }
 
-trap '' TERM INT # Don't let ctrl+c stop the server. Use ctrl+p, then ctrl+q. Standard docker "detach" sequence.
+trap 'echo Got a ctrl+c' TERM INT # Don't let ctrl+c stop the server. Use ctrl+p, then ctrl+q. Standard docker "detach" sequence.
+
+trap
 
 echo "###########################################################"
 echo "STARTING ORIGINAL ITZG/DOCKER-MINECRAFT-SERVER START SCRIPT"
