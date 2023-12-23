@@ -25,13 +25,9 @@ RUN chown $HOST_UID:$HOST_GID /worlds-bindmount-prod
 RUN chown $HOST_UID:$HOST_GID /plugins-volume-dev
 RUN chown $HOST_UID:$HOST_GID /worlds-volume-dev
 
-# Oh god this is confusing. We have to symlink this in the dockerfile
-# cuz it's touching root. Can't symlink from start.sh cuz it's running as miencraft already.
-RUN ln -s /worlds-bindmount-prod /yc-worlds
-
 # Just in-case remotely SSH'ing in and dev'ing from vscode (windows) causes CRLF issues
 RUN sed -i 's/\r$//' /scripts/start.sh  && \
     chmod +x /scripts/start.sh
 
 RUN mkfifo /tmp/minecraft-console-in
-ENTRYPOINT "/scripts/start.sh"
+ENTRYPOINT [ "/scripts/start.sh" ]

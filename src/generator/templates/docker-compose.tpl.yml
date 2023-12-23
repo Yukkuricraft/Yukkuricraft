@@ -34,6 +34,7 @@ custom_extensions:
     restart: unless-stopped
     networks:
       - ycnet
+    stop_grace_period: 20s
     environment:
       YC_ENV: ${ENV_TYPE}
       MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
@@ -50,8 +51,7 @@ custom_extensions:
       VERSION: ${MC_VERSION}
       TYPE: ${MC_TYPE}
       PAPER_BUILD: ${PAPER_BUILD}
-      STOP_SERVER_ANNOUNCE_DELAY: 5
-      EXEC_DIRECTLY: "true"
+      STOP_SERVER_ANNOUNCE_DELAY: 10
       UID: ${UID}
       GID: ${GID}
       RCON_PASSWORD_FILE: /rcon.password

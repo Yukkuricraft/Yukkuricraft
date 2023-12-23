@@ -84,8 +84,7 @@ if [[ "$YC_ENV" == "prod" || x"$DEV_AS_PROD_OVERRIDE" == x"true" ]]; then
     ls -al /data
 elif [[ "$YC_ENV" == "dev" ]]; then
     ## Symlinks
-    #symlinkmap["/worlds-volume-dev"]="/yc-worlds"
-
+    symlinkmap["/worlds-volume-dev"]="/yc-worlds"
     run rm /data/plugins # Please refactor this...
     symlinkmap["/plugins-volume-dev"]="/data/plugins"
 
@@ -129,12 +128,8 @@ function warn_ctrl_c {
     fi
 }
 
-trap 'echo Got a ctrl+c' TERM INT # Don't let ctrl+c stop the server. Use ctrl+p, then ctrl+q. Standard docker "detach" sequence.
-
-trap
-
 echo "###########################################################"
 echo "STARTING ORIGINAL ITZG/DOCKER-MINECRAFT-SERVER START SCRIPT"
 echo $(whoami)
 
-/start
+exec /start
