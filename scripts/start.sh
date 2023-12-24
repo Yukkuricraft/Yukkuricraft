@@ -34,14 +34,6 @@ function create_symlinks {
     done
 }
 
-function copy_configs {
-    debuglog "Copying /yc-default-configs/server to /data"
-    run cp /yc-default-configs/server/* /data/
-
-    debuglog "Copying /yc-server-configs to /data"
-    run cp /yc-server-configs/* /data/
-}
-
 # START FLOW
 debuglog "RUNNING AS: $(whoami)"
 debuglog "YC_ENV: $YC_ENV"
@@ -50,76 +42,61 @@ debuglog "COPY_PROD_WORLD: $COPY_PROD_WORLD"
 debuglog "COPY_PROD_PLUGINS: $COPY_PROD_PLUGINS"
 debuglog "UID: $UID"
 debuglog "GID: $GID"
+debuglog "SERVER TYPE: $TYPE"
 
 
 echo "################################################"
 echo "STARTING CUSTOM YC/MINECRAFT-SERVER START SCRIPT"
 
-run mkdir /data/logs
-run touch /data/logs/latest.log
-
+# run mkdir /data/logs
+# run touch /data/logs/latest.log
 run find /yc-worlds/ -name session.lock -type f -delete
 
-run echo "YC_ENV=$YC_ENV"
-run echo "DEV_AS_PROD_OVERRIDE=$DEV_AS_PROD_OVERRIDE"
-if [[ "$YC_ENV" == "prod" || x"$DEV_AS_PROD_OVERRIDE" == x"true" ]]; then
-    symlinkmap["/worlds-bindmount"]="/yc-worlds"
-    symlinkmap["/plugins-bindmount"]="/data/plugins"
-
-    debuglog "WE PROD - $YC_ENV - $DEV_AS_PROD_OVERRIDE";
+# We use `bukkit.yml` to set the world path to the bindmount. If not bukkit/paper, we need to symlink.
+# Atm we only deal with bukkit/paper and forge/fabric. Not sure about other server types.
+if [[ ${TYPE} != "PAPER" && ${TYPE} != "BUKKIT" ]]; then
+    symlinkmap["/worlds-bindmount"]="/data/world"
     create_symlinks symlinkmap
-
-    copy_configs
-
-    debuglog "Chown /data to ${UID}:${GID}"
-    run chown -R ${UID}:${GID} /data
-
-    run chown -R ${UID}:${GID} /plugins-bindmount
-    run chown -R ${UID}:${GID} /worlds-bindmount
-    run chown -R ${UID}:${GID} /mods-bindmount
-    run chown -R ${UID}:${GID} /modsconfig-bindmount
-
-    echo "==============="
-    ls -al /
-    ls -al /data
-elif [[ "$YC_ENV" == "dev" ]]; then
-    ## Symlinks
-    symlinkmap["/worlds-volume-dev"]="/yc-worlds"
-    run rm /data/plugins # Please refactor this...
-    symlinkmap["/plugins-volume-dev"]="/data/plugins"
-
-    debuglog "WE DEV";
-    create_symlinks symlinkmap
-
-    copy_configs
-
-    ## Chowns
-    for vol in ${!symlinkmap[@]}; do
-        run chown -R $UID:$GID ${vol}
-    done
-
-    ## Copying prod data
-    if [[ ! -z "$COPY_PROD_WORLD" ]]; then
-        run rsync -arP /worlds-bindmount/ /yc-worlds
-    fi
-
-    if [[ ! -z "$COPY_PROD_PLUGINS" ]]; then
-        ignored_plugins=(
-            --exclude='dynmap'
-        )
-        run rsync -arP  /plugins-bindmount/ /plugins-volume-dev "${ignored_plugins[@]}"
-    fi
-
-    ## Configs
-    # If dev env, use the MOTD passed in from docker-compose which gives us useful info.
-    # If prod, just copy `minecraft-data/configs/server.properties` wholesale and don't do anything extra.
-    if [[ ! -s "/data/server.properties" ]]; then
-        run cp /yc-server-configs/server.properties /data/server.properties
-    fi
-    if ! grep -q "motd" /data/server.properties; then
-        echo "motd=$MOTD" >> /data/server.properties # Don't use 'run' - the >> is processed after the 'run' so it also appends debug echos.
-    fi
 fi
+
+# Copy configs
+debuglog "Copying /yc-default-configs/server to /yc-configs"
+run cp /yc-default-configs/server/* /yc-configs/
+
+debuglog "Copying /yc-server-configs to /yc-configs"
+run cp /yc-server-configs/* /yc-configs/
+
+if [[ ${TYPE} != "FORGE" || ${TYPE} == "FABRIC" ]]; then
+    debuglog "Copying /modsconfig-bindmount to /yc-configs/config/"
+    mkdir /yc-configs/config/
+    run cp /modsconfig-bindmount/* /yc-configs/config/
+fi
+
+# Chowns
+debuglog "Chown /data to ${UID}:${GID}"
+run chown -R ${UID}:${GID} /data
+
+run chown -R ${UID}:${GID} /plugins-bindmount
+run chown -R ${UID}:${GID} /worlds-bindmount
+run chown -R ${UID}:${GID} /mods-bindmount
+run chown -R ${UID}:${GID} /modsconfig-bindmount
+
+echo "==============="
+ls -al /
+ls -al /data
+
+# Sort of unused atm. Keeping logic in case we want to reuse.
+if [[ ! -z "$COPY_PROD_WORLD" ]]; then
+    run rsync -arP /worlds-bindmount/ /yc-worlds
+fi
+
+if [[ ! -z "$COPY_PROD_PLUGINS" ]]; then
+    ignored_plugins=(
+        --exclude='dynmap'
+    )
+    run rsync -arP  /plugins-bindmount/ /plugins-volume-dev "${ignored_plugins[@]}"
+fi
+
 
 function warn_ctrl_c {
     if [[ ! -f "/last_ctrl_c" ]]; then
