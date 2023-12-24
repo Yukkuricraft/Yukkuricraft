@@ -25,6 +25,7 @@ from src.api.lib.environment import (
     delete_dev_env,
     generate_env_configs,
 )
+from src.api.lib.types import ConfigType
 from src.api.lib.runner import Runner
 from src.common.config import load_toml_config
 
@@ -79,7 +80,6 @@ def create_env():
 def delete_env(env):
     env_dict = Env.from_env_string(env).toJson()
 
-
     env_config = load_toml_config(env_str_to_toml_path(env))
     if env_config["general"].enable_env_protection:
         resp = make_cors_response(status_code=403)
@@ -97,6 +97,7 @@ def delete_env(env):
 
         resp.data = json.dumps(resp_data)
     return resp
+
 
 @envs_bp.route("/<env>/generate-configs", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight

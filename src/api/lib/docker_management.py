@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.environment import ensure_valid_env, get_next_valid_dev_env_number
 from src.api.lib.runner import Runner
+from src.api.lib.types import ConfigType
 from src.generator.docker_compose_gen import DockerComposeGen
 from src.generator.generator import GeneratorType, get_generator
 from src.common.logger_setup import logger
@@ -32,11 +33,13 @@ class DockerManagement:
 
         defined_containers: List = []
         for svc_name, svc_data in docker_compose.services.items():
+            logger.info(pformat({"svc_name": svc_name, "svc_data": svc_data}))
             container = {}
             container["image"] = svc_data.get_or_default("image", "NO IMAGE")
             container["names"] = (
                 [svc_name] if "name" not in svc_data else [svc_name, svc_data["name"]]
             )
+            container["container_name"] = svc_data.get_or_default("container_name", "")
             container["mounts"] = svc_data.get_or_default("mounts", [])
             container["networks"] = svc_data.get_or_default("networks", [])
             container["ports"] = svc_data.get_or_default("ports", [])
@@ -97,7 +100,40 @@ class DockerManagement:
 
         out = Runner.run(cmds)
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
-        logger.info(["Original command", stdout, stderr, exit_code])
+        logger.info([stdout, stderr, exit_code])
+
+        rtn_msg= stdout
+        if stderr:
+            rtn_msg += f"\n{stderr}"
+
+        return rtn_msg
+
+    def copy_configs_to_bindmount(self, container_name: str, env_str: str, type: ConfigType):
+        if type == ConfigType.PLUGIN:
+            # TODO Hardcoded paths :-/
+            copy_src = "/data/plugins/*"
+            copy_dest = "/yc-plugins"
+        elif type == ConfigType.MOD:
+            copy_src = "/data/config/*"
+            copy_dest = "/modsconfig-bindmount"
+        elif type == ConfigType.MOD_FILES:
+            copy_src = "/data/mods"
+            copy_dest = "/mods-bindmount"
+
+        cmds = [
+            [
+                "docker",
+                "exec",
+                container_name,
+                "bash",
+                "-c",
+                f"cp -r {copy_src} {copy_dest}"
+            ]
+        ]
+
+        out = Runner.run(cmds)
+        stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
+        logger.info([stdout, stderr, exit_code])
 
         rtn_msg= stdout
         if stderr:

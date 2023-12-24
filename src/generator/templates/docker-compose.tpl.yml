@@ -40,13 +40,13 @@ custom_extensions:
       MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
       DEBUG: "true"
       EULA: "true"
-      DEV_AS_PROD_OVERRIDE: ${DEV_AS_PROD_OVERRIDE}
       COPY_PROD_WORLD: ${COPY_PROD_WORLD}
       COPY_PROD_PLUGINS: ${COPY_PROD_PLUGINS}
-      COPY_MODS_SRC: /mods-bindmount
-      COPY_CONFIG_SRC: /modsconfig-bindmount
-      COPY_CONFIG_DEST: /data/config
       REMOVE_OLD_MODS: true
+      COPY_PLUGINS_SRC: /plugins-bindmount
+      COPY_MODS_SRC: /mods-bindmount
+      COPY_CONFIG_SRC: /yc-configs
+      COPY_CONFIG_DEST: /data
       OVERRIDE_SERVER_PROPERTIES: true
       VERSION: ${MC_VERSION}
       TYPE: ${MC_TYPE}
@@ -92,8 +92,6 @@ custom_extensions:
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
       - ${MC_FS_ROOT}/logs/${ENV}/worlds/<<WORLDGROUP>>/:/data/logs
-      - ycworldsvolume_<<WORLDGROUP>>:/worlds-volume-dev
-      - ycpluginsvolume_<<WORLDGROUP>>:/plugins-volume-dev
 
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic

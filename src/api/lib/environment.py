@@ -8,6 +8,7 @@ from typing import Callable, List, Optional
 
 from src.api.constants import ENV_FOLDER, MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
+from src.api.lib.types import ConfigType
 from src.common.config import load_toml_config
 from src.common.logger_setup import logger
 from src.generator.generator import GeneratorType, get_generator
@@ -221,30 +222,31 @@ def create_new_env(
     return env_name
 
 
-def delete_dev_env(env: str):
-    cmd = ["make", "delete_env", env]
-    logger.info("DELETING ENV: ", env)
-    return Runner.run_make_cmd(cmd, env=env)
+def delete_dev_env(env_str: str):
+    cmd = ["make", "delete_env", env_str]
+    logger.info("DELETING ENV: ", env_str)
+    return Runner.run_make_cmd(cmd, env=env_str)
 
 
-def generate_env_configs(env: str):
-    generate_all(env)
+def generate_env_configs(env_str: str):
+    generate_all(env_str)
 
     return {}
 
-def generate_all(env_name: str):
+def generate_all(env_str: str):
     # Generate env file
-    gen = get_generator(GeneratorType.ENV_FILE, env_name)
+    gen = get_generator(GeneratorType.ENV_FILE, env_str)
     gen.run()
-    generate_velocity_and_docker(env_name)
+    generate_velocity_and_docker(env_str)
 
-def generate_velocity_and_docker(env_name: str):
+def generate_velocity_and_docker(env_str: str):
     # Generate docker compose file
-    gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_name)
+    gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_str)
     gen.run()
 
 
-    hostname = get_env_hostname_from_config(env_name)
+    hostname = get_env_hostname_from_config(env_str)
     # Generate velocity file
-    gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_name)
+    gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_str)
     gen.run(hostname)
+

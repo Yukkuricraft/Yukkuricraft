@@ -31,7 +31,8 @@ class ServerManagement:
             "up",
         ]
 
-        return Runner.run([cmd], env_vars={ 'ENV': env, 'COPY_PROD_WORLD': '1', 'COPY_PROD_PLUGINS': '1' })
+        # return Runner.run([cmd], env_vars={ 'ENV': env, 'COPY_PROD_WORLD': '1', 'COPY_PROD_PLUGINS': '1' })
+        return Runner.run([cmd], env_vars={ 'ENV': env })
 
     @ensure_valid_env
     def down_containers(self, env: str) -> Tuple[str, str, int]:
