@@ -33,13 +33,14 @@ class DockerManagement:
 
         defined_containers: List = []
         for svc_name, svc_data in docker_compose.services.items():
-            logger.info(pformat({"svc_name": svc_name, "svc_data": svc_data}))
+            # logger.debug(pformat({"svc_name": svc_name, "svc_data": svc_data}))
             container = {}
             container["image"] = svc_data.get_or_default("image", "NO IMAGE")
             container["names"] = (
                 [svc_name] if "name" not in svc_data else [svc_name, svc_data["name"]]
             )
             container["container_name"] = svc_data.get_or_default("container_name", "")
+            container["hostname"] = svc_data.get_or_default("hostname", "")
             container["mounts"] = svc_data.get_or_default("mounts", [])
             container["networks"] = svc_data.get_or_default("networks", [])
             container["ports"] = svc_data.get_or_default("ports", [])
@@ -106,7 +107,7 @@ class DockerManagement:
         if stderr:
             rtn_msg += f"\n{stderr}"
 
-        return rtn_msg
+        return rtn_msg.strip()
 
     def copy_configs_to_bindmount(self, container_name: str, env_str: str, type: ConfigType):
         if type == ConfigType.PLUGIN:

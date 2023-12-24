@@ -50,7 +50,7 @@ echo "STARTING CUSTOM YC/MINECRAFT-SERVER START SCRIPT"
 
 # run mkdir /data/logs
 # run touch /data/logs/latest.log
-run find /yc-worlds/ -name session.lock -type f -delete
+run find /worlds-bindmount/ -name session.lock -type f -delete
 
 # We use `bukkit.yml` to set the world path to the bindmount. If not bukkit/paper, we need to symlink.
 # Atm we only deal with bukkit/paper and forge/fabric. Not sure about other server types.
@@ -60,13 +60,17 @@ if [[ ${TYPE} != "PAPER" && ${TYPE} != "BUKKIT" ]]; then
 fi
 
 # Copy configs
+if [[ ! -d "/yc-configs" ]]; then
+    mkdir /yc-configs/
+fi
+
 debuglog "Copying /yc-default-configs/server to /yc-configs"
 run cp /yc-default-configs/server/* /yc-configs/
 
 debuglog "Copying /yc-server-configs to /yc-configs"
 run cp /yc-server-configs/* /yc-configs/
 
-if [[ ${TYPE} != "FORGE" || ${TYPE} == "FABRIC" ]]; then
+if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
     debuglog "Copying /modsconfig-bindmount to /yc-configs/config/"
     mkdir /yc-configs/config/
     run cp /modsconfig-bindmount/* /yc-configs/config/
@@ -87,14 +91,19 @@ ls -al /data
 
 # Sort of unused atm. Keeping logic in case we want to reuse.
 if [[ ! -z "$COPY_PROD_WORLD" ]]; then
-    run rsync -arP /worlds-bindmount/ /yc-worlds
+    # We've removed the /yc-worlds symlink so it just points to worlds-bindmount atm.
+    # Realistically we'd need to refactor this part to mount a "src" and "dest" env's world data
+    # and copy that way.
+    # run rsync -arP /worlds-bindmount/ /yc-worlds
+    echo "COPY_PROD_WORLD is not implemented"
 fi
 
 if [[ ! -z "$COPY_PROD_PLUGINS" ]]; then
-    ignored_plugins=(
-        --exclude='dynmap'
-    )
-    run rsync -arP  /plugins-bindmount/ /plugins-volume-dev "${ignored_plugins[@]}"
+    # ignored_plugins=(
+    #     --exclude='dynmap'
+    # )
+    # run rsync -arP  /plugins-bindmount/ /plugins-volume-dev "${ignored_plugins[@]}"
+    echo "COPY_PROD_PLUGINS is not implemented"
 fi
 
 
