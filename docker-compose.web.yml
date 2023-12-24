@@ -8,7 +8,8 @@ services:
     image: yukkuricraft/yc-docker-api
     restart: 'on-failure'
     depends_on:
-      - yc-api-mysql
+      yc-api-mysql:
+        condition: service_healthy
     environment:
       VIRTUAL_HOST: ${API_HOST}
       VIRTUAL_PORT: 5001
@@ -16,9 +17,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./:/app
-      - /var/lib/yukkuricraft/logs:/var/lib/yukkuricraft/logs
+      - /var/lib/yukkuricraft/:/var/lib/yukkuricraft/
     networks:
       - yc-web-dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "10"
 
   yc-api-mysql:
     container_name: yc-api-mysql
@@ -32,6 +38,20 @@ services:
       - ${MC_FS_ROOT}/db/api:/var/lib/mysql
     networks:
       - yc-web-dev
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:3306
+      interval: 10s
+      timeout: 10s
+      retries: 15
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "10"
 
   nginx-proxy:
     container_name: nginx-proxy
@@ -46,6 +66,11 @@ services:
       - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
     networks:
       - yc-web-dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "10"
 
   # Homelab setup currently has an independent nginx reverse proxy with SSL certs serving traffic to both prod and dev hosts.
   # Leaving this in incase development work is done outside these two hosts. To re-enable local SSL cert generation, should be

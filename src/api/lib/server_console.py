@@ -29,7 +29,7 @@ def listen_to_server_console(env: str, world_group_name: str) -> Generator:
 
     logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE() (Nyan)")
     # TODO: Use configurable root.
-    log_file = f"/var/lib/yukkuricraft/logs/{env}/worlds/{world_group_name}/latest.log"
+    log_file = f"/var/lib/yukkuricraft/env/{env}/{world_group_name}/logs/latest.log"
 
     # Output N last lines of file
     for line in tail(log_file, "-n100"):

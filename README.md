@@ -2,6 +2,8 @@
 
 Containerized Yukkuricraft
 
+# 2024-ish edit: This entire doc really just needs to be rewritten rip.
+
 ## Architecture (WIP)
 
 ![Architecture Draft](docs/img/architecture_diagram.jpeg)

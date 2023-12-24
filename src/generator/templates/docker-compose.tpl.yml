@@ -13,6 +13,13 @@
 
 version: "3.4"
 
+x_logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "20"
+
 # These custom_extensions are read by docker_compose_gen.py and used as templates for generating
 # the full service definition.
 custom_extensions:
@@ -57,7 +64,6 @@ custom_extensions:
       RCON_PASSWORD_FILE: /rcon.password
       MAX_MEMORY: 4G
       USE_AIKAR_FLAGS: true
-
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
@@ -86,12 +92,18 @@ custom_extensions:
         read_only: ${BINDMOUNT_RO}
         bind:
           create_host_path: true
+      - type: bind
+        source: ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/logs
+        target: /data/logs
+        read_only: ${BINDMOUNT_RO}
+        bind:
+          create_host_path: true
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/default:/yc-default-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/plugins:/yc-plugin-configs
       - ${YC_REPO_ROOT}/secrets/configs/${ENV}/worlds/<<WORLDGROUP>>/server:/yc-server-configs
-      - ${MC_FS_ROOT}/logs/${ENV}/worlds/<<WORLDGROUP>>/:/data/logs
+    logging: *default-logging
 
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic
@@ -99,7 +111,7 @@ custom_extensions:
       BACKUP_NAME: <<WORLDGROUP>>
       BACKUP_INTERVAL: "3h"
       BACKUP_METHOD: restic
-      SRC_DIR: /worlds-bindmount-prod
+      SRC_DIR: /worlds-bindmount
       RCON_HOST: set-by-generator
       RCON_PASSWORD_FILE: /rcon.password
       RESTIC_REPOSITORY: /backups
@@ -121,6 +133,7 @@ custom_extensions:
       - ${BACKUPS_ROOT}/restic-<<WORLDGROUP>>:/backups
     volumes_from:
       - mc_<<WORLDGROUP>>:ro
+    logging: *default-logging
 
   velocity_template:
     depends_on: {}
@@ -141,6 +154,7 @@ custom_extensions:
       - "${VELOCITY_PORT}:25577"
     networks:
       - ycnet
+    logging: *default-logging
 
 # "Static" services
 services:
@@ -162,6 +176,7 @@ services:
       retries: 15
     networks:
       - ycnet
+    logging: *default-logging
 
   mysql_backup:
     image: yukkuricraft/mysql-backup-restic
@@ -195,6 +210,7 @@ services:
       - ${BACKUPS_ROOT}/restic-mysql:/backups
     networks:
       - ycnet
+    logging: *default-logging
 
   postgres:
     container_name: YC-${ENV}-postgres
@@ -215,6 +231,7 @@ services:
       retries: 15
     networks:
       - ycnet
+    logging: *default-logging
 
   # TODO: Postgres backup. prodrigestivill/postgres-backup-local
 
@@ -233,6 +250,7 @@ services:
       retries: 15
     networks:
       - ycnet
+    logging: *default-logging
 
 # Volumes will also be dynamically generated for each "enabled" world group.
 volumes:
