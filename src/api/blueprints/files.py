@@ -20,6 +20,7 @@ from src.api.lib.auth import (
 from src.api.db import db
 from src.api.lib.environment import Env, list_valid_envs, create_new_env, delete_dev_env
 from src.api.lib.file_management import FileManager
+from src.api.lib.helpers import log_request
 from src.api.lib.runner import Runner
 
 from src.common.logger_setup import logger
@@ -30,6 +31,7 @@ files_bp: Blueprint = Blueprint("files", __name__)
 @files_bp.route("/list", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def list_files():
     post_data = request.get_json()
 
@@ -48,6 +50,7 @@ def list_files():
 @files_bp.route("/read", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def read_file():
     post_data = request.get_json()
 
@@ -64,6 +67,7 @@ def read_file():
 @files_bp.route("/write", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def write_file():
     post_data = request.get_json()
 

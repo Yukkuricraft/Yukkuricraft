@@ -23,6 +23,7 @@ from src.api.lib.auth import (
 from src.api.lib.server_management import ServerManagement
 from src.api.lib.docker_management import DockerManagement
 from src.api.lib.environment import Env
+from src.api.lib.helpers import log_request
 from src.api.lib.types import ConfigType
 
 
@@ -34,6 +35,7 @@ DockerMgmtApi = DockerManagement()
 @server_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def list_defined_containers(env):
     """List all containers that are defined in the generated server compose for this env"""
     resp = make_cors_response()
@@ -46,6 +48,7 @@ def list_defined_containers(env):
 @server_bp.route("/<env>/containers/active", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def list_active_containers(env):
     """List all containers running"""
     resp = make_cors_response()
@@ -58,6 +61,7 @@ def list_active_containers(env):
 @server_bp.route("/<env>/containers/up", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def up_containers(env):
     resp = make_cors_response()
     resp_data = ServerMgmtApi.up_containers(env=env)
@@ -72,6 +76,7 @@ def up_containers(env):
 )
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def up_one_container(env):
     resp = make_cors_response()
     container_name = request.json['container_name']
@@ -88,6 +93,7 @@ def up_one_container(env):
 @server_bp.route("/<env>/containers/down", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def down_containers(env):
     resp = make_cors_response()
     resp_data = ServerMgmtApi.down_containers(env=env)
@@ -103,6 +109,7 @@ def down_containers(env):
 )
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def down_one_container(env):
     resp = make_cors_response()
     container_name = request.json['container_name']
@@ -118,6 +125,7 @@ def down_one_container(env):
 @server_bp.route("/<env>/containers/copy-configs-to-bindmount", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def copy_configs_to_bindmount(env):
     if request.method == "POST":
         resp = make_cors_response()

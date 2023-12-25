@@ -18,6 +18,7 @@ from src.api.lib.auth import (
     validate_access_token,
     get_access_token_from_headers,
 )
+from src.api.lib.helpers import log_request
 from src.api.db import db
 from src.api.models import AccessToken, User
 
@@ -28,6 +29,7 @@ auth_bp: Blueprint = Blueprint("auth", __name__)
 
 @auth_bp.route("/login", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
+@log_request
 def login():
     if request.method == "POST":
         resp = make_cors_response()
@@ -49,6 +51,7 @@ def login():
 
 @auth_bp.route("/logout", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
+@log_request
 def logout():
     if request.method == "POST":
         resp = make_cors_response()
@@ -65,6 +68,7 @@ def logout():
 @auth_bp.route("/me", methods=["OPTIONS", "GET"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def me():
     if request.method == "GET":
         resp = make_cors_response()
@@ -83,6 +87,7 @@ def me():
 # @auth_bp.route("/createdbdeleteme", methods=["OPTIONS", "GET"])
 # @intercept_cors_preflight
 # @validate_access_token
+# @log_request
 def createdb():
     from src.api.models import create_db_tables
     logger.warning("?? CREATEDB")

@@ -25,6 +25,7 @@ from src.api.lib.environment import (
     delete_dev_env,
     generate_env_configs,
 )
+from src.api.lib.helpers import log_request
 from src.api.lib.types import ConfigType
 from src.api.lib.runner import Runner
 from src.common.config import load_toml_config
@@ -37,6 +38,7 @@ envs_bp: Blueprint = Blueprint("environment", __name__)
 @envs_bp.route("/create-env", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def create_env():
     """List all containers running"""
     post_data = request.get_json()
@@ -77,6 +79,7 @@ def create_env():
 @envs_bp.route("/<env>", methods=["DELETE", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def delete_env(env):
     env_dict = Env.from_env_string(env).toJson()
 
@@ -88,6 +91,14 @@ def delete_env(env):
             'error': True,
             'message': f"You can't delete an environment that has env protection enabled. Disable it before trying to delete {env}",
         })
+    elif env in ["env1"]:
+        # Blegh. Hardcoding ugly.
+        resp = make_cors_response(status_code=403)
+        resp.headers.add("Content-Type", "application/json")
+        resp.data = json.dumps({
+            'error': True,
+            'message': f"You can't delete env1/prod.",
+        })
     else:
         resp = make_cors_response(status_code=200)
         resp.headers.add("Content-Type", "application/json")
@@ -96,12 +107,14 @@ def delete_env(env):
         resp_data["env"] = env_dict
 
         resp.data = json.dumps(resp_data)
+
     return resp
 
 
 @envs_bp.route("/<env>/generate-configs", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def generate_configs(env):
     env_dict = Env.from_env_string(env).toJson()
 
@@ -117,6 +130,7 @@ def generate_configs(env):
 @envs_bp.route("/list-envs-with-configs", methods=["OPTIONS", "GET"])
 @intercept_cors_preflight
 @validate_access_token
+@log_request
 def list_envs_with_configs():
     if request.method == "GET":
         resp = make_cors_response()
