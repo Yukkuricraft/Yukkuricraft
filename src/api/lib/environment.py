@@ -13,6 +13,8 @@ from src.common.config import load_toml_config
 from src.common.logger_setup import logger
 from src.generator.generator import GeneratorType, get_generator
 
+class InvalidPortException(Exception):
+    pass
 
 @total_ordering
 class Env:
@@ -161,6 +163,11 @@ def get_next_valid_env_number():
 
 
 def list_valid_envs() -> List[Env]:
+    """Returns a list of valid and defined `Env`s in the `env/` folder
+
+    Returns:
+        List[Env]: List of valid envs
+    """
     envs = []
 
     for item in ENV_FOLDER.iterdir():
@@ -198,9 +205,23 @@ def list_valid_envs() -> List[Env]:
 
 def create_new_env(
     proxy_port: int, env_alias: str, enable_env_protection: bool, description: str = ""
-):
+) -> str:
+    """Creates a new env using the next available and valid env number.
+
+    Args:
+        proxy_port (int): Port to use for the proxy
+        env_alias (str): Human readable alias (name) for this env
+        enable_env_protection (bool): Whether to enable env protection, which disables deleting the env.
+        description (str, optional): Description for humans. Defaults to "".
+
+    Raises:
+        InvalidPortException: Invalid port
+
+    Returns:
+        str: Env id string in the format of "env#" where # is any positive int
+    """
     if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
-        raise Exception(
+        raise InvalidPortException(
             f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
         )
 
@@ -216,6 +237,16 @@ def create_new_env(
 
 
 def delete_dev_env(env_str: str):
+    """Delete an environment defined by its env string
+
+    Cannot delete some envs such as env1.
+
+    Args:
+        env (str): Environment name string
+
+    Returns:
+        _type_: _description_
+    """
     cmd = ["make", "delete_env", env_str]
     logger.info("DELETING ENV: ", env_str)
     return Runner.run_make_cmd(cmd, env=env_str)

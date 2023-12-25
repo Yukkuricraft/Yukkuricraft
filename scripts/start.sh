@@ -37,8 +37,6 @@ function create_symlinks {
 # START FLOW
 debuglog "RUNNING AS: $(whoami)"
 debuglog "MOTD: $MOTD"
-debuglog "COPY_PROD_WORLD: $COPY_PROD_WORLD"
-debuglog "COPY_PROD_PLUGINS: $COPY_PROD_PLUGINS"
 debuglog "UID: $UID"
 debuglog "GID: $GID"
 debuglog "SERVER TYPE: $TYPE"
@@ -70,8 +68,11 @@ debuglog "Copying /yc-server-configs to /yc-configs"
 run cp /yc-server-configs/* /yc-configs/
 
 if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
+    if [[ ! -d "/yc-configs/config" ]]; then
+        mkdir /yc-configs/config/
+    fi
+
     debuglog "Copying /modsconfig-bindmount to /yc-configs/config/"
-    mkdir /yc-configs/config/
     run cp /modsconfig-bindmount/* /yc-configs/config/
 fi
 
@@ -85,26 +86,8 @@ run chown -R ${UID}:${GID} /mods-bindmount
 run chown -R ${UID}:${GID} /modsconfig-bindmount
 
 echo "==============="
-ls -al /
-ls -al /data
-
-# Sort of unused atm. Keeping logic in case we want to reuse.
-if [[ ! -z "$COPY_PROD_WORLD" ]]; then
-    # We've removed the /yc-worlds symlink so it just points to worlds-bindmount atm.
-    # Realistically we'd need to refactor this part to mount a "src" and "dest" env's world data
-    # and copy that way.
-    # run rsync -arP /worlds-bindmount/ /yc-worlds
-    echo "COPY_PROD_WORLD is not implemented"
-fi
-
-if [[ ! -z "$COPY_PROD_PLUGINS" ]]; then
-    # ignored_plugins=(
-    #     --exclude='dynmap'
-    # )
-    # run rsync -arP  /plugins-bindmount/ /plugins-volume-dev "${ignored_plugins[@]}"
-    echo "COPY_PROD_PLUGINS is not implemented"
-fi
-
+run ls -al /
+run ls -al /data
 
 function warn_ctrl_c {
     if [[ ! -f "/last_ctrl_c" ]]; then

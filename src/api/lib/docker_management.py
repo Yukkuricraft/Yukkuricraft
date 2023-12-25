@@ -19,12 +19,18 @@ from src.common.decorators import serialize_tuple_out_as_dict
 
 class DockerManagement:
     @ensure_valid_env
-    def list_defined_containers(self, env: str):
-        """
-        Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
+    def list_defined_containers(self, env: str) -> List[Dict]:
+        """Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
 
         We do this by parsing the generated `gen/docker-compose.{{ENV}}.yml` file.
         This may have unforseen bugs in the future...? :-/
+
+        Args:
+            env (str): Environment name string
+
+        Returns:
+            List[Dict]: List of dicts representing container definitions.
+            TODO: Dataclass this.
         """
 
         docker_compose_gen = DockerComposeGen(env)
@@ -59,10 +65,17 @@ class DockerManagement:
         return defined_containers
 
     @ensure_valid_env
-    def list_active_containers(self, env: str):
-        """
-        Eh, the @Environment.ensure_valid_env decorator might be confusing
+    def list_active_containers(self, env: str) -> List[Dict]:
+        """List containers for env that are currently up and running.
+
+        The @Environment.ensure_valid_env decorator might be confusing
         as this func needs 'env=env' in the calling sig vs just 'env' for up/up_one/down/down_one
+
+        Args:
+            env (str): Environment name string
+
+        Returns:
+            List[Dict]: Container definitions as returned from `docker ps`
         """
         cmds = [
             [
@@ -88,7 +101,18 @@ class DockerManagement:
 
         return containers
 
-    def send_command_to_container(self, container_name: str, command: str):
+    def send_command_to_container(self, container_name: str, command: str) -> str:
+        """Send a command to the minecraft console using rcon-cli
+
+        Args:
+            container_name (str): A docker container name or id
+            command (str): Command string such as 'say hello', 'list', 'op remi_scarlet' etc
+
+        Returns:
+            str: Response from rcon-cli
+        """
+
+
         cmds = [
             [
                 "docker",
@@ -109,7 +133,17 @@ class DockerManagement:
 
         return rtn_msg.strip()
 
-    def copy_configs_to_bindmount(self, container_name: str, env_str: str, type: ConfigType):
+    def copy_configs_to_bindmount(self, container_name: str, env_str: str, type: ConfigType) -> str:
+        """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
+
+        Args:
+            container_name (str): A docker container name or id
+            env_str (str): Environment name string
+            type (ConfigType): The type of configs to copy back.
+
+        Returns:
+            str: Verbose output from `cp -v`
+        """
         if type == ConfigType.PLUGIN:
             # TODO Hardcoded paths :-/
             copy_src = "/data/plugins/*"
@@ -128,7 +162,7 @@ class DockerManagement:
                 container_name,
                 "bash",
                 "-c",
-                f"cp -r {copy_src} {copy_dest}"
+                f"cp -rv {copy_src} {copy_dest}"
             ]
         ]
 
@@ -144,7 +178,7 @@ class DockerManagement:
 
     """
     ARGS=$(filter-out $@,$(MAKECMDGOALS))
-    PRE=ENV=$(ENV)  COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
+    PRE=ENV=$(ENV)
     COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
 
     .PHONY: up
@@ -187,7 +221,7 @@ class DockerManagement:
             "up",
         ]
 
-        return Runner.run([cmd], env_vars={ 'ENV': env, 'COPY_PROD_WORLD': '1', 'COPY_PROD_PLUGINS': '1' })
+        return Runner.run([cmd], env_vars={ 'ENV': env })
 
     @ensure_valid_env
     def down_containers(self, env: str) -> Tuple[str, str, int]:
@@ -203,6 +237,19 @@ class DockerManagement:
 
     @ensure_valid_env
     def up_one_container(self, env: str, container_name: str) -> Tuple[str, str, int]:
+        """
+        REFACTOR TO NOT USE MAKE
+        """
+        cmd = [
+            "make",
+            "up_one",
+            container_name,
+        ]
+
+        return Runner.run_make_cmd(cmd, env=env)
+
+    @ensure_valid_env
+    def down_one_container(self, env: str, container_name: str) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -240,6 +287,3 @@ class DockerManagement:
         ]
 
         return Runner.run_make_cmd(cmd, env=env)
-
-    def backup_container_volumes():
-        pass

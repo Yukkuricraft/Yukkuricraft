@@ -52,9 +52,7 @@ COMPOSE_ARGS=--project-name $(ENV) \
 			 --project-directory $(shell pwd) \
 			 --env-file gen/$(ENV).env
 
-COPY_PROD_WORLD?=
-COPY_PROD_PLUGINS?=
-PRE=ENV=$(ENV) COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
+PRE=ENV=$(ENV)
 
 .PHONY: save_data_to_disk
 save_data_to_disk: __pre_ensure
@@ -246,7 +244,7 @@ run_entrypoint_target_on_mysql_backup_restic:
 		-e ENTRYPOINT_TARGET="$(ENTRYPOINT_TARGET)" \
 		-v /tmp_backup_path \
 		-v /media/backups-primary/restic-mysql:/backup \
-		--network="prod_ycnet" \
+		--network="env1_ycnet" \
 		yukkuricraft/mysql-backup-restic
 
 .PHONY: restore_mysql_from_backup
@@ -260,7 +258,7 @@ restore_mysql_from_backup:
 		-e ENTRYPOINT_TARGET="/restic.sh restore 2>&1 /foo.out" \
 		-v /tmp_backup_path \
 		-v /media/backups-primary/restic-mysql:/backups \
-		--network="prod_ycnet" \
+		--network="env1_ycnet" \
 		yukkuricraft/mysql-backup-restic
 
 .PHONY: get_snapshots_for_repo
@@ -270,7 +268,7 @@ get_snapshots_for_repo:
 		-e RESTIC_PASSWORD_FILE=/restic.password \
 		-v /media/backups-primary/restic-$(REPO):/backups \
 		-v $(PWD)/secrets/restic.password:/restic.password \
-		--network="prod_ycnet" \
+		--network="env1_ycnet" \
 		restic/restic \
 		snapshots
 

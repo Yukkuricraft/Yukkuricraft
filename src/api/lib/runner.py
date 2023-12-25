@@ -26,7 +26,15 @@ class Runner:
         is equivalent to `cat foo.txt > echo`
 
         stderr is discarded as far as passing to the next stdin goes.
+
+        Args:
+            cmds (List[List[str]]): List of commands to run. stdout from previous commands are piped to the next command's stdin
+            env_vars (Optional[Dict[str, str]], optional): Environment variables to set while running commands. Defaults to None
+
+        Returns:
+            Tuple[str, str, int]: Stdout, stdin, and returncode
         """
+
         env = os.environ.copy()
         if env_vars is not None:
             for key, value in env_vars.items():
@@ -47,5 +55,14 @@ class Runner:
 
     @staticmethod
     def run_make_cmd(cmd: List, env: str) -> Tuple[str, str, int]:
+        """Wrapper for `Runner.run()` but adds the `env` as an env var
+
+        Args:
+            cmd (List): Make command to run. Eg, ["make", "up"]
+            env (str): Env name string
+
+        Returns:
+            Tuple[str, str, int]: Stdout, stdin, and return code
+        """
         env_vars = {"ENV": env}
         return Runner.run([cmd], env_vars=env_vars)

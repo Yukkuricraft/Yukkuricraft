@@ -20,7 +20,6 @@ from src.api.lib.auth import (
     intercept_cors_preflight,
     make_cors_response,
 )
-from src.api.lib.server_management import ServerManagement
 from src.api.lib.docker_management import DockerManagement
 from src.api.lib.environment import Env
 from src.api.lib.helpers import log_request
@@ -29,7 +28,6 @@ from src.api.lib.types import ConfigType
 
 server_bp: Blueprint = Blueprint("server", __name__)
 
-ServerMgmtApi = ServerManagement()
 DockerMgmtApi = DockerManagement()
 
 @server_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
@@ -64,7 +62,7 @@ def list_active_containers(env):
 @log_request
 def up_containers(env):
     resp = make_cors_response()
-    resp_data = ServerMgmtApi.up_containers(env=env)
+    resp_data = DockerMgmtApi.up_containers(env=env)
     resp_data["env"] = Env.from_env_string(env).toJson()
 
     resp.data = json.dumps(resp_data)
@@ -81,7 +79,7 @@ def up_one_container(env):
     resp = make_cors_response()
     container_name = request.json['container_name']
 
-    resp_data = ServerMgmtApi.up_one_container(env=env, container_name=container_name)
+    resp_data = DockerMgmtApi.up_one_container(env=env, container_name=container_name)
     resp_data["env"] = Env.from_env_string(env).toJson()
     resp_data["container_name"] = container_name
 
@@ -96,7 +94,7 @@ def up_one_container(env):
 @log_request
 def down_containers(env):
     resp = make_cors_response()
-    resp_data = ServerMgmtApi.down_containers(env=env)
+    resp_data = DockerMgmtApi.down_containers(env=env)
     resp_data["env"] = Env.from_env_string(env).toJson()
 
     resp.data = json.dumps(resp_data)
@@ -114,7 +112,7 @@ def down_one_container(env):
     resp = make_cors_response()
     container_name = request.json['container_name']
 
-    resp_data = ServerMgmtApi.down_one_container(env=env, container_name=container_name)
+    resp_data = DockerMgmtApi.down_one_container(env=env, container_name=container_name)
     resp_data["env"] = Env.from_env_string(env).toJson()
     resp_data["container_name"] = container_name
 
