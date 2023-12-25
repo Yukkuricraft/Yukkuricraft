@@ -36,7 +36,6 @@ function create_symlinks {
 
 # START FLOW
 debuglog "RUNNING AS: $(whoami)"
-debuglog "YC_ENV: $YC_ENV"
 debuglog "MOTD: $MOTD"
 debuglog "COPY_PROD_WORLD: $COPY_PROD_WORLD"
 debuglog "COPY_PROD_PLUGINS: $COPY_PROD_PLUGINS"

@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Tuple
 from subprocess import Popen, PIPE
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
-from src.api.lib.environment import ensure_valid_env, get_next_valid_dev_env_number
+from src.api.lib.environment import ensure_valid_env
 from src.api.lib.runner import Runner
 from src.api.lib.types import ConfigType
 from src.generator.docker_compose_gen import DockerComposeGen
@@ -144,7 +144,7 @@ class DockerManagement:
 
     """
     ARGS=$(filter-out $@,$(MAKECMDGOALS))
-    PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
+    PRE=ENV=$(ENV)  COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
     COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
 
     .PHONY: up
@@ -156,8 +156,8 @@ class DockerManagement:
             echo ''; \
             exit 1; \
         fi
-        @if ! [[ "$(ENV_TYPE)" =~ ^(dev|prod)$$ ]]; then \
-            echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_TYPE). Aborting."; \
+        @if ! [[ "$(ENV)" =~ ^env$$ ]]; then \
+            echo "ENV value must be 'env#' where # is any int. Got: $(ENV). Aborting."; \
             echo ''; \
             exit 1; \
         fi

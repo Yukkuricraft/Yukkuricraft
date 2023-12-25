@@ -94,6 +94,7 @@ class NewDevEnvGen(BaseGenerator):
             copied_config["general"] = {}
         copied_config["general"]["description"] = description
         copied_config["general"]["enable_env_protection"] = enable_env_protection
+        copied_config["general"]["enable_backups"] = False
 
         if "runtime-environment-variables" not in copied_config:
             copied_config["runtime-environment-variables"] = {}

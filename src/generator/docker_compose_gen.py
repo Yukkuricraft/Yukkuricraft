@@ -109,7 +109,7 @@ class DockerComposeGen(BaseGenerator):
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
-            if self.is_prod():
+            if self.is_prod() or self.env_config["general"].enable_backups:
                 backup_service_template = copy.deepcopy(
                     self.docker_compose_template.custom_extensions.mc_backups_sidecar_template.as_dict()
                 )

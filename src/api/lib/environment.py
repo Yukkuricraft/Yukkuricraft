@@ -46,8 +46,6 @@ class Env:
         return {field: getattr(self, field) for field in self.fields_to_print}
 
     fields_to_print = [
-        "type",
-        "num",
         "config",
         "name",
         "hostname",
@@ -57,8 +55,6 @@ class Env:
         "enable_env_protection",
     ]
 
-    type: str
-    num: Optional[int]
 
     config: dict
 
@@ -145,7 +141,7 @@ def get_env_protection_status(env_str: str):
     )
 
 
-def get_next_valid_dev_env_number():
+def get_next_valid_env_number():
     """
     Starts checking from dev1, dev2, etc.
     Returns the next valid int.
@@ -154,14 +150,14 @@ def get_next_valid_dev_env_number():
     Eg having dev1, dev2, dev666 will return dev3.
     """
 
-    next_valid_dev_env_number = 1
-    dev_envs = list(filter(lambda env: env.type == "dev", list_valid_envs()))
-    dev_envs.sort(key=lambda env: env.num)
-    for env in dev_envs:
-        if env.num == next_valid_dev_env_number:
-            next_valid_dev_env_number += 1
+    next_valid_env_number = 1
+    envs = list_valid_envs()
+    envs.sort(key=lambda env: env.num)
+    for env in envs:
+        if env.num == next_valid_env_number:
+            next_valid_env_number += 1
 
-    return next_valid_dev_env_number
+    return next_valid_env_number
 
 
 def list_valid_envs() -> List[Env]:
@@ -177,7 +173,6 @@ def list_valid_envs() -> List[Env]:
 
         name = item.stem
 
-        env.type = re.sub(r"\d", "", name)
         num = re.sub(r"\D", "", name)
         env.num = int(num) if num != "" else None
 
@@ -189,9 +184,7 @@ def list_valid_envs() -> List[Env]:
         env.alias = get_env_alias_from_config(name)
         env.enable_env_protection = get_env_protection_status(name)
 
-        env.formatted = f"{env.type.capitalize()}"
-        if env.num is not None:
-            env.formatted += f" {env.num}"
+        env.formatted = f"Env {env.num} - {env.alias.capitalize()}"
 
         envs.append(env)
 
@@ -211,7 +204,7 @@ def create_new_env(
             f"Invalid proxy port supplied. Must be between {MIN_VALID_PROXY_PORT} and {MAX_VALID_PROXY_PORT}"
         )
 
-    env_name = f"dev{get_next_valid_dev_env_number()}"
+    env_name = f"env{get_next_valid_env_number()}"
 
     # Generate env toml config
     gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?

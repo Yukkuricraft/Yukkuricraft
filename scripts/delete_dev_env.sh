@@ -14,7 +14,7 @@ if [ -z ${ENV+x} ]; then
     exit 1
 fi
 
-if [ ${ENV} == 'prod' ]; then
+if [ ${ENV} == 'env1' ]; then
     log ""
     log "Please don't delete prod. :("
     log ""

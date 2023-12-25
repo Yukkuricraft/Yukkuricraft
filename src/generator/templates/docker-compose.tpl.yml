@@ -43,8 +43,7 @@ custom_extensions:
       - ycnet
     stop_grace_period: 20s
     environment:
-      YC_ENV: ${ENV_TYPE}
-      MOTD: "<<WORLDGROUP>>-${ENV_TYPE}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
+      MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
       DEBUG: "true"
       EULA: "true"
       COPY_PROD_WORLD: ${COPY_PROD_WORLD}

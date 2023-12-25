@@ -2,7 +2,7 @@
 ## SETUP ##
 ###########
 SHELL=/bin/bash
-ENV?=dev1
+ENV?=env2
 CURRENT_UID=$(shell id -u)
 CURRENT_GID=$(shell id -g)
 DOCKER_GID=$(shell getent group docker | cut -d: -f3)
@@ -15,15 +15,15 @@ __pre_ensure: __ensure_env_file_exists
 .PHONY: __ensure_env
 __ensure_env:
 	@if [[ -z "$(ENV)" ]]; then \
-		echo 'Must pass ENV: make ENV=(prod|dev1) <target>. Aborting.'; \
+		echo 'Must pass ENV: make ENV=(env1|env2|env#) <target>. Aborting.'; \
 		echo ''; \
 		exit 1; \
 	fi
 
 .PHONY: __ensure_valid_env
 __ensure_valid_env:
-	@if ! [[ "$(ENV_TYPE)" =~ ^(dev|prod)$$ ]]; then \
-		echo "ENV value must be 'prod', 'dev', or 'dev#' where # is any int. Got: $(ENV_TYPE). Aborting."; \
+	@if ! [[ "$(ENV)" =~ ^env ]]; then \
+		echo "ENV value must be 'env#' where # is any int. Got: $(ENV). Aborting."; \
 		echo ''; \
 		exit 1; \
 	fi
@@ -39,8 +39,6 @@ __ensure_env_file_exists:
 #############
 ## TARGETS ##
 #############
-# ENV_TYPE strips numbers so we only keep dev or prod
-ENV_TYPE=$(shell val='$(ENV)'; echo "$${val//[0-9]/}")
 
 COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
 WEB_COMPOSE_FILE="docker-compose.web.yml"
@@ -56,15 +54,11 @@ COMPOSE_ARGS=--project-name $(ENV) \
 
 COPY_PROD_WORLD?=
 COPY_PROD_PLUGINS?=
-PRE=ENV=$(ENV) ENV_TYPE=$(ENV_TYPE) COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
+PRE=ENV=$(ENV) COPY_PROD_WORLD=$(COPY_PROD_WORLD) COPY_PROD_PLUGINS=$(COPY_PROD_PLUGINS)
 
-.PHONY: save_devdata_to_disk
-save_devdata_to_disk: __pre_ensure
-save_devdata_to_disk:
-	@if [[ "$(ENV_TYPE)" == "prod" ]]; then \
-		echo "You ran the 'save_devdata_to_disk' target with an ENV_TYPE of prod! Aborting."; \
-		exit 1; \
-	fi
+.PHONY: save_data_to_disk
+save_data_to_disk: __pre_ensure
+save_data_to_disk:
 	@if [[ ! -d "${YC_FS_ROOT}/env/${ENV}/worlds" ]]; then \
 		echo "Please create the '${YC_FS_ROOT}/${ENV}/worlds' directory owned by ${CURRENT_UID}:${CURRENT_GID} to continue. Aborting"; \
 		exit 1; \

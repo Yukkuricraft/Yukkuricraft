@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Tuple
 from subprocess import Popen, PIPE
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
-from src.api.lib.environment import ensure_valid_env, get_next_valid_dev_env_number
+from src.api.lib.environment import ensure_valid_env
 from src.api.lib.runner import Runner
 from src.generator.docker_compose_gen import DockerComposeGen
 from src.generator.generator import GeneratorType, get_generator

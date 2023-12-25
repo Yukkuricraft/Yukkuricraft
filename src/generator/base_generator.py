@@ -18,7 +18,7 @@ class BaseGenerator:
         self.env_config = load_toml_config(f"env/{env}.toml", curr_dir)
 
     def is_prod(self):
-        return self.env == "prod"
+        return self.env == "env1"
 
     def replace_interpolations(self, inp, replace_value: str):
         """
