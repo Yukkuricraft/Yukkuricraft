@@ -44,18 +44,20 @@ class NewDevEnvGen(BaseGenerator):
         self.repo_root = Path(__file__).parent.parent.parent  # G w o s s
         self.server_root = Path("/var/lib/yukkuricraft")
 
-    def run(self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str):
+    def run(self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, server_type: str, description: str):
         logger.info("Generating New Environment Directories")
         logger.info(f"- Repo Root: {self.repo_root}")
         logger.info(f"- Server Root: {self.server_root}")
         logger.info(f"- Base Env: {self.env}")
         logger.info(f"- New Env: {new_env}")
         logger.info(f"- Enable Env Protection: {enable_env_protection}")
+        logger.info(f"- Server Type:\n{server_type}")
         logger.info(f"- Description:\n{description}")
         logger.info("\n")
 
-        self.generate_env_config(new_env, velocity_port, env_alias, enable_env_protection, description)
-        self.generate_secrets_config_dirs(new_env)
+        self.generate_env_config(new_env, velocity_port, env_alias, enable_env_protection, server_type, description)
+        self.generate_config_dirs(new_env)
+        self.generate_server_type_specific_configs(server_type)
 
     ENV_CONFIG_SECTION_ORDER = [
         "general",
@@ -82,7 +84,7 @@ class NewDevEnvGen(BaseGenerator):
         return copied_config
 
     def generate_env_config(
-        self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str
+        self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, server_type: str, description: str
     ):
         """
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
@@ -101,6 +103,7 @@ class NewDevEnvGen(BaseGenerator):
         copied_config["runtime-environment-variables"]["ENV"] = new_env
         copied_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
         copied_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port
+        copied_config["runtime-environment-variables"]["MC_TYPE"] = server_type
 
         new_config_path = self.repo_root / "env" / f"{new_env}.toml"
         with open(new_config_path, "wb") as f:
@@ -121,9 +124,9 @@ class NewDevEnvGen(BaseGenerator):
     PLUGINS_CONFIG_DIR = "plugins"
     WORLDS_CONFIG_DIR = "server"
 
-    def generate_secrets_config_dirs(self, new_env: str):
+    def generate_config_dirs(self, new_env: str):
         # World dirs
-        for world in self.env_config["world-groups"].enabled_groups:
+        for world in self.get_enabled_world_groups():
             logger.info("\n")
             logger.info(f"Generating dirs for {world}")
 
@@ -202,3 +205,6 @@ class NewDevEnvGen(BaseGenerator):
             logger.info(
                 "This script did not validate that the contents of {dst_default_path} was valid - please confirm this manually."
             )
+
+    def generate_server_type_specific_configs(self, server_type: str):
+        logger.info("Doing server type specific stuff?")

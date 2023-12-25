@@ -241,7 +241,7 @@ def list_valid_envs() -> List[Env]:
 
 
 def create_new_env(
-    proxy_port: int, env_alias: str, enable_env_protection: bool, description: str = ""
+    proxy_port: int, env_alias: str, enable_env_protection: bool, server_type: str, description: str = ""
 ) -> str:
     """Creates a new env using the next available and valid env number.
 
@@ -249,6 +249,7 @@ def create_new_env(
         proxy_port (int): Port to use for the proxy
         env_alias (str): Human readable alias (name) for this env
         enable_env_protection (bool): Whether to enable env protection, which disables deleting the env.
+        server_type (str): Server type use. Will be set as `runtime-environment-variables.MC_TYPE`
         description (str, optional): Description for humans. Defaults to "".
 
     Raises:
@@ -266,7 +267,7 @@ def create_new_env(
 
     # Generate env toml config
     gen = get_generator(GeneratorType.NEW_DEV_ENV, "env1")  # Configurable?
-    gen.run(env_name, proxy_port, env_alias, enable_env_protection, description)
+    gen.run(env_name, proxy_port, env_alias, enable_env_protection, server_type, description)
 
     generate_velocity_and_docker(env_name)
 

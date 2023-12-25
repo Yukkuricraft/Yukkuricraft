@@ -10,6 +10,10 @@ from src.common.config import load_toml_config
 class BaseGenerator:
     env_config: TomlConfig
 
+    WORLDGROUP_NAME_BLOCKLIST = [
+        "defaultconfigs", # :`) Ugly folder structures yay`
+    ]
+
     def __init__(self, env: str):
         self.env = env
 
@@ -18,6 +22,11 @@ class BaseGenerator:
 
     def is_prod(self):
         return self.env == "env1"
+
+    def get_enabled_world_groups(self):
+        all_world_groups = self.env_config["world-groups"].get_or_default("enabled_groups", [])
+        filtered_world_groups = list(filter(lambda w: w not in self.WORLDGROUP_NAME_BLOCKLIST, all_world_groups))
+        return filtered_world_groups
 
     def replace_interpolations(self, inp, replace_value: str):
         """

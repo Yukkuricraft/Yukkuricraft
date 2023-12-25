@@ -50,6 +50,7 @@ def create_env():
 
     env_alias = post_data.get("ENV_ALIAS", "")
     description = post_data.get("DESCRIPTION", "")
+    server_type = post_data.get("SERVER_TYPE", "")
     enable_env_protection = post_data.get("ENABLE_ENV_PROTECTION", False)
 
     resp = make_cors_response()
@@ -60,6 +61,7 @@ def create_env():
         proxy_port=proxy_port,
         env_alias=env_alias,
         enable_env_protection=enable_env_protection,
+        server_type=server_type,
         description=description,
     )
     logger.warning("????????????")

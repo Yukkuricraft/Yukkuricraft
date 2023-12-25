@@ -63,10 +63,6 @@ class DockerComposeGen(BaseGenerator):
             DOCKER_COMPOSE_TEMPLATE_NAME, curr_dir
         )
 
-    def get_enabled_world_groups(self):
-        all_world_groups = self.env_config["world-groups"].get_or_default("enabled_groups", [])
-        filtered_world_groups = list(filter(lambda w: w not in self.WORLDGROUP_NAME_BLOCKLIST, all_world_groups))
-        return filtered_world_groups
 
     def generate_prereqs(self):
         container_logs_path = Path("container_logs")
@@ -99,7 +95,7 @@ class DockerComposeGen(BaseGenerator):
         velocity_service = (
             self.docker_compose_template.custom_extensions.velocity_template.as_dict()
         )
-        for world in self.env_config["world-groups"].enabled_groups:
+        for world in self.get_enabled_world_groups():
             velocity_service["depends_on"][f"mc_{world}"] = {
                 'condition': 'service_healthy'
             }
@@ -153,7 +149,7 @@ class DockerComposeGen(BaseGenerator):
             },
         }
 
-        for world in self.env_config["world-groups"].enabled_groups:
+        for world in self.get_enabled_world_groups():
             volumes[f"mcdata_{world}"] = None
             volumes[f"ycworldsvolume_{world}"] = None
             volumes[f"ycpluginsvolume_{world}"] = None
