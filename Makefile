@@ -105,7 +105,7 @@ generate_docker_compose:
 .PHONY: create_new_env
 create_new_env:
 	# Do we want to do based on current active env or always use prod as BASE_ENV?
-	BASE_ENV=prod \
+	BASE_ENV=env1 \
 	NEW_ENV=$(word 1,$(ARGS)) \
 	VELOCITY_PORT=$(word 2,$(ARGS)) \
 	ENV_ALIAS=$(word 3,$(ARGS)) \
@@ -175,7 +175,7 @@ build_mysql_backup:
 # UP DOWN RESTARTS
 
 .PHONY: up_web
-up_web: ENV=prod
+up_web: ENV=env1
 up_web:
 	docker compose -f $(WEB_COMPOSE_FILE) \
 		--env-file=gen/$(ENV).env \
@@ -312,25 +312,25 @@ exec:
 # Prod Shortcuts
 
 .PHONY: up_prod
-up_prod: ENV=prod
+up_prod: ENV=env1
 up_prod: up
 
 .PHONY: down_prod
-down_prod: ENV=prod
+down_prod: ENV=env1
 down_prod: down
 
 .PHONY: logs_prod
-logs_prod: ENV=prod
+logs_prod: ENV=env1
 logs_prod: logs
 
 .PHONY: exec_prod
-exec_prod: ENV=prod
+exec_prod: ENV=env1
 exec_prod: exec
 
 .PHONY: attach_prod
-attach_prod: ENV=prod
+attach_prod: ENV=env1
 attach_prod: attach
 
 .PHONY: save_world_prod
-save_world_prod: ENV=prod
+save_world_prod: ENV=env1
 save_world_prod: save_world

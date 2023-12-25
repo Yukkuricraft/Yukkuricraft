@@ -32,7 +32,7 @@ class Env:
 
     def __lt__(self, other):
         # Do we want to support non-prod/dev envs in the future?
-        if self.name == "prod":
+        if self.name == "env1":
             return True
 
         return self.name < other.name
@@ -103,14 +103,30 @@ def _load_runtime_env_var(env_str: str, env_var: str):
 
 
 def get_env_alias_from_config(env_str: str):
+    """Get the `runtime-environment-variables.ENV_ALIAS` value from the env `<env_str>.toml` config
+
+    Args:
+        env_str (str): Environment name string
+
+    Returns:
+        str: Configured description if set. Empty string if not.
+    """
     return _load_runtime_env_var(env_str, "ENV_ALIAS")
 
 
 def get_proxy_port_from_config(env_str: str):
+    """Get the `runtime-environment-variables.VELOCITY_PORT` value from the env `<env_str>.toml` config
+
+    Args:
+        env_str (str): Environment name string
+
+    Returns:
+        str: Configured description if set. Empty string if not.
+    """
     return _load_runtime_env_var(env_str, "VELOCITY_PORT")
 
 
-def get_config_dict_from_config(env_str: str):
+def get_envvar_config_dict_from_config(env_str: str):
     return {
         "proxy_port": _load_runtime_env_var(env_str, "VELOCITY_PORT"),
         "server_type": _load_runtime_env_var(env_str, "MC_TYPE"),
@@ -120,19 +136,43 @@ def get_config_dict_from_config(env_str: str):
     }
 
 
-def get_env_desc_from_config(env_str: str):
+def get_env_desc_from_config(env_str: str) -> str:
+    """Get the `general.description` value from the env `<env_str>.toml` config
+
+    Args:
+        env_str (str): Environment name string
+
+    Returns:
+        str: Configured description if set. Empty string if not.
+    """
     config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
     return general["description"] if "description" in general else ""
 
-def get_env_hostname_from_config(env_str: str):
+def get_env_hostname_from_config(env_str: str) -> str:
+    """Get the `general.hostname` value from the env `<env_str>.toml` config.
+
+    Args:
+        env_str (str): Environment name string
+
+    Returns:
+        str: Configured hostname if set. Empty string if not.
+    """
     config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
     return general["hostname"] if "hostname" in general else ""
 
 def get_env_protection_status(env_str: str):
+    """Get the `general.enable_env_protection` value from the env `<env_str>.toml` config.
+
+    Args:
+        env_str (str): Environment name string
+
+    Returns:
+        str: Configured hostname if set. Empty string if not.
+    """
     config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
@@ -183,7 +223,7 @@ def list_valid_envs() -> List[Env]:
         num = re.sub(r"\D", "", name)
         env.num = int(num) if num != "" else None
 
-        env.config = get_config_dict_from_config(name)
+        env.config = get_envvar_config_dict_from_config(name)
 
         env.name = name
         env.hostname = get_env_hostname_from_config(name)
@@ -197,9 +237,6 @@ def list_valid_envs() -> List[Env]:
 
     # Sorting doesn't matter in backend world but does in frontend.
     rtn = sorted(envs, key=lambda d: d.name)
-    if rtn[-1].name == "prod":
-        # We really shouldn't ever have anything other than one prod and n dev_n's with aliases.
-        rtn.insert(0, rtn.pop(-1))
     return rtn
 
 
@@ -228,7 +265,7 @@ def create_new_env(
     env_name = f"env{get_next_valid_env_number()}"
 
     # Generate env toml config
-    gen = get_generator(GeneratorType.NEW_DEV_ENV, "prod")  # Configurable?
+    gen = get_generator(GeneratorType.NEW_DEV_ENV, "env1")  # Configurable?
     gen.run(env_name, proxy_port, env_alias, enable_env_protection, description)
 
     generate_velocity_and_docker(env_name)

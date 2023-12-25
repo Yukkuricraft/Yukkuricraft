@@ -18,8 +18,6 @@ yaml.SafeDumper.add_representer(
 from typing import Dict
 from pathlib import Path
 
-from src.generator.constants import SECRETS_CONFIG_RELPATH
-
 from src.generator.base_generator import BaseGenerator
 
 import logging
@@ -43,11 +41,13 @@ class NewDevEnvGen(BaseGenerator):
     def __init__(self, base_env: str):
         super().__init__(base_env)
 
-        self.server_root = Path(__file__).parent.parent.parent  # G w o s s
+        self.repo_root = Path(__file__).parent.parent.parent  # G w o s s
+        self.server_root = Path("/var/lib/yukkuricraft")
 
     def run(self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, description: str):
         logger.info("Generating New Environment Directories")
-        logger.info(f"- Repo Root: {self.server_root}")
+        logger.info(f"- Repo Root: {self.repo_root}")
+        logger.info(f"- Server Root: {self.server_root}")
         logger.info(f"- Base Env: {self.env}")
         logger.info(f"- New Env: {new_env}")
         logger.info(f"- Enable Env Protection: {enable_env_protection}")
@@ -102,14 +102,14 @@ class NewDevEnvGen(BaseGenerator):
         copied_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
         copied_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port
 
-        new_config_path = self.server_root / "env" / f"{new_env}.toml"
+        new_config_path = self.repo_root / "env" / f"{new_env}.toml"
         with open(new_config_path, "wb") as f:
             f.write(
                 (
                     "#\n"
                     f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env}.toml AS A BASE\n"
                     "# MODIFY AS NECESSARY BY HAND\n"
-                    "# SEE prod.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
+                    "# SEE env1.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
                     "#\n\n"
                 ).encode("utf8")
             )
@@ -117,52 +117,48 @@ class NewDevEnvGen(BaseGenerator):
 
         os.chmod(new_config_path, DEFAULT_CHMOD_MODE)
 
+    MODS_CONFIG_DIR = "mods"
     PLUGINS_CONFIG_DIR = "plugins"
     WORLDS_CONFIG_DIR = "server"
-    SECRETS_CONFIG_RELPATH: str = "secrets/configs/"
 
     def generate_secrets_config_dirs(self, new_env: str):
-
-        # Nginx dir (Empty for now?)
-        nginx_config_path = (
-            self.server_root / self.SECRETS_CONFIG_RELPATH / new_env / "nginx"
-        )
-        if not nginx_config_path.exists():
-            logger.info(f"Generating {nginx_config_path}...")
-            nginx_config_path.mkdir(parents=True)
-
         # World dirs
         for world in self.env_config["world-groups"].enabled_groups:
             logger.info("\n")
             logger.info(f"Generating dirs for {world}")
 
-            secrets_world_config_path = (
+            world_config_path = (
                 self.server_root
-                / self.SECRETS_CONFIG_RELPATH
+                / "env"
                 / new_env
-                / "worlds"
                 / world
+                / "configs"
             )
-            if not secrets_world_config_path.exists():
-                logger.info(f">> Generating {secrets_world_config_path}...")
-                secrets_world_config_path.mkdir(parents=True)
+            if not world_config_path.exists():
+                logger.info(f">> Generating {world_config_path}...")
+                world_config_path.mkdir(parents=True)
 
-            plugins_path = secrets_world_config_path / self.PLUGINS_CONFIG_DIR
+            mods_path = world_config_path / self.MODS_CONFIG_DIR
+            if not mods_path.exists():
+                logger.info(f">> Generating {mods_path}...")
+                mods_path.mkdir(parents=True)
+
+            plugins_path = world_config_path / self.PLUGINS_CONFIG_DIR
             if not plugins_path.exists():
                 logger.info(f">> Generating {plugins_path}...")
                 plugins_path.mkdir(parents=True)
 
-            worlds_path = secrets_world_config_path / self.WORLDS_CONFIG_DIR
+            worlds_path = world_config_path / self.WORLDS_CONFIG_DIR
             if not worlds_path.exists():
                 logger.info(f">> Generating {worlds_path}...")
                 worlds_path.mkdir(parents=True)
 
             src_server_properties_path = (
                 self.server_root
-                / self.SECRETS_CONFIG_RELPATH
+                / "env"
                 / self.env
-                / "worlds"
                 / world
+                / "configs"
                 / self.WORLDS_CONFIG_DIR
                 / "server.properties"
             )
@@ -183,17 +179,15 @@ class NewDevEnvGen(BaseGenerator):
         # Copy default secret world configs from {self.env} to {new_env}
         src_default_path = (
             self.server_root
-            / self.SECRETS_CONFIG_RELPATH
+            / "env"
             / self.env
-            / "worlds"
-            / "default"
+            / "defaultconfigs"
         )
         dst_default_path = (
             self.server_root
-            / self.SECRETS_CONFIG_RELPATH
+            / "env"
             / new_env
-            / "worlds"
-            / "default"
+            / "defaultconfigs"
         )
         if not dst_default_path.exists():
             logger.info(

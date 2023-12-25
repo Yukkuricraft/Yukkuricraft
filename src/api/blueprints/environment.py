@@ -103,7 +103,7 @@ def delete_env(env):
         resp = make_cors_response(status_code=200)
         resp.headers.add("Content-Type", "application/json")
 
-        resp_data = delete_dev_env(env=env)
+        resp_data = delete_dev_env(env_str=env)
         resp_data["env"] = env_dict
 
         resp.data = json.dumps(resp_data)

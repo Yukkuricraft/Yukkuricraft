@@ -61,11 +61,11 @@ if [[ ! -d "/yc-configs" ]]; then
     mkdir /yc-configs/
 fi
 
-debuglog "Copying /yc-default-configs/server to /yc-configs"
-run cp /yc-default-configs/server/* /yc-configs/
+debuglog "Copying /defaultconfigs-server-bindmount/server to /yc-configs"
+run cp /defaultconfigs-server-bindmount/server/* /yc-configs/
 
-debuglog "Copying /yc-server-configs to /yc-configs"
-run cp /yc-server-configs/* /yc-configs/
+debuglog "Copying /serverconfig-bindmount to /yc-configs"
+run cp /serverconfig-bindmount/* /yc-configs/
 
 if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
     if [[ ! -d "/yc-configs/config" ]]; then

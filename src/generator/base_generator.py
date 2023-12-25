@@ -3,7 +3,6 @@
 from typing import Dict
 from pathlib import Path
 
-from src.generator.constants import WORLD_GROUP_CONFIG_NAME
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
 

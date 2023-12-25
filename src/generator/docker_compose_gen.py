@@ -38,6 +38,10 @@ class DockerComposeGen(BaseGenerator):
 
     container_name_format = "YC-{env}-{name}"
 
+    WORLDGROUP_NAME_BLOCKLIST = [
+        "defaultconfigs", # :`) Ugly folder structures yay`
+    ]
+
     def __init__(self, env: str):
         super().__init__(env)
 
@@ -59,11 +63,16 @@ class DockerComposeGen(BaseGenerator):
             DOCKER_COMPOSE_TEMPLATE_NAME, curr_dir
         )
 
+    def get_enabled_world_groups(self):
+        all_world_groups = self.env_config["world-groups"].get_or_default("enabled_groups", [])
+        filtered_world_groups = list(filter(lambda w: w not in self.WORLDGROUP_NAME_BLOCKLIST, all_world_groups))
+        return filtered_world_groups
+
     def generate_prereqs(self):
         container_logs_path = Path("container_logs")
 
         # Generate log paths to mount into containers
-        for world in self.env_config["world-groups"].enabled_groups:
+        for world in self.get_enabled_world_groups():
             world_log_path = container_logs_path / self.env / "worlds" / world
 
             logger.info(f"CREATING PREREQ DIRECTORY {world_log_path}")
@@ -100,7 +109,7 @@ class DockerComposeGen(BaseGenerator):
     def generate_minecraft_service_config(self):
         services = self.generated_docker_compose["services"]
         # Add minecraft services
-        for world in self.env_config["world-groups"].enabled_groups:
+        for world in self.get_enabled_world_groups():
             mc_service_template = copy.deepcopy(
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
@@ -109,7 +118,7 @@ class DockerComposeGen(BaseGenerator):
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
-            if self.is_prod() or self.env_config["general"].enable_backups:
+            if self.is_prod() or self.env_config["general"].get_or_default("enable_backups", None):
                 backup_service_template = copy.deepcopy(
                     self.docker_compose_template.custom_extensions.mc_backups_sidecar_template.as_dict()
                 )
