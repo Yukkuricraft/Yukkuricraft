@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
-from typing import Dict
+import os
+from typing import Dict, Callable, Optional
 from pathlib import Path
+import tomli_w # type: ignore
 
+from src.generator.constants import DEFAULT_CHMOD_MODE
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
-
 
 class BaseGenerator:
     env_config: TomlConfig
@@ -45,3 +47,26 @@ class BaseGenerator:
             return inp.replace("<<WORLDGROUP>>", replace_value)
         else:
             return inp
+
+    def write_config(
+        self,
+        config_path: Path,
+        config: Dict,
+        header: str = "",
+        write_cb: Optional[Callable] = lambda f, config: tomli_w.dump(f, config, multiline_strings=True)
+    ):
+        """Writes config to path with optional header and custom write cb
+
+        Also applies `constants.DEFAULT_CHMOD_MODE`
+
+        Args:
+            config_path (Path): Path
+            config (Dict): Config represented as a dict
+            header (str, optional): Optional header. Defaults to "".
+            write_cb (Optional[Callable], optional): Defaults to a `toml_w.dump()`.
+        """
+
+        with open(config_path, "wb") as f:
+            f.write(header.encode("utf8"))
+            write_cb(f, config)
+        os.chmod(config_path, DEFAULT_CHMOD_MODE)

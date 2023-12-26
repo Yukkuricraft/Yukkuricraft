@@ -106,19 +106,18 @@ class NewDevEnvGen(BaseGenerator):
         copied_config["runtime-environment-variables"]["MC_TYPE"] = server_type
 
         new_config_path = self.repo_root / "env" / f"{new_env}.toml"
-        with open(new_config_path, "wb") as f:
-            f.write(
-                (
-                    "#\n"
-                    f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env}.toml AS A BASE\n"
-                    "# MODIFY AS NECESSARY BY HAND\n"
-                    "# SEE env1.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
-                    "#\n\n"
-                ).encode("utf8")
-            )
-            tomli_w.dump(copied_config, f, multiline_strings=True)
 
-        os.chmod(new_config_path, DEFAULT_CHMOD_MODE)
+        self.write_config(
+            new_config_path,
+            copied_config,
+            (
+                "#\n"
+                f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env}.toml AS A BASE\n"
+                "# MODIFY AS NECESSARY BY HAND\n"
+                "# SEE env1.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
+                "#\n\n"
+            )
+        )
 
     MODS_CONFIG_DIR = "mods"
     PLUGINS_CONFIG_DIR = "plugins"
@@ -203,8 +202,15 @@ class NewDevEnvGen(BaseGenerator):
                 f"Skipped copying files from {src_default_path} to {dst_default_path} as destination directory already existed."
             )
             logger.info(
-                "This script did not validate that the contents of {dst_default_path} was valid - please confirm this manually."
+                f"This script did not validate that the contents of {dst_default_path} was valid - please confirm this manually."
             )
 
     def generate_server_type_specific_configs(self, server_type: str):
         logger.info("Doing server type specific stuff?")
+
+        if server_type in ["FABRIC", "FORGE"]:
+            pass
+        elif server_type in ["PAPER", "BUKKIT"]:
+            pass
+        else:
+            logger.info(f"No special actions taken for serer type: {server_type}")

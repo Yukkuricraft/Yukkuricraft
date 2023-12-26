@@ -80,13 +80,20 @@ class EnvFileGen(BaseGenerator):
         self.generated_env_config["HOST_HOSTNAME"] = socket.gethostname()
         
 
+    def dump_write_cb(self, f, config):
+        for key, value in config.items():
+            f.write(f'{key}="{value}"\n')
+
     def dump_generated_env_file(self):
         print(f"Generating new {self.generated_env_file_path}...")
 
         generated_env_file_path = self.get_generated_env_file_path()
         generated_env_file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(generated_env_file_path, "w") as f:
-            f.write(
+
+        self.write_config(
+            generated_env_file_path,
+            self.generate,
+            (
                 "#\n"
                 "# THIS FILE WAS AUTOMATICALLY GENERATED\n"
                 "# DO NOT MODIFY MANUALLY\n"
@@ -94,8 +101,8 @@ class EnvFileGen(BaseGenerator):
                 "#"
                 f"# MODIFY `env/{self.env}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
-            )
-            for key, value in self.generated_env_config.items():
-                f.write(f'{key}="{value}"\n')
-        os.chmod(generated_env_file_path, DEFAULT_CHMOD_MODE)
+            ),
+            self.dump_write_cb
+        )
+
         print("Done.")
