@@ -124,7 +124,7 @@ test:
 
 .PHONY: delete_env
 delete_env:
-	ENV=$(ARGS) ./scripts/delete_dev_env.sh
+	$(PRE) ./scripts/delete_dev_env.sh
 
 # BUILD
 

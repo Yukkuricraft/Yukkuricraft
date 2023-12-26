@@ -9,12 +9,12 @@ log() {
     echo "[$(date +"%Y-%m-%d_%H-%M")] $@"
 }
 
-if [ -z ${ENV+x} ]; then
+if [ "${ENV}"x == "x" ]; then
     log "Must set environment variable 'ENV'. Was unset."
     exit 1
 fi
 
-if [ ${ENV} == 'env1' ]; then
+if [[ "${ENV}"x == 'env1'x ]]; then
     log ""
     log "Please don't delete prod. :("
     log ""
