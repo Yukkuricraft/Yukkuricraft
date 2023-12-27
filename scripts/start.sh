@@ -61,11 +61,11 @@ if [[ ! -d "/yc-configs" ]]; then
     mkdir /yc-configs/
 fi
 
-debuglog "Copying /defaultconfigs-server-bindmount/server to /yc-configs"
-run cp /defaultconfigs-server-bindmount/server/* /yc-configs/
+debuglog "Copying /defaultconfigs-server-bindmount to /yc-configs"
+run cp -r /defaultconfigs-server-bindmount/* /yc-configs/
 
 debuglog "Copying /serverconfig-bindmount to /yc-configs"
-run cp /serverconfig-bindmount/* /yc-configs/
+run cp -r  /serverconfig-bindmount/* /yc-configs/
 
 if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
     if [[ ! -d "/yc-configs/config" ]]; then
@@ -73,7 +73,7 @@ if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
     fi
 
     debuglog "Copying /modsconfig-bindmount to /yc-configs/config/"
-    run cp /modsconfig-bindmount/* /yc-configs/config/
+    run cp -r /modsconfig-bindmount/* /yc-configs/config/
 fi
 
 # Chowns
