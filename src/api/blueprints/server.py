@@ -3,17 +3,12 @@ import os
 import pprint
 import json
 import codecs
-import logging
-
-logger = logging.getLogger(__name__)
-
 from flask import Flask, Blueprint, request, abort # type: ignore
 
 from pprint import pformat
 from subprocess import check_output, Popen, PIPE
 from typing import Optional, Dict, List, Tuple, Callable
 from pathlib import Path
-
 
 from src.api.lib.auth import (
     validate_access_token,
@@ -23,8 +18,8 @@ from src.api.lib.auth import (
 from src.api.lib.docker_management import DockerManagement
 from src.api.lib.environment import Env
 from src.api.lib.helpers import log_request
-from src.api.lib.types import ConfigType
-
+from src.common.types import ConfigType
+from src.common.logger_setup import logger
 
 server_bp: Blueprint = Blueprint("server", __name__)
 

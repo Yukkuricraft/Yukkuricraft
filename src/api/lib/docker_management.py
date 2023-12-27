@@ -9,12 +9,11 @@ from subprocess import Popen, PIPE
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.environment import ensure_valid_env
 from src.api.lib.runner import Runner
-from src.api.lib.types import ConfigType
-from src.generator.docker_compose_gen import DockerComposeGen
-from src.generator.generator import GeneratorType, get_generator
+from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.decorators import serialize_tuple_out_as_dict
+from src.common.types import ConfigType
 
 
 class DockerManagement:
@@ -33,8 +32,7 @@ class DockerManagement:
             TODO: Dataclass this.
         """
 
-        docker_compose_gen = DockerComposeGen(env)
-        filepath = docker_compose_gen.get_generated_docker_compose_path()
+        filepath = ServerPaths.get_generated_docker_compose_path(env)
         docker_compose = load_yaml_config(filepath, no_cache=True)
 
         defined_containers: List = []

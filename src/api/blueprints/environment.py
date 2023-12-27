@@ -4,33 +4,23 @@ import json
 
 from flask import Blueprint, abort, request # type: ignore
 
-from pprint import pformat, pprint
-from typing import Callable, Dict, Tuple
-
-from src.api.constants import (
-    ENV_FOLDER,
-    YC_TOKEN_AUTH_SCHEME,
-)
 from src.api.lib.auth import (
     intercept_cors_preflight,
     validate_access_token,
     make_cors_response,
 )
-from src.api.db import db
 from src.api.lib.environment import (
     Env,
-    env_str_to_toml_path,
     list_valid_envs,
     create_new_env,
     delete_dev_env,
     generate_env_configs,
 )
 from src.api.lib.helpers import log_request
-from src.api.lib.types import ConfigType
-from src.api.lib.runner import Runner
-from src.common.config import load_toml_config
 
+from src.common.config import load_toml_config
 from src.common.logger_setup import logger
+from src.common.paths import ServerPaths
 
 envs_bp: Blueprint = Blueprint("environment", __name__)
 
@@ -85,8 +75,8 @@ def create_env():
 def delete_env(env):
     env_dict = Env.from_env_string(env).toJson()
 
-    env_config = load_toml_config(env_str_to_toml_path(env))
-    if env_config["general"].enable_env_protection:
+    env_config = load_toml_config(ServerPaths.get_env_toml_config_path(env))
+    if env_config["general"].get_or_default("enable_env_protection", False):
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")
         resp.data = json.dumps({

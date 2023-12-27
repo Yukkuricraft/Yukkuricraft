@@ -1,35 +1,18 @@
 #!/bin/env python3
 
 import os
-import copy
-import yaml  # type: ignore
 import socket
+from src.common.paths import ServerPaths
 
-import tomli_w  # type: ignore
-import shutil
-
-yaml.SafeDumper.add_representer(
-    type(None),
-    lambda dumper, value: dumper.represent_scalar("tag:yaml.org,2002:null", ""),
-)
-
+from pprint import pformat
 from typing import Dict
 from pathlib import Path
 
 from src.api.constants import IS_PROD_HOST
 
+from src.common.logger_setup import logger
 from src.generator.constants import DEFAULT_CHMOD_MODE
 from src.generator.base_generator import BaseGenerator
-
-import logging
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-logger.addHandler(ch)
 
 """
 Generate .env files for use with docker-compose.
@@ -50,14 +33,10 @@ class EnvFileGen(BaseGenerator):
     def __init__(self, env: str):
         super().__init__(env)
 
-        self.generated_env_file_name = f"{env}.env"
-        self.generated_env_file_path = (
-            Path(__file__).parent.parent.parent / "gen"
-        )  # G w o s s
+        self.generated_env_file_path = ServerPaths.get_generated_env_file_path(env)
+        if not self.generated_env_file_path.parent.exists():
+            self.generated_env_file_path.parent.mkdir()
         self.env = env
-
-    def get_generated_env_file_path(self):
-        return self.generated_env_file_path / self.generated_env_file_name
 
     def run(self):
         self.generate_env_file()
@@ -80,19 +59,18 @@ class EnvFileGen(BaseGenerator):
         self.generated_env_config["HOST_HOSTNAME"] = socket.gethostname()
         
 
-    def dump_write_cb(self, f, config):
+    @staticmethod
+    def dump_write_cb(f, config):
+        logger.info(pformat(config))
         for key, value in config.items():
-            f.write(f'{key}="{value}"\n')
+            f.write(f'{key}="{value}"\n'.encode("utf8"))
 
     def dump_generated_env_file(self):
-        print(f"Generating new {self.generated_env_file_path}...")
-
-        generated_env_file_path = self.get_generated_env_file_path()
-        generated_env_file_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Generating new {self.generated_env_file_path}...")
 
         self.write_config(
-            generated_env_file_path,
-            self.generate,
+            self.generated_env_file_path,
+            self.generated_env_config,
             (
                 "#\n"
                 "# THIS FILE WAS AUTOMATICALLY GENERATED\n"
@@ -102,7 +80,7 @@ class EnvFileGen(BaseGenerator):
                 f"# MODIFY `env/{self.env}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
             ),
-            self.dump_write_cb
+            EnvFileGen.dump_write_cb
         )
 
-        print("Done.")
+        logger.info("Done.")

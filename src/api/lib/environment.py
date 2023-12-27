@@ -6,11 +6,12 @@ from functools import total_ordering
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from src.api.constants import ENV_FOLDER, MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
+from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
-from src.api.lib.types import ConfigType
 from src.common.config import load_toml_config
 from src.common.logger_setup import logger
+from src.common.types import ConfigType
+from src.common.paths import ServerPaths
 from src.generator.generator import GeneratorType, get_generator
 
 class InvalidPortException(Exception):
@@ -68,13 +69,8 @@ class Env:
     enable_env_protection: bool
 
 
-def env_str_to_toml_path(env_str: str):
-    return ENV_FOLDER / f"{env_str}.toml"
-
-
 def is_env_valid(env_str: str):
-    return env_str_to_toml_path(env_str).exists()
-
+    return ServerPaths.get_env_toml_config_path(env_str).exists()
 
 def ensure_valid_env(func: Callable):
     def wrapper(*args, **kwargs):
@@ -94,12 +90,8 @@ def ensure_valid_env(func: Callable):
 
 
 def _load_runtime_env_var(env_str: str, env_var: str):
-    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
-    env_vars = config["runtime-environment-variables"]
-    if not env_vars:
-        raise Exception("Invalid Env Config...?")
-
-    return env_vars[env_var] if env_var in env_vars else env_str
+    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
+    return config["runtime-environment-variables"].get_or_default(env_var, "")
 
 
 def get_env_alias_from_config(env_str: str):
@@ -145,7 +137,7 @@ def get_env_desc_from_config(env_str: str) -> str:
     Returns:
         str: Configured description if set. Empty string if not.
     """
-    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
+    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
     return general["description"] if "description" in general else ""
@@ -159,7 +151,7 @@ def get_env_hostname_from_config(env_str: str) -> str:
     Returns:
         str: Configured hostname if set. Empty string if not.
     """
-    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
+    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
     return general["hostname"] if "hostname" in general else ""
@@ -173,7 +165,7 @@ def get_env_protection_status(env_str: str):
     Returns:
         str: Configured hostname if set. Empty string if not.
     """
-    config = load_toml_config(env_str_to_toml_path(env_str), no_cache=True)
+    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
     general = config["general"] if "general" in config else {}
 
     return (
@@ -210,7 +202,7 @@ def list_valid_envs() -> List[Env]:
     """
     envs = []
 
-    for item in ENV_FOLDER.iterdir():
+    for item in ServerPaths.get_env_toml_config_dir_path().iterdir():
         if item.is_dir():
             continue
         elif item.suffix != ".toml":
@@ -285,8 +277,8 @@ def delete_dev_env(env_str: str):
     Returns:
         _type_: _description_
     """
-    cmd = ["make", "delete_env", env_str]
-    logger.info("DELETING ENV: ", env_str)
+    cmd = ["make", "delete_env"]
+    logger.info(f"DELETING ENV: {env_str}")
     return Runner.run_make_cmd(cmd, env=env_str)
 
 

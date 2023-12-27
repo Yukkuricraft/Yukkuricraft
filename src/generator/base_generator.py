@@ -3,11 +3,11 @@
 import os
 from typing import Dict, Callable, Optional
 from pathlib import Path
-import tomli_w # type: ignore
 
 from src.generator.constants import DEFAULT_CHMOD_MODE
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
+from src.common.paths import ServerPaths
 
 class BaseGenerator:
     env_config: TomlConfig
@@ -20,7 +20,10 @@ class BaseGenerator:
         self.env = env
 
         curr_dir = Path(__file__).parent
-        self.env_config = load_toml_config(f"env/{env}.toml", curr_dir)
+        self.env_config = load_toml_config(
+            ServerPaths.get_env_toml_config_path(env),
+            curr_dir
+        )
 
     def is_prod(self):
         return self.env == "env1"
@@ -53,7 +56,7 @@ class BaseGenerator:
         config_path: Path,
         config: Dict,
         header: str = "",
-        write_cb: Optional[Callable] = lambda f, config: tomli_w.dump(f, config, multiline_strings=True)
+        write_cb: Optional[Callable] = lambda f, config: TomlConfig.write_cb(f, config)
     ):
         """Writes config to path with optional header and custom write cb
 
@@ -65,6 +68,9 @@ class BaseGenerator:
             header (str, optional): Optional header. Defaults to "".
             write_cb (Optional[Callable], optional): Defaults to a `toml_w.dump()`.
         """
+
+        if not config_path.parent.exists():
+            config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(config_path, "wb") as f:
             f.write(header.encode("utf8"))

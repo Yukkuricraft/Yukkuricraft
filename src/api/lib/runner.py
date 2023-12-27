@@ -49,7 +49,11 @@ class Runner:
 
             prev_stdout, prev_stderr = stdout_b.decode("utf8"), stderr_b.decode("utf8")
             logger.info(f"Completed proc (pid:{proc.pid}) and got stdout/stderr")
-            logger.warning(prev_stderr)
+
+            if prev_stdout:
+                logger.info(prev_stdout)
+            if prev_stderr:
+                logger.warning(prev_stderr)
 
         return prev_stdout, prev_stderr, proc.returncode
 
@@ -64,5 +68,9 @@ class Runner:
         Returns:
             Tuple[str, str, int]: Stdout, stdin, and return code
         """
+        if not env:
+            raise Exception("Must provide an env string!")
+
         env_vars = {"ENV": env}
+        logger.info(env_vars)
         return Runner.run([cmd], env_vars=env_vars)
