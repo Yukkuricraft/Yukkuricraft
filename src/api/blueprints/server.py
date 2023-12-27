@@ -3,7 +3,7 @@ import os
 import pprint
 import json
 import codecs
-from flask import Flask, Blueprint, request, abort # type: ignore
+from flask import Flask, Blueprint, request, abort  # type: ignore
 
 from pprint import pformat
 from subprocess import check_output, Popen, PIPE
@@ -24,6 +24,7 @@ from src.common.logger_setup import logger
 server_bp: Blueprint = Blueprint("server", __name__)
 
 DockerMgmtApi = DockerManagement()
+
 
 @server_bp.route("/<env>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
@@ -64,15 +65,13 @@ def up_containers(env):
     return resp
 
 
-@server_bp.route(
-    "/<env>/containers/up_one", methods=["POST", "OPTIONS"]
-)
+@server_bp.route("/<env>/containers/up_one", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
 def up_one_container(env):
     resp = make_cors_response()
-    container_name = request.json['container_name']
+    container_name = request.json["container_name"]
 
     resp_data = DockerMgmtApi.up_one_container(env=env, container_name=container_name)
     resp_data["env"] = Env.from_env_string(env).toJson()
@@ -97,15 +96,13 @@ def down_containers(env):
     return resp
 
 
-@server_bp.route(
-    "/<env>/containers/down_one", methods=["POST", "OPTIONS"]
-)
+@server_bp.route("/<env>/containers/down_one", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
 def down_one_container(env):
     resp = make_cors_response()
-    container_name = request.json['container_name']
+    container_name = request.json["container_name"]
 
     resp_data = DockerMgmtApi.down_one_container(env=env, container_name=container_name)
     resp_data["env"] = Env.from_env_string(env).toJson()
@@ -115,7 +112,10 @@ def down_one_container(env):
 
     return resp
 
-@server_bp.route("/<env>/containers/copy-configs-to-bindmount", methods=["OPTIONS", "POST"])
+
+@server_bp.route(
+    "/<env>/containers/copy-configs-to-bindmount", methods=["OPTIONS", "POST"]
+)
 @intercept_cors_preflight
 @validate_access_token
 @log_request
@@ -124,11 +124,13 @@ def copy_configs_to_bindmount(env):
         resp = make_cors_response()
         resp.status = 200
 
-        container_name = request.json['container_name']
-        type = request.json['config_type']
+        container_name = request.json["container_name"]
+        type = request.json["config_type"]
 
         config_type = ConfigType.from_str(type)
-        output = DockerMgmtApi.copy_configs_to_bindmount(container_name, env, config_type)
+        output = DockerMgmtApi.copy_configs_to_bindmount(
+            container_name, env, config_type
+        )
 
         resp.data = json.dumps(output)
         return resp

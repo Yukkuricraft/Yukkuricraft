@@ -14,8 +14,10 @@ from src.common.types import ConfigType
 from src.common.paths import ServerPaths
 from src.generator.generator import GeneratorType, get_generator
 
+
 class InvalidPortException(Exception):
     pass
+
 
 @total_ordering
 class Env:
@@ -58,7 +60,6 @@ class Env:
         "enable_env_protection",
     ]
 
-
     config: dict
 
     name: str
@@ -71,6 +72,7 @@ class Env:
 
 def is_env_valid(env_str: str):
     return ServerPaths.get_env_toml_config_path(env_str).exists()
+
 
 def ensure_valid_env(func: Callable):
     def wrapper(*args, **kwargs):
@@ -90,7 +92,9 @@ def ensure_valid_env(func: Callable):
 
 
 def _load_runtime_env_var(env_str: str, env_var: str):
-    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
+    config = load_toml_config(
+        ServerPaths.get_env_toml_config_path(env_str), no_cache=True
+    )
     return config["runtime-environment-variables"].get_or_default(env_var, "")
 
 
@@ -137,10 +141,13 @@ def get_env_desc_from_config(env_str: str) -> str:
     Returns:
         str: Configured description if set. Empty string if not.
     """
-    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
+    config = load_toml_config(
+        ServerPaths.get_env_toml_config_path(env_str), no_cache=True
+    )
     general = config["general"] if "general" in config else {}
 
     return general["description"] if "description" in general else ""
+
 
 def get_env_hostname_from_config(env_str: str) -> str:
     """Get the `general.hostname` value from the env `<env_str>.toml` config.
@@ -151,10 +158,13 @@ def get_env_hostname_from_config(env_str: str) -> str:
     Returns:
         str: Configured hostname if set. Empty string if not.
     """
-    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
+    config = load_toml_config(
+        ServerPaths.get_env_toml_config_path(env_str), no_cache=True
+    )
     general = config["general"] if "general" in config else {}
 
     return general["hostname"] if "hostname" in general else ""
+
 
 def get_env_protection_status(env_str: str):
     """Get the `general.enable_env_protection` value from the env `<env_str>.toml` config.
@@ -165,7 +175,9 @@ def get_env_protection_status(env_str: str):
     Returns:
         str: Configured hostname if set. Empty string if not.
     """
-    config = load_toml_config(ServerPaths.get_env_toml_config_path(env_str), no_cache=True)
+    config = load_toml_config(
+        ServerPaths.get_env_toml_config_path(env_str), no_cache=True
+    )
     general = config["general"] if "general" in config else {}
 
     return (
@@ -233,7 +245,11 @@ def list_valid_envs() -> List[Env]:
 
 
 def create_new_env(
-    proxy_port: int, env_alias: str, enable_env_protection: bool, server_type: str, description: str = ""
+    proxy_port: int,
+    env_alias: str,
+    enable_env_protection: bool,
+    server_type: str,
+    description: str = "",
 ) -> str:
     """Creates a new env using the next available and valid env number.
 
@@ -259,7 +275,9 @@ def create_new_env(
 
     # Generate env toml config
     gen = get_generator(GeneratorType.NEW_DEV_ENV, "env1")  # Configurable?
-    gen.run(env_name, proxy_port, env_alias, enable_env_protection, server_type, description)
+    gen.run(
+        env_name, proxy_port, env_alias, enable_env_protection, server_type, description
+    )
 
     generate_velocity_and_docker(env_name)
 
@@ -287,20 +305,20 @@ def generate_env_configs(env_str: str):
 
     return {}
 
+
 def generate_all(env_str: str):
     # Generate env file
     gen = get_generator(GeneratorType.ENV_FILE, env_str)
     gen.run()
     generate_velocity_and_docker(env_str)
 
+
 def generate_velocity_and_docker(env_str: str):
     # Generate docker compose file
     gen = get_generator(GeneratorType.DOCKER_COMPOSE, env_str)
     gen.run()
 
-
     hostname = get_env_hostname_from_config(env_str)
     # Generate velocity file
     gen = get_generator(GeneratorType.VELOCITY_CONFIG, env_str)
     gen.run(hostname)
-

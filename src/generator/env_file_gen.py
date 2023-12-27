@@ -44,20 +44,22 @@ class EnvFileGen(BaseGenerator):
 
     prod_api_host = "api.yukkuricraft.net"
     dev_api_host = "dev.api.yukkuricraft.net"
+
     def generate_env_file(self):
         self.generated_env_config = self.env_config[
             "runtime-environment-variables"
         ].as_dict()
 
         self.generated_env_config["ENV"] = self.env
-        self.generated_env_config["API_HOST"] = self.prod_api_host if IS_PROD_HOST else self.dev_api_host
+        self.generated_env_config["API_HOST"] = (
+            self.prod_api_host if IS_PROD_HOST else self.dev_api_host
+        )
         self.generated_env_config["UID"] = os.getuid()
         self.generated_env_config["GID"] = os.getgid()
 
         # yc-api relies on hostname to determine prod vs non-prod envs. Docker containers
         # will always return the container id for hostname so we configure the hostname in the compose file.
         self.generated_env_config["HOST_HOSTNAME"] = socket.gethostname()
-        
 
     @staticmethod
     def dump_write_cb(f, config):
@@ -80,7 +82,7 @@ class EnvFileGen(BaseGenerator):
                 f"# MODIFY `env/{self.env}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
             ),
-            EnvFileGen.dump_write_cb
+            EnvFileGen.dump_write_cb,
         )
 
         logger.info("Done.")

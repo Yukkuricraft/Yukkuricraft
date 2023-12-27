@@ -9,7 +9,10 @@ from src.common.config.yaml_config import YamlConfig
 from src.common.types import ServerTypes
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
-from src.generator.constants import PAPER_GLOBAL_TEMPLATE_PATH, VELOCITY_FORWARDING_SECRET_PATH
+from src.generator.constants import (
+    PAPER_GLOBAL_TEMPLATE_PATH,
+    VELOCITY_FORWARDING_SECRET_PATH,
+)
 from src.generator.base_generator import BaseGenerator
 
 
@@ -40,18 +43,18 @@ class ServerTypeActions(BaseGenerator):
         try:
             with open(velocity_secret_path, "r") as f:
                 secret = f.read().strip()
-                velocity_forwarding_secret = secret if len(secret) > 0 else velocity_forwarding_secret
+                velocity_forwarding_secret = (
+                    secret if len(secret) > 0 else velocity_forwarding_secret
+                )
         except FileNotFoundError:
             logger.info(f"Could not load {velocity_secret_path}")
 
-
-        paper_global_tpl = load_yaml_config(
-            str(PAPER_GLOBAL_TEMPLATE_PATH),
-            curr_dir
-        )
+        paper_global_tpl = load_yaml_config(str(PAPER_GLOBAL_TEMPLATE_PATH), curr_dir)
 
         paper_global_config = paper_global_tpl.as_dict()
-        paper_global_config["proxies"]["velocity"]["secret"] = velocity_forwarding_secret
+        paper_global_config["proxies"]["velocity"][
+            "secret"
+        ] = velocity_forwarding_secret
 
         self.write_config(
             paper_global_yml_path,
@@ -62,9 +65,8 @@ class ServerTypeActions(BaseGenerator):
                 "# Particularly, proxies.velocity.secret is set to the value in our velocity secrets file."
                 "#\n\n"
             ),
-            YamlConfig.write_cb
+            YamlConfig.write_cb,
         )
-
 
     def merge_fabric_forge_prereq_mods(self):
         pass

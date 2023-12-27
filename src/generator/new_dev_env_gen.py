@@ -4,7 +4,12 @@ from collections import OrderedDict
 import os
 from src.common.config import load_env_config
 from src.common.config.env_config import EnvConfig
-from src.generator.constants import DEFAULT_CHMOD_MODE, BASE_DATA_PATH, REPO_ROOT_PATH, SERVER_PROPERTIES_TEMPLATE_PATH
+from src.generator.constants import (
+    DEFAULT_CHMOD_MODE,
+    BASE_DATA_PATH,
+    REPO_ROOT_PATH,
+    SERVER_PROPERTIES_TEMPLATE_PATH,
+)
 from src.generator.server_type_actions import ServerTypeActions
 from src.common.helpers import recursive_chmod  # type: ignore
 from src.common.paths import ServerPaths
@@ -31,12 +36,19 @@ class NewDevEnvGen(BaseGenerator):
         self.server_type_actions = ServerTypeActions(base_env)
 
         curr_dir = Path(__file__).parent
-        self.server_properties_template= load_env_config(
+        self.server_properties_template = load_env_config(
             str(SERVER_PROPERTIES_TEMPLATE_PATH), curr_dir
         )
 
-
-    def run(self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, server_type: str, description: str):
+    def run(
+        self,
+        new_env: str,
+        velocity_port: int,
+        env_alias: str,
+        enable_env_protection: bool,
+        server_type: str,
+        description: str,
+    ):
         logger.info("Generating New Environment Directories")
         logger.info(f"- Repo Root: {REPO_ROOT_PATH}")
         logger.info(f"- Server Root: {BASE_DATA_PATH}")
@@ -47,7 +59,14 @@ class NewDevEnvGen(BaseGenerator):
         logger.info(f"- Description:\n{description}")
         logger.info("\n")
 
-        self.generate_env_config(new_env, velocity_port, env_alias, enable_env_protection, server_type, description)
+        self.generate_env_config(
+            new_env,
+            velocity_port,
+            env_alias,
+            enable_env_protection,
+            server_type,
+            description,
+        )
         self.generate_config_dirs(new_env)
 
         self.server_type_actions.run(new_env, server_type)
@@ -77,7 +96,13 @@ class NewDevEnvGen(BaseGenerator):
         return copied_config
 
     def generate_env_config(
-        self, new_env: str, velocity_port: int, env_alias: str, enable_env_protection: bool, server_type: str, description: str
+        self,
+        new_env: str,
+        velocity_port: int,
+        env_alias: str,
+        enable_env_protection: bool,
+        server_type: str,
+        description: str,
     ):
         """
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
@@ -109,9 +134,8 @@ class NewDevEnvGen(BaseGenerator):
                 "# MODIFY AS NECESSARY BY HAND\n"
                 "# SEE env1.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
                 "#\n\n"
-            )
+            ),
         )
-
 
     def generate_config_dirs(self, new_env: str):
         # World dirs
@@ -119,7 +143,9 @@ class NewDevEnvGen(BaseGenerator):
             logger.info("\n")
             logger.info(f"Generating dirs for {world}")
 
-            world_config_path = ServerPaths.get_env_and_world_group_configs_path(new_env, world)
+            world_config_path = ServerPaths.get_env_and_world_group_configs_path(
+                new_env, world
+            )
             if not world_config_path.exists():
                 logger.info(f">> Generating {world_config_path}...")
                 world_config_path.mkdir(parents=True)
@@ -129,7 +155,9 @@ class NewDevEnvGen(BaseGenerator):
                 logger.info(f">> Generating {mods_path}...")
                 mods_path.mkdir(parents=True)
 
-            plugins_path = ServerPaths.get_config_path(new_env, world, ConfigType.PLUGIN)
+            plugins_path = ServerPaths.get_config_path(
+                new_env, world, ConfigType.PLUGIN
+            )
             if not plugins_path.exists():
                 logger.info(f">> Generating {plugins_path}...")
                 plugins_path.mkdir(parents=True)
@@ -139,8 +167,9 @@ class NewDevEnvGen(BaseGenerator):
                 logger.info(f">> Generating {worlds_path}...")
                 worlds_path.mkdir(parents=True)
 
-
-            self.server_properties_path = ServerPaths.get_server_properties_path(new_env, world)
+            self.server_properties_path = ServerPaths.get_server_properties_path(
+                new_env, world
+            )
             if not self.server_properties_path.parent.exists():
                 self.server_properties_path.parent.mkdir(parents=True)
 
@@ -156,11 +185,10 @@ class NewDevEnvGen(BaseGenerator):
                     self.server_properties_path,
                     template,
                     "# This file was generated from a template",
-                    lambda f, config: EnvConfig.write_cb(f, config, quote=False)
+                    lambda f, config: EnvConfig.write_cb(f, config, quote=False),
                 )
 
                 os.chmod(self.server_properties_path, DEFAULT_CHMOD_MODE)
-
 
         # Should this get copied? Maybe delegate to ServerTypeActions?
 

@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, abort, request # type: ignore
+from flask import Blueprint, abort, request  # type: ignore
 
 from pprint import pformat, pprint
 from typing import Callable, Dict, Tuple
@@ -63,6 +63,7 @@ def read_file():
     resp = make_cors_response()
     resp.data = json.dumps(resp_data)
     return resp
+
 
 @files_bp.route("/write", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight

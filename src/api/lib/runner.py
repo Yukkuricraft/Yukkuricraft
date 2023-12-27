@@ -44,7 +44,9 @@ class Runner:
 
         for cmd in cmds:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
-            logger.info(f"Starting Popen proc (pid:{proc.pid}) - Running {pprint.pformat(cmd)}")
+            logger.info(
+                f"Starting Popen proc (pid:{proc.pid}) - Running {pprint.pformat(cmd)}"
+            )
             stdout_b, stderr_b = proc.communicate(prev_stdout.encode("utf8"))
 
             prev_stdout, prev_stderr = stdout_b.decode("utf8"), stderr_b.decode("utf8")

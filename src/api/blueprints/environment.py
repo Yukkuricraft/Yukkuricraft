@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, abort, request # type: ignore
+from flask import Blueprint, abort, request  # type: ignore
 
 from src.api.lib.auth import (
     intercept_cors_preflight,
@@ -79,18 +79,22 @@ def delete_env(env):
     if env_config["general"].get_or_default("enable_env_protection", False):
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")
-        resp.data = json.dumps({
-            'error': True,
-            'message': f"You can't delete an environment that has env protection enabled. Disable it before trying to delete {env}",
-        })
+        resp.data = json.dumps(
+            {
+                "error": True,
+                "message": f"You can't delete an environment that has env protection enabled. Disable it before trying to delete {env}",
+            }
+        )
     elif env in ["env1"]:
         # Blegh. Hardcoding ugly.
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")
-        resp.data = json.dumps({
-            'error': True,
-            'message': f"You can't delete env1/prod.",
-        })
+        resp.data = json.dumps(
+            {
+                "error": True,
+                "message": f"You can't delete env1/prod.",
+            }
+        )
     else:
         resp = make_cors_response(status_code=200)
         resp.headers.add("Content-Type", "application/json")

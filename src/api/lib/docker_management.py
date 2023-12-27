@@ -110,7 +110,6 @@ class DockerManagement:
             str: Response from rcon-cli
         """
 
-
         cmds = [
             [
                 "docker",
@@ -125,13 +124,15 @@ class DockerManagement:
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
         logger.info([stdout, stderr, exit_code])
 
-        rtn_msg= stdout
+        rtn_msg = stdout
         if stderr:
             rtn_msg += f"\n{stderr}"
 
         return rtn_msg.strip()
 
-    def copy_configs_to_bindmount(self, container_name: str, env_str: str, type: ConfigType) -> str:
+    def copy_configs_to_bindmount(
+        self, container_name: str, env_str: str, type: ConfigType
+    ) -> str:
         """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
 
         Args:
@@ -160,7 +161,7 @@ class DockerManagement:
                 container_name,
                 "bash",
                 "-c",
-                f"cp -rv {copy_src} {copy_dest}"
+                f"cp -rv {copy_src} {copy_dest}",
             ]
         ]
 
@@ -168,7 +169,7 @@ class DockerManagement:
         stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
         logger.info([stdout, stderr, exit_code])
 
-        rtn_msg= stdout
+        rtn_msg = stdout
         if stderr:
             rtn_msg += f"\n{stderr}"
 
@@ -219,7 +220,7 @@ class DockerManagement:
             "up",
         ]
 
-        return Runner.run([cmd], env_vars={ 'ENV': env })
+        return Runner.run([cmd], env_vars={"ENV": env})
 
     @ensure_valid_env
     def down_containers(self, env: str) -> Tuple[str, str, int]:

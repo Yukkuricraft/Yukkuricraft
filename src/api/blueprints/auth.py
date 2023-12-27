@@ -2,7 +2,7 @@
 
 import json
 
-from flask import Blueprint, abort, request # type: ignore
+from flask import Blueprint, abort, request  # type: ignore
 
 from datetime import datetime
 from pprint import pformat, pprint
@@ -90,6 +90,7 @@ def me():
 # @log_request
 def createdb():
     from src.api.models import create_db_tables
+
     logger.warning("?? CREATEDB")
     create_db_tables()
     return "Aaaa"

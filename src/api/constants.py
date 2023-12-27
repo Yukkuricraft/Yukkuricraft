@@ -6,7 +6,7 @@ G_CLIENT_ID = (
 )
 
 PROD_HOSTNAME = "neo-yukkuricraft"
-IS_PROD_HOST = (PROD_HOSTNAME in socket.gethostname())
+IS_PROD_HOST = PROD_HOSTNAME in socket.gethostname()
 
 CORS_ORIGIN = (
     "https://yakumo.yukkuricraft.net"
@@ -25,14 +25,6 @@ YC_TOKEN_AUTH_SCHEME = "YC-Token"
 
 ENV_FOLDER: Path = Path("/app/env")
 
-MIN_VALID_PROXY_PORT = (
-    25600
-    if IS_PROD_HOST
-    else 26600
-)
+MIN_VALID_PROXY_PORT = 25600 if IS_PROD_HOST else 26600
 
-MAX_VALID_PROXY_PORT = (
-    25700
-    if IS_PROD_HOST
-    else 26700
-)
+MAX_VALID_PROXY_PORT = 25700 if IS_PROD_HOST else 26700
