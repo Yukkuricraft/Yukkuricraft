@@ -7,18 +7,16 @@ from typing import List, Optional, Dict, Tuple
 from subprocess import Popen, PIPE
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
-from src.api.lib.environment import ensure_valid_env
 from src.api.lib.runner import Runner
+from src.common.environment import Env
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.decorators import serialize_tuple_out_as_dict
-from src.common.types import ConfigType
-
+from src.common.types import DataFileType
 
 class DockerManagement:
-    @ensure_valid_env
-    def list_defined_containers(self, env: str) -> List[Dict]:
+    def list_defined_containers(self, env: Env) -> List[Dict]:
         """Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
 
         We do this by parsing the generated `gen/docker-compose.{{ENV}}.yml` file.
@@ -32,7 +30,7 @@ class DockerManagement:
             TODO: Dataclass this.
         """
 
-        filepath = ServerPaths.get_generated_docker_compose_path(env)
+        filepath = ServerPaths.get_generated_docker_compose_path(env.name)
         docker_compose = load_yaml_config(filepath, no_cache=True)
 
         defined_containers: List = []
@@ -54,7 +52,7 @@ class DockerManagement:
                 for key, val in svc_data.labels.items():
                     # TODO: Make this more robust. What else can be substituted?
                     if val == "${ENV}":
-                        val = env
+                        val = env.name
                     labels.append(f"{key}={val}")
             container["labels"] = labels
 
@@ -62,12 +60,8 @@ class DockerManagement:
 
         return defined_containers
 
-    @ensure_valid_env
-    def list_active_containers(self, env: str) -> List[Dict]:
+    def list_active_containers(self, env: Env) -> List[Dict]:
         """List containers for env that are currently up and running.
-
-        The @Environment.ensure_valid_env decorator might be confusing
-        as this func needs 'env=env' in the calling sig vs just 'env' for up/up_one/down/down_one
 
         Args:
             env (str): Environment name string
@@ -84,7 +78,7 @@ class DockerManagement:
                 "{{ json . }}",
                 "--no-trunc",
                 "--filter",
-                f"label=net.yukkuricraft.env={env}",
+                f"label=net.yukkuricraft.env={env.name}",
             ],
         ]
         out = Runner.run(cmds)
@@ -131,26 +125,26 @@ class DockerManagement:
         return rtn_msg.strip()
 
     def copy_configs_to_bindmount(
-        self, container_name: str, env_str: str, type: ConfigType
+        self, container_name: str, type: DataFileType
     ) -> str:
         """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
 
         Args:
             container_name (str): A docker container name or id
             env_str (str): Environment name string
-            type (ConfigType): The type of configs to copy back.
+            type (DataFileType): The type of configs to copy back.
 
         Returns:
             str: Verbose output from `cp -v`
         """
-        if type == ConfigType.PLUGIN:
+        if type == DataFileType.PLUGIN_CONFIGS:
             # TODO Hardcoded paths :-/
             copy_src = "/data/plugins/*"
             copy_dest = "/yc-plugins"
-        elif type == ConfigType.MOD:
+        elif type == DataFileType.MOD_CONFIGS:
             copy_src = "/data/config/*"
             copy_dest = "/modsconfig-bindmount"
-        elif type == ConfigType.MOD_FILES:
+        elif type == DataFileType.MOD_FILES:
             copy_src = "/data/mods"
             copy_dest = "/mods-bindmount"
 
@@ -210,8 +204,7 @@ class DockerManagement:
 
     """
 
-    @ensure_valid_env
-    def up_containers(self, env: str) -> Tuple[str, str, int]:
+    def up_containers(self, env: Env) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -222,8 +215,7 @@ class DockerManagement:
 
         return Runner.run([cmd], env_vars={"ENV": env})
 
-    @ensure_valid_env
-    def down_containers(self, env: str) -> Tuple[str, str, int]:
+    def down_containers(self, env: Env) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -234,8 +226,7 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env=env)
 
-    @ensure_valid_env
-    def up_one_container(self, env: str, container_name: str) -> Tuple[str, str, int]:
+    def up_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -247,8 +238,7 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env=env)
 
-    @ensure_valid_env
-    def down_one_container(self, env: str, container_name: str) -> Tuple[str, str, int]:
+    def down_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -260,8 +250,7 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env=env)
 
-    @ensure_valid_env
-    def restart_containers(self, env: str) -> Tuple[str, str, int]:
+    def restart_containers(self, env: Env) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -272,9 +261,8 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env=env)
 
-    @ensure_valid_env
     def restart_one_container(
-        self, env: str, container_name: str
+        self, env: Env, container_name: str
     ) -> Tuple[str, str, int]:
         """
         REFACTOR TO NOT USE MAKE

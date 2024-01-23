@@ -11,6 +11,8 @@ from src.generator.constants import (
     DEFAULT_CHMOD_MODE,
 )
 
+from src.common.environment import Env
+
 from src.generator.base_generator import BaseGenerator
 from src.generator.docker_compose_gen import DockerComposeGen
 from src.common.paths import ServerPaths
@@ -28,12 +30,12 @@ class VelocityConfigGen(BaseGenerator):
     generated_velocity_config_name: str
     generated_velocity_config: dict = {}
 
-    def __init__(self, env: str):
+    def __init__(self, env: Env):
 
         super().__init__(env)
 
         self.generated_velocity_config_path = (
-            ServerPaths.get_generated_velocity_config_path(env)
+            ServerPaths.get_generated_velocity_config_path(env.name)
         )
         if not self.generated_velocity_config_path.parent.exists():
             self.generated_velocity_config_path.parent.mkdir()
@@ -43,7 +45,7 @@ class VelocityConfigGen(BaseGenerator):
             VELOCITY_CONFIG_TEMPLATE_PATH, curr_dir
         )
 
-    def generate_velocity_config(self, hostname: str):
+    def generate_velocity_config(self):
 
         # Copy baseline velocity config
         self.generated_velocity_config = self.velocity_config_template.as_dict()
@@ -52,21 +54,21 @@ class VelocityConfigGen(BaseGenerator):
         servers = {}
         forced_hosts = {}
         try_servers = []
-        for world in self.get_enabled_world_groups():
+        for world in self.env.world_groups:
             world_underscored = world.replace("-", "_")
 
             # Using the generated name (when no container_name is supplied) or config object name (eg, "mc_survival"), Velocity isn't able to
             #     resolve the supplied alias. For whatever reason, explicitly declared container_names do work, however.
             container_name = DockerComposeGen.container_name_format.format(
-                env=self.env, name=world
+                env=self.env.name, name=world
             )
             servers[world_underscored] = f"{container_name}:25565"
             try_servers.append(world_underscored)
 
             if world == "lobby":
                 # Allow both lobby.yukkuricraft.net as well as mc.yukkuricraft.net connect to the lobby.
-                forced_hosts[f"mc.{hostname}"] = [world_underscored]
-            forced_hosts[f"{world}.{hostname}"] = [world_underscored]
+                forced_hosts[f"mc.{self.env.hostname}"] = [world_underscored]
+            forced_hosts[f"{world}.{self.env.hostname}"] = [world_underscored]
 
         servers["try"] = try_servers
         self.generated_velocity_config["servers"] = servers
@@ -82,6 +84,6 @@ class VelocityConfigGen(BaseGenerator):
         )
         print("Done.")
 
-    def run(self, hostname: str):
-        self.generate_velocity_config(hostname)
+    def run(self):
+        self.generate_velocity_config()
         self.dump_generated_velocity_config()

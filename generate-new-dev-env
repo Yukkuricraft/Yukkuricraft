@@ -7,6 +7,7 @@ from typing import Optional
 
 sys.path.append(Path(__file__).parent.as_posix())
 
+from src.common.environment import Env
 from src.generator.generator import GeneratorType, get_generator
 
 
@@ -33,7 +34,7 @@ def generate_new_env(*kargs, **kwargs):
             )
     else:
 
-        gen = get_generator(GeneratorType.NEW_DEV_ENV, base_env)
+        gen = get_generator(GeneratorType.NEW_DEV_ENV, Env(base_env))
         gen.run(new_env, velocity_port, env_alias, description)
 
 

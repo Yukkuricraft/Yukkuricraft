@@ -14,11 +14,13 @@ from src.generator.server_type_actions import ServerTypeActions
 from src.common.helpers import recursive_chmod  # type: ignore
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
-from src.common.types import ConfigType
+from src.common.types import DataFileType
 import shutil
 
 from typing import Dict
 from pathlib import Path
+
+from src.common.environment import Env
 
 from src.generator.base_generator import BaseGenerator
 
@@ -26,11 +28,10 @@ from src.generator.base_generator import BaseGenerator
 TODO: Configurable copying of certain folders/configs from a source env
 """
 
-
 class NewDevEnvGen(BaseGenerator):
     server_root: Path
 
-    def __init__(self, base_env: str):
+    def __init__(self, base_env: Env):
         super().__init__(base_env)
 
         self.server_type_actions = ServerTypeActions(base_env)
@@ -52,7 +53,7 @@ class NewDevEnvGen(BaseGenerator):
         logger.info("Generating New Environment Directories")
         logger.info(f"- Repo Root: {REPO_ROOT_PATH}")
         logger.info(f"- Server Root: {BASE_DATA_PATH}")
-        logger.info(f"- Base Env: {self.env}")
+        logger.info(f"- Base Env: {self.env.name}")
         logger.info(f"- New Env: {new_env}")
         logger.info(f"- Enable Env Protection: {enable_env_protection}")
         logger.info(f"- Server Type:\n{server_type}")
@@ -69,7 +70,7 @@ class NewDevEnvGen(BaseGenerator):
         )
         self.generate_config_dirs(new_env)
 
-        self.server_type_actions.run(new_env, server_type)
+        self.server_type_actions.run(Env(new_env), server_type)
 
     ENV_CONFIG_SECTION_ORDER = [
         "general",
@@ -78,7 +79,7 @@ class NewDevEnvGen(BaseGenerator):
     ]
 
     def copy_env_config(self) -> Dict:
-        src_config = self.env_config.as_dict()
+        src_config = self.env.config_as_dict
         copied_config = OrderedDict()
 
         # Copy configured/sorted sections first
@@ -130,7 +131,7 @@ class NewDevEnvGen(BaseGenerator):
             copied_config,
             (
                 "#\n"
-                f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env}.toml AS A BASE\n"
+                f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env.name}.toml AS A BASE\n"
                 "# MODIFY AS NECESSARY BY HAND\n"
                 "# SEE env1.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
                 "#\n\n"
@@ -139,7 +140,7 @@ class NewDevEnvGen(BaseGenerator):
 
     def generate_config_dirs(self, new_env: str):
         # World dirs
-        for world in self.get_enabled_world_groups():
+        for world in self.env.world_groups:
             logger.info("\n")
             logger.info(f"Generating dirs for {world}")
 
@@ -150,19 +151,24 @@ class NewDevEnvGen(BaseGenerator):
                 logger.info(f">> Generating {world_config_path}...")
                 world_config_path.mkdir(parents=True)
 
-            mods_path = ServerPaths.get_config_path(new_env, world, ConfigType.MOD)
+            mods_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.MOD_CONFIGS)
             if not mods_path.exists():
                 logger.info(f">> Generating {mods_path}...")
                 mods_path.mkdir(parents=True)
 
-            plugins_path = ServerPaths.get_config_path(
-                new_env, world, ConfigType.PLUGIN
+            server_only_mods_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_ONLY_MOD_FILES)
+            if not server_only_mods_path.exists():
+                logger.info(f">> Generating {server_only_mods_path}...")
+                server_only_mods_path.mkdir(parents=True)
+
+            plugins_path = ServerPaths.get_data_files_path(
+                new_env, world, DataFileType.PLUGIN_CONFIGS
             )
             if not plugins_path.exists():
                 logger.info(f">> Generating {plugins_path}...")
                 plugins_path.mkdir(parents=True)
 
-            worlds_path = ServerPaths.get_config_path(new_env, world, ConfigType.SERVER)
+            worlds_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_CONFIGS)
             if not worlds_path.exists():
                 logger.info(f">> Generating {worlds_path}...")
                 worlds_path.mkdir(parents=True)
@@ -193,7 +199,7 @@ class NewDevEnvGen(BaseGenerator):
         # Should this get copied? Maybe delegate to ServerTypeActions?
 
         # Copy default secret world configs from {self.env} to {new_env}
-        src_default_path = ServerPaths.get_env_default_configs_path(self.env)
+        src_default_path = ServerPaths.get_env_default_configs_path(self.env.name)
         dst_default_path = ServerPaths.get_env_default_configs_path(new_env)
         if not dst_default_path.exists():
             logger.info(

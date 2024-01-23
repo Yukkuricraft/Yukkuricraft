@@ -5,20 +5,18 @@ import pwd
 import copy
 import yaml  # type: ignore
 
-from typing import Dict
 from pathlib import Path
-from pprint import pformat
 from src.common.paths import ServerPaths
 
 from src.generator.constants import (
     DOCKER_COMPOSE_TEMPLATE_PATH,
-    DEFAULT_CHMOD_MODE,
 )
+
+from src.common.environment import Env
 
 from src.generator.base_generator import BaseGenerator
 from src.common.config import YamlConfig, load_yaml_config
 from src.common.logger_setup import logger
-from src.common.helpers import recursive_chown
 
 
 class DockerComposeGen(BaseGenerator):
@@ -34,11 +32,7 @@ class DockerComposeGen(BaseGenerator):
 
     container_name_format = "YC-{env}-{name}"
 
-    WORLDGROUP_NAME_BLOCKLIST = [
-        "defaultconfigs",  # :`) Ugly folder structures yay`
-    ]
-
-    def __init__(self, env: str):
+    def __init__(self, env: Env):
         super().__init__(env)
 
         uid = os.getuid()
@@ -47,7 +41,7 @@ class DockerComposeGen(BaseGenerator):
         self.MINECRAFT_GID = user.pw_gid
 
         self.generated_docker_compose_path = (
-            ServerPaths.get_generated_docker_compose_path(self.env)
+            ServerPaths.get_generated_docker_compose_path(self.env.name)
         )
         if not self.generated_docker_compose_path.parent.exists():
             self.generated_docker_compose_path.parent.mkdir()
@@ -60,7 +54,7 @@ class DockerComposeGen(BaseGenerator):
     def add_host_and_container_names(self):
         for service_key, service in self.generated_docker_compose["services"].items():
             name = service["labels"][self.container_name_label]
-            container_name = self.container_name_format.format(env=self.env, name=name)
+            container_name = self.container_name_format.format(env=self.env.name, name=name)
 
             logger.info(container_name)
             service["container_name"] = container_name
@@ -73,7 +67,7 @@ class DockerComposeGen(BaseGenerator):
         velocity_service = (
             self.docker_compose_template.custom_extensions.velocity_template.as_dict()
         )
-        for world in self.get_enabled_world_groups():
+        for world in self.env.world_groups:
             velocity_service["depends_on"][f"mc_{world}"] = {
                 "condition": "service_healthy"
             }
@@ -82,7 +76,7 @@ class DockerComposeGen(BaseGenerator):
     def generate_minecraft_service_config(self):
         services = self.generated_docker_compose["services"]
         # Add minecraft services
-        for world in self.get_enabled_world_groups():
+        for world in self.env.world_groups:
             mc_service_template = copy.deepcopy(
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
@@ -93,7 +87,7 @@ class DockerComposeGen(BaseGenerator):
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
-            if self.is_prod() or self.env_config["general"].get_or_default(
+            if self.env.is_prod() or self.env.config["general"].get_or_default(
                 "enable_backups", None
             ):
                 backup_service_template = copy.deepcopy(
@@ -104,7 +98,7 @@ class DockerComposeGen(BaseGenerator):
                 )
                 backup_service_template["environment"][
                     "RCON_HOST"
-                ] = self.container_name_format.format(env=self.env, name=world)
+                ] = self.container_name_format.format(env=self.env.name, name=world)
                 backup_service_template["labels"][
                     self.container_name_label
                 ] = f"{world}_backup"
@@ -122,21 +116,21 @@ class DockerComposeGen(BaseGenerator):
             else {}
         )
 
-        volumes[f"velocity-{self.env}"] = None
-        volumes[f"dbdata-{self.env}"] = None
-        volumes[f"html-{self.env}"] = None
-        volumes[f"vhost-{self.env}"] = None
-        volumes[f"acme-{self.env}"] = None
-        volumes[f"certs-{self.env}"] = {
+        volumes[f"velocity-{self.env.name}"] = None
+        volumes[f"dbdata-{self.env.name}"] = None
+        volumes[f"html-{self.env.name}"] = None
+        volumes[f"vhost-{self.env.name}"] = None
+        volumes[f"acme-{self.env.name}"] = None
+        volumes[f"certs-{self.env.name}"] = {
             "driver": "local",
             "driver_opts": {
                 "type": "none",
                 "o": "bind",
-                "device": f"{self.env_config['runtime-environment-variables'].MC_FS_ROOT}/env/{self.env}/certs",
+                "device": f"{self.env.envvars['MC_FS_ROOT']}/env/{self.env.name}/certs",
             },
         }
 
-        for world in self.get_enabled_world_groups():
+        for world in self.env.world_groups:
             volumes[f"mcdata_{world}"] = None
             volumes[f"ycworldsvolume_{world}"] = None
             volumes[f"ycpluginsvolume_{world}"] = None

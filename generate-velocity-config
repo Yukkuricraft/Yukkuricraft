@@ -6,15 +6,14 @@ from pathlib import Path
 
 sys.path.append(Path(__file__).parent.as_posix())
 
+from src.common.environment import Env
 from src.generator.generator import GeneratorType, get_generator
-from src.api.lib.environment import get_env_hostname_from_config
 
 
 if __name__ == "__main__":
-    env = os.getenv("ENV")
-    if env is None:
+    env_str = os.getenv("ENV")
+    if env_str is None:
         raise Exception("Environment variable 'ENV' was not set. Must be set to generate docker-compose file. Use Makefile targets ('make generate') instead of invoking manually.")
     else:
-        hostname = get_env_hostname_from_config(env)
-        get_generator(GeneratorType.VELOCITY_CONFIG, env).run(hostname)
+        get_generator(GeneratorType.VELOCITY_CONFIG, Env(env_str)).run()
 

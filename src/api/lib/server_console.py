@@ -5,7 +5,7 @@ import subprocess
 import select
 import time
 
-from src.api.lib.environment import Env
+from src.common.environment import Env
 from src.common.logger_setup import logger
 from sh import tail  # type: ignore
 
@@ -16,7 +16,7 @@ ansi_escape = re.compile(
 )
 
 
-def listen_to_server_console(env: str, world_group_name: str) -> Generator:
+def listen_to_server_console(env: Env, world_group_name: str) -> Generator:
     """
     "Why not use docker py or similar?"
     ANSI escape codes in minecraft logs. It's mainly a question of whether
@@ -29,7 +29,7 @@ def listen_to_server_console(env: str, world_group_name: str) -> Generator:
 
     logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE() (Nyan)")
     # TODO: Use configurable root.
-    log_file = f"/var/lib/yukkuricraft/env/{env}/{world_group_name}/logs/latest.log"
+    log_file = f"/var/lib/yukkuricraft/env/{env.name}/{world_group_name}/logs/latest.log"
 
     # Output N last lines of file
     for line in tail(log_file, "-n100"):

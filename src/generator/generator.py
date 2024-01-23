@@ -2,6 +2,8 @@
 
 import enum
 
+from src.common.environment import Env
+
 from src.generator.docker_compose_gen import DockerComposeGen
 from src.generator.velocity_config_gen import VelocityConfigGen
 from src.generator.new_dev_env_gen import NewDevEnvGen
@@ -15,7 +17,7 @@ class GeneratorType(enum.Enum):
     ENV_FILE = 4
 
 
-def get_generator(gen_type: GeneratorType, env: str):
+def get_generator(gen_type: GeneratorType, env: Env):
     if gen_type == GeneratorType.DOCKER_COMPOSE:
         return DockerComposeGen(env)
     elif gen_type == GeneratorType.VELOCITY_CONFIG:

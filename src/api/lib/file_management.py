@@ -13,7 +13,6 @@ from src.api.constants import ENV_FOLDER, MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_
 from src.api.lib.runner import Runner
 from src.common.config import load_toml_config
 from src.common.logger_setup import logger
-from src.generator.generator import GeneratorType, get_generator
 
 
 class FileManager:

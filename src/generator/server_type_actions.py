@@ -1,14 +1,18 @@
 #!/bin/env python3
 import yaml  # type: ignore
+import shutil
 
 from pathlib import Path
 
 from src.common.config import ConfigNode, load_yaml_config
 from src.common.config.config_finder import ConfigFinder
 from src.common.config.yaml_config import YamlConfig
-from src.common.types import ServerTypes
+from src.common.types import DataFileType, ServerTypes
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
+
+from src.common.environment import Env
+
 from src.generator.constants import (
     PAPER_GLOBAL_TEMPLATE_PATH,
     VELOCITY_FORWARDING_SECRET_PATH,
@@ -19,21 +23,21 @@ from src.generator.base_generator import BaseGenerator
 class ServerTypeActions(BaseGenerator):
     server_root: Path
 
-    def __init__(self, base_env: str):
+    def __init__(self, base_env: Env):
         super().__init__(base_env)
 
-    def run(self, target_env: str, server_type: ServerTypes):
+    def run(self, target_env: Env, server_type: ServerTypes):
         logger.info("Doing server type specific stuff?")
 
         if server_type in ["FABRIC", "FORGE"]:
-            self.merge_fabric_forge_prereq_mods()
+            self.merge_fabric_forge_prereq_mods(target_env)
         elif server_type in ["PAPER", "BUKKIT"]:
             self.write_paper_bukkit_configs(target_env)
         else:
             logger.info(f"No special actions taken for serer type: {server_type}")
 
-    def write_paper_bukkit_configs(self, target_env: str):
-        paper_global_yml_path = ServerPaths.get_paper_global_yml_path(target_env)
+    def write_paper_bukkit_configs(self, target_env: Env):
+        paper_global_yml_path = ServerPaths.get_paper_global_yml_path(target_env.name)
         velocity_forwarding_secret = "CouldNotFindValidSecret?"
         curr_dir = Path(__file__).parent
         velocity_secret_path = ConfigFinder(
@@ -68,5 +72,6 @@ class ServerTypeActions(BaseGenerator):
             YamlConfig.write_cb,
         )
 
-    def merge_fabric_forge_prereq_mods(self):
-        pass
+    def merge_fabric_forge_prereq_mods(self, env: Env):
+        for world in self.env.world_groups:
+            server_mods_path = ServerPaths.get_data_files_path(env.name, world, DataFileType.SERVER_ONLY_MOD_FILES)

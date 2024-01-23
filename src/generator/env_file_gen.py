@@ -9,9 +9,9 @@ from typing import Dict
 from pathlib import Path
 
 from src.api.constants import IS_PROD_HOST
+from src.common.environment import Env
 
 from src.common.logger_setup import logger
-from src.generator.constants import DEFAULT_CHMOD_MODE
 from src.generator.base_generator import BaseGenerator
 
 """
@@ -28,15 +28,12 @@ class EnvFileGen(BaseGenerator):
 
     generated_env_config: Dict[str, str]
 
-    env: str
-
-    def __init__(self, env: str):
+    def __init__(self, env: Env):
         super().__init__(env)
 
-        self.generated_env_file_path = ServerPaths.get_generated_env_file_path(env)
+        self.generated_env_file_path = ServerPaths.get_generated_env_file_path(env.name)
         if not self.generated_env_file_path.parent.exists():
             self.generated_env_file_path.parent.mkdir()
-        self.env = env
 
     def run(self):
         self.generate_env_file()
@@ -46,11 +43,11 @@ class EnvFileGen(BaseGenerator):
     dev_api_host = "dev.api.yukkuricraft.net"
 
     def generate_env_file(self):
-        self.generated_env_config = self.env_config[
+        self.generated_env_config = self.config[
             "runtime-environment-variables"
         ].as_dict()
 
-        self.generated_env_config["ENV"] = self.env
+        self.generated_env_config["ENV"] = self.env.name
         self.generated_env_config["API_HOST"] = (
             self.prod_api_host if IS_PROD_HOST else self.dev_api_host
         )
@@ -79,7 +76,7 @@ class EnvFileGen(BaseGenerator):
                 "# DO NOT MODIFY MANUALLY\n"
                 "# CHANGES WILL BE OVERWRITTEN ON RESTART\n"
                 "#"
-                f"# MODIFY `env/{self.env}.toml` FOR PERMANENT CHANGES"
+                f"# MODIFY `env/{self.env.name}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
             ),
             EnvFileGen.dump_write_cb,

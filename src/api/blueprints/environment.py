@@ -2,6 +2,7 @@
 
 import json
 
+from pprint import pformat
 from flask import Blueprint, abort, request  # type: ignore
 
 from src.api.lib.auth import (
@@ -9,8 +10,8 @@ from src.api.lib.auth import (
     validate_access_token,
     make_cors_response,
 )
+
 from src.api.lib.environment import (
-    Env,
     list_valid_envs,
     create_new_env,
     delete_dev_env,
@@ -19,6 +20,7 @@ from src.api.lib.environment import (
 from src.api.lib.helpers import log_request
 
 from src.common.config import load_toml_config
+from src.common.environment import Env
 from src.common.logger_setup import logger
 from src.common.paths import ServerPaths
 
@@ -58,7 +60,7 @@ def create_env():
     logger.warning([resp_data, new_env_name])
 
     resp_data["created_env"] = {
-        "env": Env.from_env_string(new_env_name).toJson(),
+        "env": Env(new_env_name).to_json(),
         "alias": env_alias,
         "port": proxy_port,
     }
@@ -68,14 +70,15 @@ def create_env():
     return resp
 
 
-@envs_bp.route("/<env>", methods=["DELETE", "OPTIONS"])
+@envs_bp.route("/<env_str>", methods=["DELETE", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def delete_env(env):
-    env_dict = Env.from_env_string(env).toJson()
+def delete_env(env_str):
+    env = Env(env_str)
+    env_dict = env.to_json()
 
-    env_config = load_toml_config(ServerPaths.get_env_toml_config_path(env))
+    env_config = load_toml_config(ServerPaths.get_env_toml_config_path(env.name))
     if env_config["general"].get_or_default("enable_env_protection", False):
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")
@@ -85,7 +88,7 @@ def delete_env(env):
                 "message": f"You can't delete an environment that has env protection enabled. Disable it before trying to delete {env}",
             }
         )
-    elif env in ["env1"]:
+    elif env_str in ["env1"]:
         # Blegh. Hardcoding ugly.
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")
@@ -99,7 +102,7 @@ def delete_env(env):
         resp = make_cors_response(status_code=200)
         resp.headers.add("Content-Type", "application/json")
 
-        resp_data = delete_dev_env(env_str=env)
+        resp_data = delete_dev_env(env_str)
         resp_data["env"] = env_dict
 
         resp.data = json.dumps(resp_data)
@@ -107,12 +110,13 @@ def delete_env(env):
     return resp
 
 
-@envs_bp.route("/<env>/generate-configs", methods=["POST", "OPTIONS"])
+@envs_bp.route("/<env_str>/generate-configs", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def generate_configs(env):
-    env_dict = Env.from_env_string(env).toJson()
+def generate_configs(env_str):
+    env = Env(env_str)
+    env_dict = env.to_json()
 
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
@@ -133,8 +137,9 @@ def list_envs_with_configs():
         resp.status = 200
 
         valid_envs = list_valid_envs()
-        valid_envs_as_dicts = list(map(lambda env: env.toJson(), valid_envs))
+        valid_envs_as_dicts = list(map(lambda env: env.to_json(), valid_envs))
 
+        logger.info(pformat(valid_envs_as_dicts))
         resp.data = json.dumps(valid_envs_as_dicts)
 
         return resp
