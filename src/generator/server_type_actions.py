@@ -37,6 +37,7 @@ class ServerTypeActions(BaseGenerator):
             logger.info(f"No special actions taken for serer type: {server_type}")
 
     def write_paper_bukkit_configs(self, target_env: Env):
+        logger.info(f"Writing paper/bukkit configs for env: '{target_env.name}'")
         paper_global_yml_path = ServerPaths.get_paper_global_yml_path(target_env.name)
         velocity_forwarding_secret = "CouldNotFindValidSecret?"
         curr_dir = Path(__file__).parent
@@ -73,5 +74,11 @@ class ServerTypeActions(BaseGenerator):
         )
 
     def merge_fabric_forge_prereq_mods(self, env: Env):
+        logger.info(f"Merging fabric/forge prereq mods for env '{env.name}'")
         for world in self.env.world_groups:
             server_mods_path = ServerPaths.get_data_files_path(env.name, world, DataFileType.SERVER_ONLY_MOD_FILES)
+            mods_path = ServerPaths.get_data_files_path(env.name, world, DataFileType.MOD_FILES)
+
+            logger.info(f"Merging '{server_mods_path}' => '{mods_path}'")
+
+            shutil.copytree(server_mods_path, mods_path)

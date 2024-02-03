@@ -79,7 +79,7 @@ class NewDevEnvGen(BaseGenerator):
     ]
 
     def copy_env_config(self) -> Dict:
-        src_config = self.env.config_as_dict
+        src_config = self.env.config
         copied_config = OrderedDict()
 
         # Copy configured/sorted sections first

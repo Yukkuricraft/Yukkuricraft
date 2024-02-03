@@ -213,7 +213,7 @@ class DockerManagement:
             "up",
         ]
 
-        return Runner.run([cmd], env_vars={"ENV": env})
+        return Runner.run_make_cmd(cmd, env)
 
     def down_containers(self, env: Env) -> Tuple[str, str, int]:
         """
@@ -224,7 +224,7 @@ class DockerManagement:
             "down",
         ]
 
-        return Runner.run_make_cmd(cmd, env=env)
+        return Runner.run_make_cmd(cmd, env)
 
     def up_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
         """
@@ -236,7 +236,7 @@ class DockerManagement:
             container_name,
         ]
 
-        return Runner.run_make_cmd(cmd, env=env)
+        return Runner.run_make_cmd(cmd, env)
 
     def down_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
         """
@@ -248,7 +248,7 @@ class DockerManagement:
             container_name,
         ]
 
-        return Runner.run_make_cmd(cmd, env=env)
+        return Runner.run_make_cmd(cmd, env)
 
     def restart_containers(self, env: Env) -> Tuple[str, str, int]:
         """
@@ -259,7 +259,7 @@ class DockerManagement:
             "restart",
         ]
 
-        return Runner.run_make_cmd(cmd, env=env)
+        return Runner.run_make_cmd(cmd, env)
 
     def restart_one_container(
         self, env: Env, container_name: str
@@ -273,4 +273,4 @@ class DockerManagement:
             container_name,
         ]
 
-        return Runner.run_make_cmd(cmd, env=env)
+        return Runner.run_make_cmd(cmd, env)

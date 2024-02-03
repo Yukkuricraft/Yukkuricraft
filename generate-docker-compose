@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.append(Path(__file__).parent.as_posix())
 
+from src.common.environment import Env
 from src.generator.generator import GeneratorType, get_generator
 
 if __name__ == "__main__":

@@ -43,9 +43,9 @@ class EnvFileGen(BaseGenerator):
     dev_api_host = "dev.api.yukkuricraft.net"
 
     def generate_env_file(self):
-        self.generated_env_config = self.config[
+        self.generated_env_config = self.env.config[
             "runtime-environment-variables"
-        ].as_dict()
+        ]
 
         self.generated_env_config["ENV"] = self.env.name
         self.generated_env_config["API_HOST"] = (

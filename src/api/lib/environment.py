@@ -113,6 +113,8 @@ def delete_dev_env(env_str: str):
 def generate_env_configs(env_str: str):
     generate_all(env_str)
 
+    # TODO: Run ServerTypeActions and move it into common lib
+
     return {}
 
 
