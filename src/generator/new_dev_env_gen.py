@@ -4,13 +4,15 @@ from collections import OrderedDict
 import os
 from src.common.config import load_env_config
 from src.common.config.env_config import EnvConfig
-from src.generator.constants import (
+from src.common.constants import (
     DEFAULT_CHMOD_MODE,
     BASE_DATA_PATH,
     REPO_ROOT_PATH,
+)
+from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
 )
-from src.generator.server_type_actions import ServerTypeActions
+from src.common.server_type_actions import ServerTypeActions
 from src.common.helpers import recursive_chmod  # type: ignore
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
@@ -34,7 +36,7 @@ class NewDevEnvGen(BaseGenerator):
     def __init__(self, base_env: Env):
         super().__init__(base_env)
 
-        self.server_type_actions = ServerTypeActions(base_env)
+        self.server_type_actions = ServerTypeActions()
 
         curr_dir = Path(__file__).parent
         self.server_properties_template = load_env_config(
@@ -70,7 +72,7 @@ class NewDevEnvGen(BaseGenerator):
         )
         self.generate_config_dirs(new_env)
 
-        self.server_type_actions.run(Env(new_env), server_type)
+        self.server_type_actions.run(Env(new_env))
 
     ENV_CONFIG_SECTION_ORDER = [
         "general",
@@ -160,6 +162,11 @@ class NewDevEnvGen(BaseGenerator):
             if not server_only_mods_path.exists():
                 logger.info(f">> Generating {server_only_mods_path}...")
                 server_only_mods_path.mkdir(parents=True)
+
+            client_and_server_mods_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.CLIENT_AND_SERVER_MOD_FILES)
+            if not client_and_server_mods_path.exists():
+                logger.info(f">> Generating {client_and_server_mods_path}...")
+                client_and_server_mods_path.mkdir(parents=True)
 
             plugins_path = ServerPaths.get_data_files_path(
                 new_env, world, DataFileType.PLUGIN_CONFIGS
