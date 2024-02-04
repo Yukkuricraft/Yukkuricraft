@@ -13,6 +13,7 @@ from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.decorators import serialize_tuple_out_as_dict
+from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataFileType
 
 class DockerManagement:
@@ -208,6 +209,10 @@ class DockerManagement:
         """
         REFACTOR TO NOT USE MAKE
         """
+
+        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
+        ServerTypeActions().run(env)
+
         cmd = [
             "make",
             "up",
@@ -236,6 +241,9 @@ class DockerManagement:
             container_name,
         ]
 
+        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
+        ServerTypeActions().run(env)
+
         return Runner.run_make_cmd(cmd, env)
 
     def down_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
@@ -259,6 +267,9 @@ class DockerManagement:
             "restart",
         ]
 
+        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
+        ServerTypeActions().run(env)
+
         return Runner.run_make_cmd(cmd, env)
 
     def restart_one_container(
@@ -272,5 +283,8 @@ class DockerManagement:
             "restart_one",
             container_name,
         ]
+
+        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
+        ServerTypeActions().run(env)
 
         return Runner.run_make_cmd(cmd, env)

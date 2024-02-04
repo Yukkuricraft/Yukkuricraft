@@ -2,10 +2,14 @@ from typing import Callable, List, Optional
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
+
 from src.common.environment import Env, InvalidPortException
 from src.common.logger_setup import logger
 from src.common.paths import ServerPaths
+from src.common.server_type_actions import ServerTypeActions
+
 from src.generator.generator import GeneratorType, get_generator
+
 
 def get_next_valid_env_number():
     """
@@ -110,24 +114,22 @@ def delete_dev_env(env_str: str):
     return Runner.run_make_cmd(cmd, env=Env(env_str))
 
 
-def generate_env_configs(env_str: str):
-    generate_all(env_str)
+def generate_env_configs(env: Env):
+    generate_all(env)
 
-    # TODO: Run ServerTypeActions and move it into common lib
+    ServerTypeActions().run(env)
 
     return {}
 
 
-def generate_all(env_str: str):
+def generate_all(env: Env):
     # Generate env file
-    gen = get_generator(GeneratorType.ENV_FILE, Env(env_str))
+    gen = get_generator(GeneratorType.ENV_FILE, env)
     gen.run()
-    generate_velocity_and_docker(env_str)
+    generate_velocity_and_docker(env)
 
 
-def generate_velocity_and_docker(env_str: str):
-    env = Env(env_str)
-
+def generate_velocity_and_docker(env: Env):
     # Generate docker compose file
     gen = get_generator(GeneratorType.DOCKER_COMPOSE, env)
     gen.run()
