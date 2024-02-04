@@ -120,7 +120,7 @@ def generate_configs(env_str):
 
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp_data = generate_env_configs(env=env)
+    resp_data = generate_env_configs(env)
     resp_data["env"] = env_dict
 
     resp.data = json.dumps(resp_data)

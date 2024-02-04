@@ -5,9 +5,7 @@ from typing import Dict, Callable, Optional
 from pathlib import Path
 
 from src.common.environment import Env
-
-from src.generator.constants import DEFAULT_CHMOD_MODE
-
+from src.common.helpers import write_config
 from src.common.config.toml_config import TomlConfig
 
 class BaseGenerator:
@@ -53,11 +51,4 @@ class BaseGenerator:
             header (str, optional): Optional header. Defaults to "".
             write_cb (Optional[Callable], optional): Defaults to a `toml_w.dump()`.
         """
-
-        if not config_path.parent.exists():
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(config_path, "wb") as f:
-            f.write(header.encode("utf8"))
-            write_cb(f, config)
-        os.chmod(config_path, DEFAULT_CHMOD_MODE)
+        write_config(config_path, config, header, write_cb)

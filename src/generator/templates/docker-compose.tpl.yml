@@ -117,7 +117,7 @@ custom_extensions:
       DEBUG: "false"
       TYPE: "VELOCITY"
       SYNC_SKIP_NEWER_IN_DESTINATION: "false"
-      VELOCITY_VERSION: "${MC_VERSION}"
+      VELOCITY_VERSION: "${VELOCITY_VERSION:-3.3.0-SNAPSHOT}"
       VELOCITY_BUILD_ID: "${VELOCITY_BUILD_ID:-latest}"
     labels:
       net.yukkuricraft.env: ${ENV}

@@ -1,23 +1,18 @@
 #!/bin/env python3
 
-import os
-import copy
-
 from typing import Dict
 from pathlib import Path
 
+from src.generator.base_generator import BaseGenerator
 from src.generator.constants import (
     VELOCITY_CONFIG_TEMPLATE_PATH,
-    DEFAULT_CHMOD_MODE,
 )
-
-from src.common.environment import Env
-
-from src.generator.base_generator import BaseGenerator
 from src.generator.docker_compose_gen import DockerComposeGen
-from src.common.paths import ServerPaths
+
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
+from src.common.environment import Env
+from src.common.paths import ServerPaths
 
 
 class VelocityConfigGen(BaseGenerator):
