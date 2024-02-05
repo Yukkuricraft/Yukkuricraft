@@ -15,13 +15,13 @@ RUN groupadd --force --gid $DOCKER_GID docker \
     && usermod -a -G docker minecraft
 
 # Create and set ownership of all mount endpoints
-RUN mkdir /plugins-bindmount-prod
-RUN mkdir /worlds-bindmount-prod
+RUN mkdir /plugins-bindmount
+RUN mkdir /worlds-bindmount
 RUN mkdir /plugins-volume-dev
 RUN mkdir /worlds-volume-dev
 
-RUN chown $HOST_UID:$HOST_GID /plugins-bindmount-prod
-RUN chown $HOST_UID:$HOST_GID /worlds-bindmount-prod
+RUN chown $HOST_UID:$HOST_GID /plugins-bindmount
+RUN chown $HOST_UID:$HOST_GID /worlds-bindmount
 RUN chown $HOST_UID:$HOST_GID /plugins-volume-dev
 RUN chown $HOST_UID:$HOST_GID /worlds-volume-dev
 
