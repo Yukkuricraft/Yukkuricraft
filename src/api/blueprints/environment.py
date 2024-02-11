@@ -49,7 +49,7 @@ def create_env():
     resp.headers.add("Content-Type", "application/json")
 
     resp_data = {}
-    new_env_name = create_new_env(
+    new_env: Env = create_new_env(
         proxy_port=proxy_port,
         env_alias=env_alias,
         enable_env_protection=enable_env_protection,
@@ -57,10 +57,10 @@ def create_env():
         description=description,
     )
     logger.warning("????????????")
-    logger.warning([resp_data, new_env_name])
+    logger.warning([resp_data, new_env])
 
     resp_data["created_env"] = {
-        "env": Env(new_env_name).to_json(),
+        "env": new_env.to_json(),
         "alias": env_alias,
         "port": proxy_port,
     }

@@ -64,7 +64,7 @@ def create_new_env(
     enable_env_protection: bool,
     server_type: str,
     description: str = "",
-) -> str:
+) -> Env:
     """Creates a new env using the next available and valid env number.
 
     Args:
@@ -78,7 +78,7 @@ def create_new_env(
         InvalidPortException: Invalid port
 
     Returns:
-        str: Env id string in the format of "env#" where # is any positive int
+        Env: An Env object representing the new environment.
     """
     if proxy_port < MIN_VALID_PROXY_PORT or proxy_port > MAX_VALID_PROXY_PORT:
         raise InvalidPortException(
@@ -93,9 +93,10 @@ def create_new_env(
         env_name, proxy_port, env_alias, enable_env_protection, server_type, description
     )
 
-    generate_velocity_and_docker(env_name)
-
-    return env_name
+    # Order matters. Can't instantiate Env() until config has been generated with above.
+    env = Env(env_name)
+    generate_velocity_and_docker(env)
+    return env
 
 
 def delete_dev_env(env_str: str):
