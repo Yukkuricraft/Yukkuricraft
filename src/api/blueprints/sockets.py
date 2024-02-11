@@ -5,6 +5,7 @@ from src.api.lib.sockets import socketio
 from src.api.lib.server_console import listen_to_server_console
 from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
+from src.common.environment import Env
 from src.api.lib.helpers import log_request
 
 DockerMgmtApi = DockerManagement()
@@ -31,9 +32,14 @@ def disconnect(*args, **kwargs):
 @socketio.on("connect to console")
 @log_request
 def connect_to_console(data):
-    env, world_group_name = data.get("env", None), data.get("world_group_name", None)
+    env_str, world_group_name = data.get("env", None), data.get("world_group_name", None)
     logger.info("SOCKET GOT CONSOLE CONNECT REQUEST")
     logger.info(data)
+
+    if env_str is None:
+        raise ValueError("Must provide an env string!")
+
+    env = Env(env_str)
     for item in listen_to_server_console(env, world_group_name):
         logger.info(f"#> {item}")
         emit("log from console", item)
