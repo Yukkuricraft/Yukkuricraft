@@ -17,13 +17,9 @@ RUN groupadd --force --gid $DOCKER_GID docker \
 # Create and set ownership of all mount endpoints
 RUN mkdir /plugins-bindmount
 RUN mkdir /worlds-bindmount
-RUN mkdir /plugins-volume-dev
-RUN mkdir /worlds-volume-dev
 
 RUN chown $HOST_UID:$HOST_GID /plugins-bindmount
 RUN chown $HOST_UID:$HOST_GID /worlds-bindmount
-RUN chown $HOST_UID:$HOST_GID /plugins-volume-dev
-RUN chown $HOST_UID:$HOST_GID /worlds-volume-dev
 
 # Just in-case remotely SSH'ing in and dev'ing from vscode (windows) causes CRLF issues
 RUN sed -i 's/\r$//' /scripts/start.sh  && \

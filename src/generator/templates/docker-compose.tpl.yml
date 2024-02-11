@@ -46,11 +46,11 @@ custom_extensions:
       MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
       DEBUG: "true"
       EULA: "true"
-      COPY_PROD_WORLD: ${COPY_PROD_WORLD}
-      COPY_PROD_PLUGINS: ${COPY_PROD_PLUGINS}
       REMOVE_OLD_MODS: true
       COPY_PLUGINS_SRC: /plugins-bindmount
+      COPY_PLUGINS_DEST: /data/plugins
       COPY_MODS_SRC: /mods-bindmount
+      COPY_MODS_DEST: /data/mods
       COPY_CONFIG_SRC: /yc-configs
       COPY_CONFIG_DEST: /data
       OVERRIDE_SERVER_PROPERTIES: true
@@ -67,6 +67,7 @@ custom_extensions:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
     volumes:
+      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
       - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/worlds:/worlds-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/plugins:/plugins-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/mods:/mods-bindmount
