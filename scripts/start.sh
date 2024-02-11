@@ -89,13 +89,6 @@ echo "==============="
 run ls -al /
 run ls -al /data
 
-function warn_ctrl_c {
-    if [[ ! -f "/last_ctrl_c" ]]; then
-        echo $(date -c) >> /last_ctrl_c
-        echo "You just tried to send a TERM signal. Enter Ctrl+C twice within two seconds to propagate the TERM signal."
-    fi
-}
-
 echo "###########################################################"
 echo "STARTING ORIGINAL ITZG/DOCKER-MINECRAFT-SERVER START SCRIPT"
 echo $(whoami)

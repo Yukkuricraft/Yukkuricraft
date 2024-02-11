@@ -261,6 +261,17 @@ restore_mysql_from_backup:
 		--network="env1_ycnet" \
 		yukkuricraft/mysql-backup-restic
 
+.PHONY: get_snapshots_for_repo_json
+get_snapshots_for_repo_json:
+	$(PRE) docker run \
+		-e RESTIC_REPOSITORY=/backups \
+		-e RESTIC_PASSWORD_FILE=/restic.password \
+		-v /media/backups-primary/restic-$(REPO):/backups \
+		-v $(PWD)/secrets/restic.password:/restic.password \
+		restic/restic \
+		--json \
+		snapshots
+
 .PHONY: get_snapshots_for_repo
 get_snapshots_for_repo:
 	$(PRE) docker run \
@@ -268,9 +279,9 @@ get_snapshots_for_repo:
 		-e RESTIC_PASSWORD_FILE=/restic.password \
 		-v /media/backups-primary/restic-$(REPO):/backups \
 		-v $(PWD)/secrets/restic.password:/restic.password \
-		--network="env1_ycnet" \
 		restic/restic \
 		snapshots
+
 
 .PHONY: restore_mc_from_backup
 restore_mc_from_backup:

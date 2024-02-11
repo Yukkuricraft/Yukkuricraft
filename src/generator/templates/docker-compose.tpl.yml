@@ -83,6 +83,9 @@ custom_extensions:
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic
     environment:
+      RESTIC_HOSTNAME: YC-${ENV}-<<WORLDGROUP>>
+      # Restic will also tag with <<WORLDGROUP>> as it also tags whatever BACKUP_NAME is.
+      RESTIC_ADDITIONAL_TAGS: ${ENV}
       BACKUP_NAME: <<WORLDGROUP>>
       BACKUP_INTERVAL: "3h"
       BACKUP_METHOD: restic
@@ -105,7 +108,7 @@ custom_extensions:
     volumes:
       - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
-      - ${BACKUPS_ROOT}/restic-<<WORLDGROUP>>:/backups
+      - ${BACKUPS_ROOT}/restic:/backups
     volumes_from:
       - mc_<<WORLDGROUP>>:ro
     logging: *default-logging
