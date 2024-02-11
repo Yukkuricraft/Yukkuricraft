@@ -171,24 +171,26 @@ services:
       net.yukkuricraft.container_type: backup
       net.yukkuricraft.container_name: mysql_backup
     environment:
+      BACKUP_NAME: mysql
+      RESTIC_ADDITIONAL_TAGS: ${ENV}
+      RESTIC_HOSTNAME: YC-${ENV}-mysql
+      RESTIC_REPOSITORY: /backups
+      RESTIC_PASSWORD_FILE: /restic.password
+      PRUNE_BACKUPS_DAYS: 7
+      PRUNE_RESTIC_RETENTION: --keep-last 8 --keep-daily 7 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
       DB_SERVER: YC-${ENV}-mysql
       DB_USER: root
       DB_PORT: 3306
       DB_DUMP_TARGET: /mysqldump
       SRC_DIR: /mysqldump
       DEST_DIR: /backups
-      RESTIC_HOSTNAME: YC-${ENV}-mysql_backup
-      PRUNE_BACKUPS_DAYS: 7
-      RESTIC_REPOSITORY: /backups
-      RESTIC_PASSWORD_FILE: /restic.password
-      PRUNE_RESTIC_RETENTION: --keep-last 8 --keep-daily 7 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
       MYSQLDUMP_OPTS: --quick --single-transaction
       ENTRYPOINT_TARGET: /entrypoint
       DB_DUMP_FREQ: 360 # Minutes
     volumes:
       - /mysqldump
       - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
-      - ${BACKUPS_ROOT}/restic-mysql:/backups
+      - ${BACKUPS_ROOT}/restic:/backups
     networks:
       - ycnet
     logging: *default-logging
