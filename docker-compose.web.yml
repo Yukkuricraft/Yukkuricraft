@@ -10,6 +10,7 @@ services:
     depends_on:
       yc-api-mysql:
         condition: service_healthy
+    user: "${UID}:${GID}"
     environment:
       VIRTUAL_HOST: ${API_HOST}
       VIRTUAL_PORT: 5001
@@ -19,6 +20,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./:/app
       - /var/lib/yukkuricraft/:/var/lib/yukkuricraft/
+      - /etc/passwd:/etc/passwd # We need to get the running host username from inside container so we "impersonate" the host fs's passwd
     networks:
       - yc-web-dev
     logging:

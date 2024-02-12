@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Dict, Callable, Optional
+from typing import Any, Dict, Callable, Optional, TypeVar
 from pathlib import Path
 
 from src.common.environment import Env
 from src.common.helpers import write_config
 from src.common.config.toml_config import TomlConfig
 
+T = TypeVar("T")
 class BaseGenerator:
     WORLDGROUP_NAME_BLOCKLIST = [
         "defaultconfigs",  # :`) Ugly folder structures yay`
@@ -16,9 +17,16 @@ class BaseGenerator:
     def __init__(self, env: Env):
         self.env = env
 
-    def replace_interpolations(self, inp, replace_value: str):
-        """
-        Please for the love of god refactor me in the future.
+    def replace_interpolations(self, inp: T, target: str, replace_value: str) -> T:
+        """Given some primitive datastructure `inp`, will replace any instance of `target` in both keys and vals with `replace_value`
+
+        Args:
+            inp (T): Any python native datastructure.
+            target (str): Target string to replace. Usually of format `<<TARGET>>`.
+            replace_value (str): Value to replace `target` with.
+
+        Returns:
+            T: The `inp` with targets replaced.
         """
         if type(inp) == list:
             return [self.replace_interpolations(item, replace_value) for item in inp]
@@ -30,7 +38,7 @@ class BaseGenerator:
                 for key, value in inp.items()
             }
         elif type(inp) == str:
-            return inp.replace("<<WORLDGROUP>>", replace_value)
+            return inp.replace(target, replace_value)
         else:
             return inp
 

@@ -82,7 +82,10 @@ class DockerComposeGen(BaseGenerator):
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
             mc_service_template = self.replace_interpolations(
-                mc_service_template, world
+                mc_service_template, "<<WORLDGROUP>>", world
+            )
+            mc_service_template = self.replace_interpolations(
+                mc_service_template, "<<HOST_USER>>", get_host_username()
             )
             mc_service_template["labels"][YC_CONTAINER_NAME_LABEL] = world
             mc_service_key = f"mc_{world}"

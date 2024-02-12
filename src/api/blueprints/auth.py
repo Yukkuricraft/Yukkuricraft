@@ -14,7 +14,7 @@ from src.api.constants import (
 from src.api.lib.auth import (
     make_cors_response,
     intercept_cors_preflight,
-    verify_id_token_allowed,
+    generate_access_token_if_valid,
     validate_access_token,
     get_access_token_from_headers,
 )
@@ -41,10 +41,10 @@ def login():
         logger.warning(resp)
         logger.warning(data)
 
-        is_allowed, json_resp = verify_id_token_allowed(data["id_token"])
-        if is_allowed:
+        access_token = generate_access_token_if_valid(data["id_token"])
+        if access_token is not None:
             resp.status = 200
-            resp.data = json.dumps(json_resp)
+            resp.data = json.dumps({"access_token": access_token})
 
         return resp
 
