@@ -63,6 +63,15 @@ custom_extensions:
       RCON_PASSWORD_FILE: /rcon.password
       MAX_MEMORY: 4G
       USE_AIKAR_FLAGS: true
+      REPLACE_ENV_VARIABLES: true
+      ENV_VARIABLE_PREFIX: YC_
+      YC_MYSQL_DB: ${YC_MYSQL_DB}
+      YC_MYSQL_HOST: ${YC_MYSQL_HOST}
+      YC_MYSQL_USER: ${YC_MYSQL_USER}
+      YC_MYSQL_PASS: ${YC_MYSQL_PASS}
+      YC_POSTGRES_HOST: ${YC_POSTGRES_HOST}
+      YC_POSTGRES_USER: ${YC_POSTGRES_USER}
+      YC_POSTGRES_HOST: ${YC_POSTGRES_PASS}
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
@@ -143,7 +152,7 @@ services:
     container_name: YC-${ENV}-mysql
     image: mysql:8.1
     env_file:
-      - ./secrets/db.env
+      - ./secrets/minecraft_db.env
     user: "${UID}:${GID}"
     volumes:
       - ${MC_FS_ROOT}/env/${ENV}/mysql:/var/lib/mysql
@@ -200,7 +209,7 @@ services:
     container_name: YC-${ENV}-postgres
     image: postgres:16.0
     environment:
-      POSTGRES_USER: minecraft
+      POSTGRES_USER: mine
       POSTGRES_PASSWORD_FILE: /secrets/postgres_pw
     user: "${UID}:${GID}"
     volumes:

@@ -2,16 +2,19 @@
 
 import os
 import socket
-from src.common.paths import ServerPaths
+import traceback
 
 from pprint import pformat
 from typing import Dict
 from pathlib import Path
 
 from src.api.constants import IS_PROD_HOST
-from src.common.environment import Env
 
+from src.common.config import load_env_config
+from src.common.paths import ServerPaths
+from src.common.environment import Env
 from src.common.logger_setup import logger
+
 from src.generator.base_generator import BaseGenerator
 
 """
@@ -57,6 +60,48 @@ class EnvFileGen(BaseGenerator):
         # yc-api relies on hostname to determine prod vs non-prod envs. Docker containers
         # will always return the container id for hostname so we configure the hostname in the compose file.
         self.generated_env_config["HOST_HOSTNAME"] = socket.gethostname()
+
+        self.generate_mysql_env_vars()
+        self.generate_postgres_env_vars()
+
+
+    def generate_mysql_env_vars(self):
+        mysql_user = ""
+        mysql_pw = ""
+        mysql_db = ""
+
+        try:
+            db_env_config = load_env_config(
+                ServerPaths.get_minecraft_db_env_file_path()
+            )
+            mysql_user = db_env_config["MYSQL_USER"]
+            mysql_pw = db_env_config["MYSQL_PASSWORD"]
+            mysql_db = db_env_config["MYSQL_DATABASE"]
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            raise RuntimeError("Was unable to get MySQL user/pass from the db env file!")
+
+        self.generated_env_config["YC_MYSQL_DB"] = mysql_db
+        self.generated_env_config["YC_MYSQL_HOST"] = f"YC-{self.env.name}-mysql"
+        self.generated_env_config["YC_MYSQL_USER"] = mysql_user
+        self.generated_env_config["YC_MYSQL_PASS"] = mysql_pw
+
+
+    def generate_postgres_env_vars(self):
+        pg_user = "mine"
+        pg_pw = ""
+
+        try:
+            with open(ServerPaths.get_pg_pw_file_path(), "r") as f:
+                pg_pw = f.read().strip()
+        except Exception as e:
+            logger.error(traceback.format_exc())
+            raise RuntimeError("Was unable to get Postgres pass from the postgres_pw file!")
+
+        self.generated_env_config["YC_POSTGRES_HOST"] = f"YC-{self.env.name}-postgres"
+        self.generated_env_config["YC_POSTGRES_USER"] = pg_user
+        self.generated_env_config["YC_POSTGRES_PASS"] = pg_pw
+
 
     @staticmethod
     def dump_write_cb(f, config):
