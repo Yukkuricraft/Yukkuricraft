@@ -12,6 +12,9 @@ from src.generator.constants import (
     DOCKER_COMPOSE_TEMPLATE_PATH,
 )
 
+from src.common.constants import (
+    YC_CONTAINER_NAME_LABEL,
+)
 from src.common.environment import Env
 
 from src.generator.base_generator import BaseGenerator
@@ -23,8 +26,6 @@ class DockerComposeGen(BaseGenerator):
     MINECRAFT_UID = None
     MINECRAFT_GID = None
 
-    container_name_label = "net.yukkuricraft.container_name"
-    container_type_label = "net.yukkuricraft.container_type"
     docker_compose_template: YamlConfig
 
     generated_docker_compose_name: str
@@ -53,7 +54,7 @@ class DockerComposeGen(BaseGenerator):
 
     def add_host_and_container_names(self):
         for service_key, service in self.generated_docker_compose["services"].items():
-            name = service["labels"][self.container_name_label]
+            name = service["labels"][YC_CONTAINER_NAME_LABEL]
             container_name = self.container_name_format.format(env=self.env.name, name=name)
 
             logger.info(container_name)
@@ -83,7 +84,7 @@ class DockerComposeGen(BaseGenerator):
             mc_service_template = self.replace_interpolations(
                 mc_service_template, world
             )
-            mc_service_template["labels"][self.container_name_label] = world
+            mc_service_template["labels"][YC_CONTAINER_NAME_LABEL] = world
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
@@ -100,7 +101,7 @@ class DockerComposeGen(BaseGenerator):
                     "RCON_HOST"
                 ] = self.container_name_format.format(env=self.env.name, name=world)
                 backup_service_template["labels"][
-                    self.container_name_label
+                    YC_CONTAINER_NAME_LABEL
                 ] = f"{world}_backup"
                 backup_service_template["depends_on"][mc_service_key] = {
                     "condition": "service_healthy"

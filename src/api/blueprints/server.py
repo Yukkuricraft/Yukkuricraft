@@ -17,8 +17,11 @@ from src.api.lib.auth import (
     intercept_cors_preflight,
     make_cors_response,
 )
+from src.api.lib.backup_management import BackupManagement
 from src.api.lib.docker_management import DockerManagement
 from src.api.lib.helpers import log_request, seconds_to_string
+from src.common.constants import YC_CONTAINER_NAME_LABEL
+
 from src.common.environment import Env
 from src.common.types import DataFileType
 from src.common.logger_setup import logger
@@ -37,13 +40,19 @@ DockerMgmtApi = DockerManagement()
 def convert_dockerpy_container_to_container_definition(container: Container):
     config = container.attrs.get("Config", {})
     state = container.attrs.get("State", {})
+    labels = config.get("Labels", [])
 
     mounts = list(map(
         lambda d: f"{d['Source']}:{d['Destination']}",
         container.attrs.get("Mounts", [])
     ))
-
     hostname = config.get("Hostname", "unknown")
+    names = [
+        labels[YC_CONTAINER_NAME_LABEL],
+        labels["com.docker.compose.service"],
+        hostname,
+
+    ]
 
     started_at = state.get("StartedAt", None)
     running_for = None
@@ -67,9 +76,9 @@ def convert_dockerpy_container_to_container_definition(container: Container):
         "Hostname": hostname,
         "ID": container.attrs.get("Id", "unknown"),
         "Image": config.get("Image", "unknown"),
-        "Labels": config.get("Labels", []),
+        "Labels": labels,
         "Mounts": mounts,
-        "Names": hostname,
+        "Names": names,
         "Networks": list(config.get("NetworkSettings", {}).get("Networks", {}).keys()),
         "Ports": list(config.get("ExposedPorts", {}).keys()),
         "RunningFor": running_for,
@@ -103,7 +112,6 @@ def list_active_containers(env_str):
     containers = DockerMgmtApi.list_active_containers(env)
 
     resp.data = json.dumps(list(map(convert_dockerpy_container_to_container_definition, containers)))
-
     logger.debug(resp.data)
 
     return resp

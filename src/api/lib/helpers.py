@@ -1,4 +1,8 @@
-from typing import Callable
+import docker
+from docker.models.containers import Container
+import traceback
+
+from typing import Callable, Optional
 from functools import wraps
 from collections import OrderedDict
 from pprint import pformat
@@ -65,3 +69,16 @@ def seconds_to_string(seconds: int) -> str:
         parts.append(f"{int(s)} seconds")
 
     return ", ".join(parts)
+
+def container_name_to_container(client: docker.client, container_name: str) -> Optional[Container]:
+    try:
+        container = client.containers.get(container_name)
+        return container
+    except docker.errors.NotFound:
+        logger.error(f"Tried sending a command to container '{container_name}' but a container by that name did not exist!")
+    except docker.errors.APIError:
+        logger.error("Caught Docker API Error!")
+        logger.error(traceback.format_exc())
+
+    return None
+

@@ -10,10 +10,12 @@ from subprocess import Popen, PIPE
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
+from src.api.lib.helpers import container_name_to_container
 from src.common.environment import Env
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
+from src.common.constants import YC_ENV_LABEL
 from src.common.decorators import serialize_tuple_out_as_dict
 from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataFileType
@@ -51,17 +53,8 @@ class DockerManagement:
 
         return exit_code, rtn_msg.strip()
 
-    def container_name_to_container(self, container_name: str) -> Optional[Container]:
-        try:
-            container = self.client.containers.get(container_name)
-            return container
-        except docker.errors.NotFound:
-            logger.error(f"Tried sending a command to container '{container_name}' but a container by that name did not exist!")
-        except docker.errors.APIError:
-            logger.error("Caught Docker API Error!")
-            logger.error(traceback.format_exc())
-
-        return None
+    def container_name_to_container(self, container_name):
+        return container_name_to_container(self.client, container_name)
 
     def list_defined_containers(self, env: Env) -> List[Dict]:
         """Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
@@ -120,7 +113,7 @@ class DockerManagement:
         containers = self.client.containers.list(
             all=True,
             filters={
-                "label": f"net.yukkuricraft.env={env.name}"
+                "label": f"{YC_ENV_LABEL}={env.name}"
             }
         )
 
@@ -140,6 +133,7 @@ class DockerManagement:
         output = ""
         try:
             container = self.container_name_to_container(container_name)
+            logger.info(pformat(container.attrs))
             if container is None:
                 return ""
             exit_code, output = self.exec_run(container, ["rcon-cli", command])

@@ -9,6 +9,7 @@ def create_app():
 
     from src.api.blueprints.server import server_bp
     from src.api.blueprints.auth import auth_bp
+    from src.api.blueprints.backups import backups_bp
     from src.api.blueprints.environment import envs_bp
     from src.api.blueprints.files import files_bp
     from src.api.blueprints.sockets import sockets_bp
@@ -21,6 +22,7 @@ def create_app():
 
     app.register_blueprint(server_bp, url_prefix="/server")
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(backups_bp, url_prefix="/backups")
     app.register_blueprint(envs_bp, url_prefix="/environments")
     app.register_blueprint(files_bp, url_prefix="/files")
     app.register_blueprint(sockets_bp, url_prefix="/sockets")

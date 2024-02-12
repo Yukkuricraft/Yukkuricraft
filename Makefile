@@ -174,6 +174,9 @@ build_mysql_backup:
 
 # UP DOWN RESTARTS
 
+# The following using `--env-file` really makes this a circular dependency.
+# We cannot `up_web` unless env1 already exists, but env1 can't exist
+# unless we created it via the API.
 .PHONY: up_web
 up_web: ENV=env1
 up_web:
@@ -281,7 +284,6 @@ get_restic_snapshots:
 		-v $(PWD)/secrets/restic.password:/restic.password \
 		restic/restic \
 		snapshots
-
 
 .PHONY: restore_mc_from_backup
 restore_mc_from_backup:
