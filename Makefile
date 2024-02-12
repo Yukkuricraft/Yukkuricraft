@@ -213,7 +213,6 @@ up_one:
 
 .PHONY: down
 down: __pre_ensure
-down: save_world
 down:
 	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
@@ -239,7 +238,7 @@ restart_one:
 .PHONY: run_entrypoint_target_on_mysql_backup_restic
 run_entrypoint_target_on_mysql_backup_restic:
 	$(PRE) docker run \
-		--env-file=secrets/db.env \
+		--env-file=secrets/minecraft_db.env \
 		-e DB_SERVER=YC-$(ENV)-mysql \
 		-e DB_USER=root \
 		-e BACKUP_DEST_PATH=/tmp_backup_path \
@@ -253,7 +252,7 @@ run_entrypoint_target_on_mysql_backup_restic:
 .PHONY: restore_mysql_from_backup
 restore_mysql_from_backup:
 	$(PRE) docker run \
-		--env-file=secrets/db.env \
+		--env-file=secrets/minecraft_db.env \
 		-e DB_SERVER=YC-$(ENV)-mysql \
 		-e DB_USER=root \
 		-e BACKUP_DEST_PATH=/tmp_backup_path \

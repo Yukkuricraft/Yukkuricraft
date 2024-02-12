@@ -14,7 +14,7 @@ def create_app():
     from src.api.blueprints.files import files_bp
     from src.api.blueprints.sockets import sockets_bp
 
-    db_config = load_env_config(ServerPaths.get_db_env_file_path())
+    db_config = load_env_config(ServerPaths.get_api_db_env_file_path())
     app = Flask("YC API")
     app.config[
         "SQLALCHEMY_DATABASE_URI"

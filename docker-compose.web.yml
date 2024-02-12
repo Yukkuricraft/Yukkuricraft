@@ -33,7 +33,7 @@ services:
     image: mysql:5.7
     restart: 'on-failure'
     env_file:
-      - ./secrets/db.env
+      - ./secrets/api_db.env
     ports:
       - "3366:3306"
     volumes:
