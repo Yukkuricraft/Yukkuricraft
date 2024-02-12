@@ -6,6 +6,7 @@ import copy
 import yaml  # type: ignore
 
 from pathlib import Path
+from src.api.lib.helpers import get_running_username
 from src.common.paths import ServerPaths
 
 from src.generator.constants import (
@@ -84,9 +85,7 @@ class DockerComposeGen(BaseGenerator):
             mc_service_template = self.replace_interpolations(
                 mc_service_template, "<<WORLDGROUP>>", world
             )
-            mc_service_template = self.replace_interpolations(
-                mc_service_template, "<<HOST_USER>>", get_host_username()
-            )
+
             mc_service_template["labels"][YC_CONTAINER_NAME_LABEL] = world
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template

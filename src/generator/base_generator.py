@@ -29,12 +29,12 @@ class BaseGenerator:
             T: The `inp` with targets replaced.
         """
         if type(inp) == list:
-            return [self.replace_interpolations(item, replace_value) for item in inp]
+            return [self.replace_interpolations(item, target, replace_value) for item in inp]
         elif type(inp) == dict:
             return {
                 self.replace_interpolations(
-                    key, replace_value
-                ): self.replace_interpolations(value, replace_value)
+                    key, target, replace_value
+                ): self.replace_interpolations(value, target, replace_value)
                 for key, value in inp.items()
             }
         elif type(inp) == str:

@@ -200,7 +200,7 @@ services:
     container_name: YC-${ENV}-postgres
     image: postgres:16.0
     environment:
-      POSTGRES_USER: <<HOST_USER>>
+      POSTGRES_USER: minecraft
       POSTGRES_PASSWORD_FILE: /secrets/postgres_pw
     user: "${UID}:${GID}"
     volumes:

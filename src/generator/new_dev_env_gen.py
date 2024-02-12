@@ -70,7 +70,7 @@ class NewDevEnvGen(BaseGenerator):
             server_type,
             description,
         )
-        self.generate_config_dirs(new_env)
+        self.generate_prereq_dirs(new_env)
 
         self.server_type_actions.run(Env(new_env))
 
@@ -140,68 +140,64 @@ class NewDevEnvGen(BaseGenerator):
             ),
         )
 
-    def generate_config_dirs(self, new_env: str):
+    def generate_prereq_dirs(self, new_env: str):
+        paths = [
+            ServerPaths.get_env_data_path(new_env),
+            ServerPaths.get_mc_env_data_path(new_env),
+            ServerPaths.get_mysql_env_data_path(new_env),
+            ServerPaths.get_pg_env_data_path(new_env),
+        ]
+
+        for path in paths:
+            if not path.exists():
+                logger.info("Generating {path}...")
+                path.mkdir(parents=True)
+
         # World dirs
         for world in self.env.world_groups:
             logger.info("\n")
             logger.info(f"Generating dirs for {world}")
 
-            world_config_path = ServerPaths.get_env_and_world_group_configs_path(
+            paths = [
+                ServerPaths.get_env_and_world_group_configs_path(
+                    new_env, world
+                ),
+                ServerPaths.get_data_files_path(new_env, world, DataFileType.MOD_CONFIGS),
+                ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_ONLY_MOD_FILES),
+                ServerPaths.get_data_files_path(new_env, world, DataFileType.CLIENT_AND_SERVER_MOD_FILES),
+                ServerPaths.get_data_files_path(
+                    new_env, world, DataFileType.PLUGIN_CONFIGS
+                ),
+                ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_CONFIGS)
+            ]
+
+            for path in paths:
+                if not path.exists():
+                    logger.info("Generating {path}...")
+                    path.mkdir(parents=True)
+
+            server_properties_path = ServerPaths.get_server_properties_path(
                 new_env, world
             )
-            if not world_config_path.exists():
-                logger.info(f">> Generating {world_config_path}...")
-                world_config_path.mkdir(parents=True)
-
-            mods_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.MOD_CONFIGS)
-            if not mods_path.exists():
-                logger.info(f">> Generating {mods_path}...")
-                mods_path.mkdir(parents=True)
-
-            server_only_mods_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_ONLY_MOD_FILES)
-            if not server_only_mods_path.exists():
-                logger.info(f">> Generating {server_only_mods_path}...")
-                server_only_mods_path.mkdir(parents=True)
-
-            client_and_server_mods_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.CLIENT_AND_SERVER_MOD_FILES)
-            if not client_and_server_mods_path.exists():
-                logger.info(f">> Generating {client_and_server_mods_path}...")
-                client_and_server_mods_path.mkdir(parents=True)
-
-            plugins_path = ServerPaths.get_data_files_path(
-                new_env, world, DataFileType.PLUGIN_CONFIGS
-            )
-            if not plugins_path.exists():
-                logger.info(f">> Generating {plugins_path}...")
-                plugins_path.mkdir(parents=True)
-
-            worlds_path = ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_CONFIGS)
-            if not worlds_path.exists():
-                logger.info(f">> Generating {worlds_path}...")
-                worlds_path.mkdir(parents=True)
-
-            self.server_properties_path = ServerPaths.get_server_properties_path(
-                new_env, world
-            )
-            if not self.server_properties_path.parent.exists():
-                self.server_properties_path.parent.mkdir(parents=True)
+            if not server_properties_path.parent.exists():
+                server_properties_path.parent.mkdir(parents=True)
 
             template = self.server_properties_template.as_dict()
             template["level-name"] = world
 
-            if not self.server_properties_path.exists():
+            if not server_properties_path.exists():
                 logger.info(
-                    f">> Generating server.properties at {self.server_properties_path}..."
+                    f">> Generating server.properties at {server_properties_path}..."
                 )
 
                 self.write_config(
-                    self.server_properties_path,
+                    server_properties_path,
                     template,
                     "# This file was generated from a template",
                     lambda f, config: EnvConfig.write_cb(f, config, quote=False),
                 )
 
-                os.chmod(self.server_properties_path, DEFAULT_CHMOD_MODE)
+                os.chmod(server_properties_path, DEFAULT_CHMOD_MODE)
 
         # Should this get copied? Maybe delegate to ServerTypeActions?
 
