@@ -162,14 +162,9 @@ class NewDevEnvGen(BaseGenerator):
                 ServerPaths.get_env_and_world_group_configs_path(
                     new_env, world
                 ),
-                ServerPaths.get_data_files_path(new_env, world, DataFileType.MOD_CONFIGS),
-                ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_ONLY_MOD_FILES),
-                ServerPaths.get_data_files_path(new_env, world, DataFileType.CLIENT_AND_SERVER_MOD_FILES),
-                ServerPaths.get_data_files_path(
-                    new_env, world, DataFileType.PLUGIN_CONFIGS
-                ),
-                ServerPaths.get_data_files_path(new_env, world, DataFileType.SERVER_CONFIGS)
             ]
+            for data_file_type in DataFileType:
+                paths.append(ServerPaths.get_data_files_path(new_env, world, data_file_type))
 
             for path in paths:
                 if not path.exists():
