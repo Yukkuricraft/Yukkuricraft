@@ -67,15 +67,15 @@ custom_extensions:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
     volumes:
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/worlds:/worlds-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/plugins:/plugins-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/mods:/mods-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/logs:/data/logs
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/defaultconfigs/server:/defaultconfigs-server-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/worlds:/worlds-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/plugins-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/mods:/mods-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/logs:/data/logs
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs/server:/defaultconfigs-server-bindmount
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
 
@@ -144,8 +144,9 @@ services:
     image: mysql:8.1
     env_file:
       - ./secrets/db.env
+    user: "${UID}:${GID}"
     volumes:
-      - dbdata:/var/lib/mysql
+      - ${MC_FS_ROOT}/env/${ENV}/mysql:/var/lib/mysql
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: mysql
@@ -200,9 +201,11 @@ services:
     image: postgres:16.0
     environment:
       POSTGRES_PASSWORD_FILE: /secrets/postgres_pw
+    user: "${UID}:${GID}"
     volumes:
-      - pgdata:/var/lib/postgresql
+      - ${MC_FS_ROOT}/env/${ENV}/postgres:/var/lib/postgresql/data
       - ${YC_REPO_ROOT}/secrets/postgres_pw:/secrets/postgres_pw
+      - /etc/passwd:/etc/passwd:ro # Neat hack. Initdb needs a valid system user but it just checks /etc/passwd so...
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: postgres
