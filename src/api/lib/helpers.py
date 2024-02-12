@@ -1,3 +1,5 @@
+import os
+import pwd
 import docker
 from docker.models.containers import Container
 import traceback
@@ -10,7 +12,15 @@ from flask import request  # type: ignore
 from src.common.logger_setup import logger
 
 
-def log_request(func: Callable):
+def log_request(func: Callable) -> Callable:
+    """Decorator for logging funcname and *args/**kwargs
+
+    Args:
+        func (Callable): Function to be decorated.
+
+    Returns:
+        Callable: Decorated function
+    """
     @wraps(func)
     def decorated_function(*args, **kwargs):
         request_json = None
@@ -71,6 +81,15 @@ def seconds_to_string(seconds: int) -> str:
     return ", ".join(parts)
 
 def container_name_to_container(client: docker.client, container_name: str) -> Optional[Container]:
+    """Uses docker-py to convert a container name string to a Container object
+
+    Args:
+        client (docker.client): Instantiated docker client
+        container_name (str): Name of container
+
+    Returns:
+        Optional[Container]: Returns a Container if a matching one is found. None otherwise.
+    """
     try:
         container = client.containers.get(container_name)
         return container
@@ -82,3 +101,11 @@ def container_name_to_container(client: docker.client, container_name: str) -> O
 
     return None
 
+
+def get_running_username() -> str:
+    """Get the name of linux user running the API
+
+    Returns:
+        str: Username of running user
+    """
+    return pwd.getpwuid(os.getuid()).pw_name

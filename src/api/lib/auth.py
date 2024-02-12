@@ -2,7 +2,7 @@ from flask import request, make_response, current_app  # type: ignore
 
 from pprint import pformat
 from functools import wraps
-from typing import Dict, Tuple, Callable
+from typing import Dict, Optional, Tuple, Callable
 from datetime import datetime
 from secrets import token_hex
 from google.oauth2 import id_token  # type: ignore
@@ -76,14 +76,34 @@ class ExpiredAccessTokenError(RuntimeError):
 
 
 def generate_access_token() -> Tuple[str, int]:
-    return token_hex(), (int(datetime.now().timestamp()) + 1000 * ACCESS_TOKEN_DUR_MINS)
+    """Generates a random token and its expiration
+
+    Returns:
+        Tuple[str, int]: _description_
+    """
+    return token_hex(), (int(datetime.now().timestamp()) + 60 * ACCESS_TOKEN_DUR_MINS)
 
 
 def deserialize_id_token(token: str) -> Dict:
+    """Deserializes the oauth token
+
+    Args:
+        token (str): _description_
+
+    Returns:
+        Dict: _description_
+    """
     return id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
 
 
 def get_access_token_from_headers() -> Tuple[str, str]:
+    """Helper to get the scheme and token of the `Authorization` header from a flask request.
+
+    Header will usually look like: `Authorization: {scheme} {token}`
+
+    Returns:
+        Tuple[str, str]: Scheme and token
+    """
     # Authorization: YC-Token <access_token>
     auth_header = request.headers.get("Authorization", "")
     scheme, token = auth_header.split()
@@ -91,8 +111,21 @@ def get_access_token_from_headers() -> Tuple[str, str]:
     return scheme, token
 
 
-def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
-    json_resp = {}
+def generate_access_token_if_valid(token: str) -> Optional[str]:
+    """Validates the oauth token string, which encodes info like the subject, email, jti, etc, and generated a temporary access token if valid.
+a
+    Args:
+        token (str): Token string
+
+    Raises:
+        DuplicateJTIError: If the we've seen this unique JTI already before. Duplicate requests?
+        ExpiredJTIError: If the decoded JTI has expired
+        TimeTravelerError: If the decoded iat (issued at time) is somehow in the future
+        UnknownUserError: If the decoded subject is not whitelisted
+
+    Returns:
+        Optional[str]: None if provided `token` was invalid. Otherwise the generated access token as a string.
+    """
     try:
         idinfo = deserialize_id_token(token)
 
@@ -132,9 +165,7 @@ def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
         )
         db.session.commit()
 
-        json_resp["access_token"] = access_token
-
-        return True, json_resp
+        return access_token
     except ValueError as e:
         logger.warning("Got an invalid idtoken?")
         logger.warning(f"Token: {token}")
@@ -146,10 +177,19 @@ def verify_id_token_allowed(token: str) -> Tuple[bool, Dict]:
     except ExpiredJTIError as e:
         logger.warning(e)
 
-    return False, json_resp
+    return None
+
 
 
 def verify_access_token_allowed(access_token: str):
+    """Verifies we issued the access token by checking the DB
+
+    Args:
+        access_token (str): Token to verify
+
+    Returns:
+        _type_: _description_
+    """
     token = AccessToken.query.filter_by(id=access_token).first()
 
     if not token:
@@ -165,6 +205,14 @@ def verify_access_token_allowed(access_token: str):
 
 
 def validate_access_token(func: Callable):
+    """Decorator for validating Flask request has a valid access token in its headers
+
+    Args:
+        func (Callable): Function to be decorated.
+
+    Returns:
+        Callable: Decorated function
+    """
     @wraps(func)
     def decorated_function(*args, **kwargs):
         unauthed_resp = make_cors_response()
@@ -187,6 +235,14 @@ def validate_access_token(func: Callable):
 
 
 def intercept_cors_preflight(func: Callable):
+    """Decorator for flask endpoints that injects CORS origin headers into any OPTIONS requests
+
+    Args:
+        func (Callable): Function to be decorated.
+
+    Returns:
+        Callable: Decorated function
+    """
     @wraps(func)
     def decorated_function(*args, **kwargs):
         # logger.info(request.method)
@@ -206,6 +262,14 @@ def intercept_cors_preflight(func: Callable):
 
 
 def make_cors_response(status_code=200):
+    """Helper for creating an empty response object with the CORS origin headers added.
+
+    Args:
+        status_code (int, optional): Status code of the response. Defaults to 200.
+
+    Returns:
+        Flask response object
+    """
     resp = make_response("", status_code)
     resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
     return resp
