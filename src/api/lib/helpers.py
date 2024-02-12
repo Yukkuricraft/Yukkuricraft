@@ -1,4 +1,5 @@
 import os
+import re
 import pwd
 import docker
 from docker.models.containers import Container
@@ -8,7 +9,8 @@ from typing import Callable, Optional
 from functools import wraps
 from collections import OrderedDict
 from pprint import pformat
-from flask import request  # type: ignore
+from flask import request
+from src.api.constants import HOST_PASSWD  # type: ignore
 from src.common.logger_setup import logger
 
 
@@ -102,10 +104,22 @@ def container_name_to_container(client: docker.client, container_name: str) -> O
     return None
 
 
+PASSWD_RE = r"\n(?P<user>[^:]+):\w+:{uid}:\d+:.*\n"
 def get_running_username() -> str:
     """Get the name of linux user running the API
 
     Returns:
         str: Username of running user
     """
-    return pwd.getpwuid(os.getuid()).pw_name
+    uid = os.getuid()
+    with open(HOST_PASSWD, "r") as f:
+        contents = f.read()
+        regex = PASSWD_RE.format(uid=uid)
+        resp = re.search(regex, contents)
+
+        if resp == None:
+            logger.info(regex)
+            logger.info(contents)
+            logger.info(resp)
+            raise RuntimeError(f"Could not deduce the username for uid '{uid}'!")
+        return resp.group(1)

@@ -15,6 +15,8 @@ CORS_ORIGIN = (
 )
 
 
+HOST_PASSWD = "/etc/host-passwd"
+
 DB_ENV_FILE = "secrets/db.env"
 
 WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"
