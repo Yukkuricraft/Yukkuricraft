@@ -1,9 +1,9 @@
-from flask import Flask  # type: ignore
+from flask import Flask
+from src.common.paths import ServerPaths  # type: ignore
 
 
 def create_app():
     from src.common.config import load_env_config
-    from src.api.constants import DB_ENV_FILE
     from src.api.db import db
     from src.api.lib.sockets import socketio
 
@@ -14,7 +14,7 @@ def create_app():
     from src.api.blueprints.files import files_bp
     from src.api.blueprints.sockets import sockets_bp
 
-    db_config = load_env_config(DB_ENV_FILE)
+    db_config = load_env_config(ServerPaths.get_db_env_file_path())
     app = Flask("YC API")
     app.config[
         "SQLALCHEMY_DATABASE_URI"

@@ -6,7 +6,6 @@ import copy
 import yaml  # type: ignore
 
 from pathlib import Path
-from src.api.lib.helpers import get_running_username
 from src.common.paths import ServerPaths
 
 from src.generator.constants import (
