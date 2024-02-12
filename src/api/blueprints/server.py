@@ -51,8 +51,11 @@ def convert_dockerpy_container_to_container_definition(container: Container):
         labels[YC_CONTAINER_NAME_LABEL],
         labels["com.docker.compose.service"],
         hostname,
-
     ]
+    command = config.get("Cmd", None)
+    entrypoint = config.get("Entrypoint", [])
+    entry_command = command if command is not None else " ".join(entrypoint if entrypoint is not None else [])
+
 
     started_at = state.get("StartedAt", None)
     running_for = None
@@ -70,7 +73,7 @@ def convert_dockerpy_container_to_container_definition(container: Container):
         health_status = state.get("Health", {}).get("Status", "unknown")
         status = f"Up {running_for} ({health_status})"
     return {
-        "Command": " ".join(config.get("Entrypoint", [])), # TODO: Is this valid?
+        "Command": entry_command,
         "ContainerName": hostname,
         "CreatedAt": container.attrs.get("Created", "unknown"),
         "Hostname": hostname,

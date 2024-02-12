@@ -137,6 +137,4 @@ prune() {
   fi
 }
 
-init
-
-# Actual function should be called by ENTRYPOINT or CMD
+$1
