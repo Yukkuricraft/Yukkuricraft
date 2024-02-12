@@ -1,6 +1,8 @@
 from flask import Blueprint  # type: ignore
 from flask_socketio import emit  # type: ignore
 
+from pprint import pformat
+
 from src.api.lib.sockets import socketio
 from src.api.lib.server_console import listen_to_server_console
 from src.api.lib.docker_management import DockerManagement
@@ -62,6 +64,11 @@ def exec_server_command(data):
         f"EXECUTING COMMAND ON SERVER CONTAINER: container_name='{container_name}' - cmd='{command}'"
     )
     message = DockerMgmtApi.send_command_to_container(container_name, command)
+    logger.info("RETURNING RESPONSE FROM CONSOLE COMMAND:")
+    logger.info(message)
+    logger.info(repr(message))
+    logger.info(pformat(message))
+
     emit("log from console", message)
 
 

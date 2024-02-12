@@ -1,6 +1,8 @@
 import os
 import json
-
+import traceback
+import docker
+from docker.models.containers import Container
 
 from pprint import pformat
 from typing import List, Optional, Dict, Tuple
@@ -17,6 +19,50 @@ from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataFileType
 
 class DockerManagement:
+    def __init__(self):
+        self.client = docker.from_env()
+
+    def exec_run(self, container: Container, command: List[str], silent: bool = False, **extra_args):
+        params = {
+            "cmd": command,
+            "demux": True,
+        }
+
+        if extra_args and type(extra_args) == dict:
+            params.update(extra_args)
+
+        exit_code, output = container.exec_run(**params)
+        stdout, stderr = output
+
+        rtn_msg = stdout
+        if not silent:
+            logger.info({"stdout": stdout})
+        if stderr:
+            if not silent:
+                logger.info({"stderr": stderr})
+            rtn_msg += f"\n{stderr}"
+
+        if isinstance(rtn_msg, bytes):
+            try:
+                rtn_msg = rtn_msg.decode("utf-8")
+            except:
+                logger.warning("Failed to decode byte string as utf8!")
+                logger.warning(rtn_msg)
+
+        return exit_code, rtn_msg.strip()
+
+    def container_name_to_container(self, container_name: str) -> Optional[Container]:
+        try:
+            container = self.client.containers.get(container_name)
+            return container
+        except docker.errors.NotFound:
+            logger.error(f"Tried sending a command to container '{container_name}' but a container by that name did not exist!")
+        except docker.errors.APIError:
+            logger.error("Caught Docker API Error!")
+            logger.error(traceback.format_exc())
+
+        return None
+
     def list_defined_containers(self, env: Env) -> List[Dict]:
         """Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
 
@@ -48,49 +94,35 @@ class DockerManagement:
             container["networks"] = svc_data.get_or_default("networks", [])
             container["ports"] = svc_data.get_or_default("ports", [])
 
-            labels = []
+            labels = {}
             if "labels" in svc_data:
                 for key, val in svc_data.labels.items():
                     # TODO: Make this more robust. What else can be substituted?
                     if val == "${ENV}":
                         val = env.name
-                    labels.append(f"{key}={val}")
+                    labels[key] = val
             container["labels"] = labels
 
             defined_containers.append(container)
 
         return defined_containers
 
-    def list_active_containers(self, env: Env) -> List[Dict]:
+    def list_active_containers(self, env: Env) -> List[Container]:
         """List containers for env that are currently up and running.
 
         Args:
-            env (str): Environment name string
+            env (Env): Environment
 
         Returns:
             List[Dict]: Container definitions as returned from `docker ps`
         """
-        cmds = [
-            [
-                "docker",
-                "ps",
-                "-a",
-                "--format",
-                "{{ json . }}",
-                "--no-trunc",
-                "--filter",
-                f"label=net.yukkuricraft.env={env.name}",
-            ],
-        ]
-        out = Runner.run(cmds)
-        stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
 
-        containers: List[Dict] = []
-        for line in stdout.splitlines():
-            if len(line.strip()) == 0:
-                continue
-            container = json.loads(line)
-            containers.append(container)
+        containers = self.client.containers.list(
+            all=True,
+            filters={
+                "label": f"net.yukkuricraft.env={env.name}"
+            }
+        )
 
         return containers
 
@@ -105,25 +137,17 @@ class DockerManagement:
             str: Response from rcon-cli
         """
 
-        cmds = [
-            [
-                "docker",
-                "exec",
-                container_name,
-                "rcon-cli",
-                command,
-            ],
-        ]
+        output = ""
+        try:
+            container = self.container_name_to_container(container_name)
+            if container is None:
+                return ""
+            exit_code, output = self.exec_run(container, ["rcon-cli", command])
+        except docker.errors.APIError:
+            logger.error("Caught Docker API Error!")
+            logger.error(traceback.format_exc())
 
-        out = Runner.run(cmds)
-        stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
-        logger.info([stdout, stderr, exit_code])
-
-        rtn_msg = stdout
-        if stderr:
-            rtn_msg += f"\n{stderr}"
-
-        return rtn_msg.strip()
+        return output
 
     def copy_configs_to_bindmount(
         self, container_name: str, type: DataFileType
@@ -149,26 +173,21 @@ class DockerManagement:
             copy_src = "/data/mods"
             copy_dest = "/mods-bindmount"
 
-        cmds = [
-            [
-                "docker",
-                "exec",
-                container_name,
+        output = ""
+        try:
+            container = self.container_name_to_container(container_name)
+            if container is None:
+                return ""
+            exit_code, output = self.exec_run(container, [
                 "bash",
                 "-c",
-                f"cp -rv {copy_src} {copy_dest}",
-            ]
-        ]
+                f"cp -rv {copy_src} {copy_dest}"
+            ])
+        except docker.errors.APIError:
+            logger.error("Caught Docker API Error!")
+            logger.error(traceback.format_exc())
 
-        out = Runner.run(cmds)
-        stdout, stderr, exit_code = out["stdout"], out["stderr"], out["exit_code"]
-        logger.info([stdout, stderr, exit_code])
-
-        rtn_msg = stdout
-        if stderr:
-            rtn_msg += f"\n{stderr}"
-
-        return rtn_msg
+        return output
 
     """
     ARGS=$(filter-out $@,$(MAKECMDGOALS))

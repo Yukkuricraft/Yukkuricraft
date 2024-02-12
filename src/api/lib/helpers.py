@@ -32,3 +32,36 @@ def log_request(func: Callable):
         return func(*args, **kwargs)
 
     return decorated_function
+
+
+def seconds_to_string(seconds: int) -> str:
+    """Converts seconds as an int to a human-readable string of the duration.
+
+    Eg,
+    - `788645` seconds becomes
+    - "1 week, 2 days, 3 hours, 4 minutes, 5 seconds"
+
+    Args:
+        seconds (int): Seconds as an int
+
+    Returns:
+        str: Human-readable duration string of the number of seconds.
+    """
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    d, h = divmod(h, 24)
+    w, d = divmod(d, 7)
+
+    parts = []
+    if w:
+        parts.append(f"{int(w)} weeks")
+    if d:
+        parts.append(f"{int(d)} days")
+    if h:
+        parts.append(f"{int(h)} hours")
+    if m:
+        parts.append(f"{int(m)} minutes")
+    if s:
+        parts.append(f"{int(s)} seconds")
+
+    return ", ".join(parts)

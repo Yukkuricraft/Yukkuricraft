@@ -3,8 +3,10 @@ import os
 import pprint
 import json
 import codecs
-from flask import Flask, Blueprint, request, abort  # type: ignore
 
+from flask import Flask, Blueprint, request, abort  # type: ignore
+from datetime import datetime
+from docker.models.containers import Container
 from pprint import pformat
 from subprocess import check_output, Popen, PIPE
 from typing import Optional, Dict, List, Tuple, Callable
@@ -16,8 +18,8 @@ from src.api.lib.auth import (
     make_cors_response,
 )
 from src.api.lib.docker_management import DockerManagement
+from src.api.lib.helpers import log_request, seconds_to_string
 from src.common.environment import Env
-from src.api.lib.helpers import log_request
 from src.common.types import DataFileType
 from src.common.logger_setup import logger
 
@@ -25,6 +27,55 @@ server_bp: Blueprint = Blueprint("server", __name__)
 
 DockerMgmtApi = DockerManagement()
 
+# TODO: Figure out a better solution to this.
+# Dockerpy gives us a robust and thorough Container object. However, we don't need 98% of that information
+# on the frontend. We also have our old DTO models on the frontend side whose shape is not the same
+# as dockerpy's Container object. Old shape is whatever `docker ps --format json` outputs.
+# Basically if we want to have proper typing of the Container object on frontend, we'd have to extend our def
+# to have _all_ of the dockerpy Container fields but that feels overkill.
+# Instead, we'll just use this transformer function to convert dockerpy's Container back to our old ContainerDefinition shapes for now.
+def convert_dockerpy_container_to_container_definition(container: Container):
+    config = container.attrs.get("Config", {})
+    state = container.attrs.get("State", {})
+
+    mounts = list(map(
+        lambda d: f"{d['Source']}:{d['Destination']}",
+        container.attrs.get("Mounts", [])
+    ))
+
+    hostname = config.get("Hostname", "unknown")
+
+    started_at = state.get("StartedAt", None)
+    running_for = None
+    status = None
+    if started_at is None:
+        running_for = "Container is down"
+        status = "Container is down (unhealthy)"
+    else:
+        # datetime.datetime.fromisoformat() doesn't take `2024-02-11T22:16:57.510507768Z` as a format
+        # which is what dockerpy gives us. 2024-02-11T22:16:57 is valid though so just drop the milliseconds.
+        started_at_truncated_ms = started_at.split(".")[0]
+        running_for_seconds = datetime.now() - datetime.fromisoformat(started_at_truncated_ms)
+        running_for = seconds_to_string(running_for_seconds.total_seconds())
+
+        health_status = state.get("Health", {}).get("Status", "unknown")
+        status = f"Up {running_for} ({health_status})"
+    return {
+        "Command": " ".join(config.get("Entrypoint", [])), # TODO: Is this valid?
+        "ContainerName": hostname,
+        "CreatedAt": container.attrs.get("Created", "unknown"),
+        "Hostname": hostname,
+        "ID": container.attrs.get("Id", "unknown"),
+        "Image": config.get("Image", "unknown"),
+        "Labels": config.get("Labels", []),
+        "Mounts": mounts,
+        "Names": hostname,
+        "Networks": list(config.get("NetworkSettings", {}).get("Networks", {}).keys()),
+        "Ports": list(config.get("ExposedPorts", {}).keys()),
+        "RunningFor": running_for,
+        "State": state.get("Status", "unknown"),
+        "Status": status,
+    }
 
 @server_bp.route("/<env_str>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
@@ -47,7 +98,13 @@ def list_active_containers(env_str):
     """List all containers running"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
-    resp.data = json.dumps(DockerMgmtApi.list_active_containers(Env(env_str)))
+
+    env = Env(env_str)
+    containers = DockerMgmtApi.list_active_containers(env)
+
+    resp.data = json.dumps(list(map(convert_dockerpy_container_to_container_definition, containers)))
+
+    logger.debug(resp.data)
 
     return resp
 
