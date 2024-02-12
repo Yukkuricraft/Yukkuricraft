@@ -56,25 +56,7 @@ if [[ ${TYPE} != "PAPER" && ${TYPE} != "BUKKIT" ]]; then
     create_symlinks symlinkmap
 fi
 
-# Copy configs
-if [[ ! -d "/yc-configs" ]]; then
-    mkdir /yc-configs/
-fi
-
-debuglog "Copying /defaultconfigs-server-bindmount to /yc-configs"
-run cp -r /defaultconfigs-server-bindmount/* /yc-configs/
-
-debuglog "Copying /serverconfig-bindmount to /yc-configs"
-run cp -r  /serverconfig-bindmount/* /yc-configs/
-
-if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
-    if [[ ! -d "/yc-configs/config" ]]; then
-        mkdir /yc-configs/config/
-    fi
-
-    debuglog "Copying /modsconfig-bindmount to /yc-configs/config/"
-    run cp -r /modsconfig-bindmount/* /yc-configs/config/
-fi
+source /scripts/merge_configs_for_sync.sh
 
 # Chowns
 debuglog "Chown /data to ${UID}:${GID}"
