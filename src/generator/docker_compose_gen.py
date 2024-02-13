@@ -96,7 +96,7 @@ class DockerComposeGen(BaseGenerator):
                     self.docker_compose_template.custom_extensions.mc_backups_sidecar_template.as_dict()
                 )
                 backup_service_template = self.replace_interpolations(
-                    backup_service_template, world
+                    backup_service_template, "<<WORLDGROUP>>", world
                 )
                 backup_service_template["environment"][
                     "RCON_HOST"
