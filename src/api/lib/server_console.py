@@ -7,7 +7,9 @@ import time
 
 from src.common.environment import Env
 from src.common.logger_setup import logger
-from sh import tail  # type: ignore
+from sh import tail
+from src.common.paths import ServerPaths
+from src.common.types import DataFileType  # type: ignore
 
 
 ansi_escape = re.compile(
@@ -27,9 +29,8 @@ def listen_to_server_console(env: Env, world_group_name: str) -> Generator:
     Subject to change.
     """
 
-    logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE() (Nyan)")
-    # TODO: Use configurable root.
-    log_file = f"/var/lib/yukkuricraft/env/{env.name}/{world_group_name}/logs/latest.log"
+    logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE()")
+    log_file = ServerPaths.get_data_files_path(env.name, world_group_name, DataFileType.LOG_FILES) / "latest.log"
 
     # Output N last lines of file
     for line in tail(log_file, "-n100"):
