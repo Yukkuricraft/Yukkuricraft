@@ -81,6 +81,7 @@ custom_extensions:
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/plugins-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/mods:/mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/logs:/data/logs
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/crash-reports:/data/crash-reports
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
