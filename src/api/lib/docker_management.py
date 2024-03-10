@@ -265,7 +265,7 @@ class DockerManagement:
         """
         cmd = [
             "make",
-            "up_one",
+            "down_one",
             container_name,
         ]
 

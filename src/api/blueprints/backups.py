@@ -43,7 +43,7 @@ def list_backups():
     env_str = post_data.get("env_str", "")
     target_tags = post_data.get("target_tags", "")
 
-    backups = BackupsApi.list_backups(Env(env_str), target_tags)
+    backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
     resp.data = json.dumps(backups)
 
     return resp

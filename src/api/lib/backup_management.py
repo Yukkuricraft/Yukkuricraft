@@ -44,7 +44,8 @@ class BackupManagement:
     @staticmethod
     def contains_tags(backup: Dict, target_tags: List[str]) -> bool:
         if "tags" not in backup:
-            raise ValueError(f"Malformed backup: '{pformat(backup)}'")
+            return False
+
         for tag in target_tags:
             if tag not in backup["tags"]:
                 return False
