@@ -98,14 +98,14 @@ custom_extensions:
       # Restic will also tag with <<WORLDGROUP>> as it also tags whatever BACKUP_NAME is.
       RESTIC_ADDITIONAL_TAGS: ${ENV}
       BACKUP_NAME: <<WORLDGROUP>>
-      BACKUP_INTERVAL: "3h"
+      BACKUP_INTERVAL: "2h"
       BACKUP_METHOD: restic
       SRC_DIR: /worlds-bindmount
       RCON_HOST: set-by-generator
       RCON_PASSWORD_FILE: /rcon.password
       RESTIC_REPOSITORY: /backups
       RESTIC_PASSWORD_FILE: /restic.password
-      PRUNE_RESTIC_RETENTION: --keep-last 16 --keep-daily 14 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
+      PRUNE_RESTIC_RETENTION: --keep-last 24 --keep-daily 14 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666
       PAUSE_IF_NO_PLAYERS: false
       ENTRYPOINT_TARGET: /usr/bin/backup loop
       # since this service waits for mc to be healthy, no initial delay is needed
