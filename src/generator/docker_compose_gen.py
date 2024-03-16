@@ -85,11 +85,15 @@ class DockerComposeGen(BaseGenerator):
                 mc_service_template, "<<WORLDGROUP>>", world
             )
 
+            mc_service_template["environment"]["MOTD"] = self.env.envvars.get(
+                "MOTD",
+                f"{world}-{self.env.name}-{self.env.server_type}_{self.env.envvars.MC_VERSION}"
+            )
             mc_service_template["labels"][YC_CONTAINER_NAME_LABEL] = world
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
-            if self.env.is_prod() or self.env.config_node["general"].get_or_default(
+            if self.env.is_prod() or self.env.config_node["general"].get(
                 "enable_backups", None
             ):
                 backup_service_template = copy.deepcopy(

@@ -77,15 +77,15 @@ class DockerManagement:
         for svc_name, svc_data in docker_compose.services.items():
             # logger.debug(pformat({"svc_name": svc_name, "svc_data": svc_data}))
             container = {}
-            container["image"] = svc_data.get_or_default("image", "NO IMAGE")
+            container["image"] = svc_data.get("image", "NO IMAGE")
             container["names"] = (
                 [svc_name] if "name" not in svc_data else [svc_name, svc_data["name"]]
             )
-            container["container_name"] = svc_data.get_or_default("container_name", "")
-            container["hostname"] = svc_data.get_or_default("hostname", "")
-            container["mounts"] = svc_data.get_or_default("mounts", [])
-            container["networks"] = svc_data.get_or_default("networks", [])
-            container["ports"] = svc_data.get_or_default("ports", [])
+            container["container_name"] = svc_data.get("container_name", "")
+            container["hostname"] = svc_data.get("hostname", "")
+            container["mounts"] = svc_data.get("mounts", [])
+            container["networks"] = svc_data.get("networks", [])
+            container["ports"] = svc_data.get("ports", [])
 
             labels = {}
             if "labels" in svc_data:
@@ -265,7 +265,7 @@ class DockerManagement:
         """
         cmd = [
             "make",
-            "down_one",
+            "up_one",
             container_name,
         ]
 
@@ -288,9 +288,10 @@ class DockerManagement:
     def restart_one_container(
         self, env: Env, container_name: str
     ) -> Tuple[str, str, int]:
-        """
-        REFACTOR TO NOT USE MAKE
-        """
+
+        container = container_name_to_container(self.client, container_name)
+        container.sto
+
         cmd = [
             "make",
             "restart_one",

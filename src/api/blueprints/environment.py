@@ -79,7 +79,7 @@ def delete_env(env_str):
     env_dict = env.to_json()
 
     env_config = load_toml_config(ServerPaths.get_env_toml_config_path(env.name))
-    if env_config["general"].get_or_default("enable_env_protection", False):
+    if env_config["general"].get("enable_env_protection", False):
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")
         resp.data = json.dumps(
