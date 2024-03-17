@@ -85,7 +85,7 @@ class DockerComposeGen(BaseGenerator):
                 mc_service_template, "<<WORLDGROUP>>", world
             )
 
-            envvars = self.env.config.world_groups.bmt.environment
+            envvars = self.env.config.world_groups[world].environment
             mc_service_template["environment"]["MOTD"] = envvars.get(
                 "MOTD",
                 f"{world}-{self.env.name}-{self.env.server_type}_{self.env.cluster_vars.MC_VERSION}"

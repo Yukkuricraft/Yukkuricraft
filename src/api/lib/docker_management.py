@@ -1,6 +1,5 @@
 import os
 import json
-import traceback
 import docker
 from docker.models.containers import Container
 
@@ -12,6 +11,7 @@ from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
 from src.api.lib.helpers import container_name_to_container
 from src.common.environment import Env
+from src.common.helpers import log_exception
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
@@ -48,8 +48,12 @@ class DockerManagement:
             try:
                 rtn_msg = rtn_msg.decode("utf-8")
             except:
-                logger.warning("Failed to decode byte string as utf8!")
-                logger.warning(rtn_msg)
+                log_exception(
+                    message="Failed to decode byte string as utf8!",
+                    data={
+                        "rtn_msg": rtn_msg
+                    }
+                )
 
         return exit_code, rtn_msg.strip()
 
@@ -131,6 +135,7 @@ class DockerManagement:
         """
 
         output = ""
+        container = None
         try:
             container = self.container_name_to_container(container_name)
             logger.info(pformat(container.attrs))
@@ -138,8 +143,13 @@ class DockerManagement:
                 return ""
             exit_code, output = self.exec_run(container, ["rcon-cli", command])
         except docker.errors.APIError:
-            logger.error("Caught Docker API Error!")
-            logger.error(traceback.format_exc())
+            log_exception(
+                message="Caught Docker API Error!",
+                data={
+                    "container_name": container_name,
+                    "container": container
+                }
+            )
 
         return output
 
@@ -168,6 +178,7 @@ class DockerManagement:
             copy_dest = "/mods-bindmount"
 
         output = ""
+        container = None
         try:
             container = self.container_name_to_container(container_name)
             if container is None:
@@ -178,8 +189,15 @@ class DockerManagement:
                 f"cp -rv {copy_src} {copy_dest}"
             ])
         except docker.errors.APIError:
-            logger.error("Caught Docker API Error!")
-            logger.error(traceback.format_exc())
+            log_exception(
+                message="Caught Docker API Error!",
+                data={
+                    "container_name": container_name,
+                    "container": container,
+                    "copy_src": copy_src,
+                    "copy_dest": copy_dest,
+                }
+            )
 
         return output
 

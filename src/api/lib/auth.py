@@ -2,7 +2,7 @@ from flask import request, make_response, current_app  # type: ignore
 
 from pprint import pformat
 from functools import wraps
-from typing import Dict, Optional, Tuple, Callable
+from typing import Any, Dict, Optional, Tuple, Callable
 from datetime import datetime
 from secrets import token_hex
 from google.oauth2 import id_token  # type: ignore
@@ -19,12 +19,28 @@ from src.api.constants import (
 from src.api.db import db
 from src.api.models import AccessToken, User, JTI, create_db_tables
 
+from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 
 # TODO: Make more sophisticated in the future but for now this suffices.
 WHITELISTED_USERS = set(open(WHITELISTED_USERS_FILE, "r").read().splitlines())
 
 ## Custom Errors
+
+class InvalidTokenError(RuntimeError):
+    msg = "Got an invalid token that we could not inspect!"
+
+    def __init__(self, token: Any):
+        self.token = token
+        super().__init__(f"{self.msg}\n'{pformat(self.token)}'")
+
+
+class InvalidTokenSchemeError(RuntimeError):
+    msg = "Got an invalid token scheme!"
+
+    def __init__(self, scheme: Optional[str] = None):
+        self.scheme = scheme
+        super().__init__(f"{self.msg} - Got '{self.scheme}'")
 
 
 class DuplicateJTIError(RuntimeError):
@@ -166,43 +182,48 @@ a
         db.session.commit()
 
         return access_token
-    except ValueError as e:
-        logger.warning("Got an invalid idtoken?")
-        logger.warning(f"Token: {token}")
-    except DuplicateJTIError as e:
-        logger.warning(e)
-    except TimeTravelerError as e:
-        logger.warning("Huh?!")
-        logger.warning(e)
-    except ExpiredJTIError as e:
-        logger.warning(e)
+    except ValueError:
+        log_exception(
+            message="Got an invalid token!",
+            data={
+                "token": token,
+            }
+        )
+    except DuplicateJTIError:
+        log_exception()
+    except TimeTravelerError:
+        log_exception(
+            message="Huh?!"
+        )
+    except ExpiredJTIError:
+        log_exception()
 
     return None
 
 
 
-def verify_access_token_allowed(access_token: str):
+def verify_access_token_allowed(scheme: str, access_token: str):
     """Verifies we issued the access token by checking the DB
 
     Args:
+        scheme (str): The token scheme. We expect it to match `YC_TOKEN_AUTH_SCHEME`
         access_token (str): Token to verify
 
-    Returns:
-        _type_: _description_
+    Raises:
+        InvalidTokenError: If token could not be parsed
+        ExpiredJTIError: If token is expired
+        InvalidTokenSchemeError: If scheme doesn't match `YC_TOKEN_AUTH_SCHEME`
+
     """
     token = AccessToken.query.filter_by(id=access_token).first()
+    now = datetime.now()
 
     if not token:
-        logger.warning(pformat(token))
-        logger.warning("Unknown Token")
-        return False
-    elif datetime.now() >= datetime.utcfromtimestamp(token.exp):
-        logger.warning(token.exp)
-        logger.warning("Expired token")
-        return False
-
-    return True
-
+        raise InvalidTokenError(token)
+    elif now >= datetime.utcfromtimestamp(token.exp):
+        raise ExpiredJTIError(token.exp, now)
+    elif scheme != YC_TOKEN_AUTH_SCHEME:
+        raise InvalidTokenSchemeError(scheme)
 
 def validate_access_token(func: Callable):
     """Decorator for validating Flask request has a valid access token in its headers
@@ -220,13 +241,9 @@ def validate_access_token(func: Callable):
         try:
             scheme, token = get_access_token_from_headers()
             logger.warning(f"INSPECTING AUTH HEADER: '{scheme}' '{token}'")
-
-            if scheme != YC_TOKEN_AUTH_SCHEME:
-                return unauthed_resp
-            elif not verify_access_token_allowed(token):
-                return unauthed_resp
+            verify_access_token_allowed(scheme, token)
         except Exception as e:
-            logger.warning(e)
+            log_exception()
             return unauthed_resp
 
         return func(*args, **kwargs)

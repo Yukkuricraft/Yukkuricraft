@@ -4,6 +4,7 @@ from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
 
 from src.common.environment import Env, InvalidPortException
+from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 from src.common.paths import ServerPaths
 from src.common.server_type_actions import ServerTypeActions
@@ -51,8 +52,8 @@ def list_valid_envs(as_obj = True) -> List[Env|str]:
 
         try:
             envs.append(Env(item.stem) if as_obj else item)
-        except Exception as e:
-            logger.warn(e)
+        except Exception:
+            log_exception()
 
     # Sorting doesn't matter in backend world but does in frontend.
     rtn = sorted(envs, key=lambda d: d.name)

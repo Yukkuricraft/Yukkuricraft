@@ -12,6 +12,7 @@ from typing import Callable, List, Optional
 from src.api.constants import ENV_FOLDER, MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
 from src.common.config import load_toml_config
+from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 
 
@@ -150,8 +151,8 @@ class FileManager:
         try:
             with open(f"/app/{file}", "w") as f:
                 f.write(content)
-        except Exception as e:
-            logger.warning(pformat(e))
+        except Exception:
+            log_exception()
 
         return {
             "file": str(file),

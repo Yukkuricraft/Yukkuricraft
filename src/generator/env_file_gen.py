@@ -2,7 +2,6 @@
 
 import os
 import socket
-import traceback
 
 from pprint import pformat
 from typing import Dict
@@ -14,6 +13,7 @@ from src.common.config import load_env_config
 from src.common.paths import ServerPaths
 from src.common.environment import Env
 from src.common.logger_setup import logger
+from src.common.helpers import log_exception
 
 from src.generator.base_generator import BaseGenerator
 
@@ -75,8 +75,7 @@ class EnvFileGen(BaseGenerator):
             mysql_user = db_env_config["MYSQL_USER"]
             mysql_pw = db_env_config["MYSQL_PASSWORD"]
             mysql_db = db_env_config["MYSQL_DATABASE"]
-        except Exception as e:
-            logger.error(traceback.format_exc())
+        except:
             raise RuntimeError("Was unable to get MySQL user/pass from the db env file!")
 
         self.generated_env_config["YC_MYSQL_DB"] = mysql_db
@@ -92,8 +91,7 @@ class EnvFileGen(BaseGenerator):
         try:
             with open(ServerPaths.get_pg_pw_file_path(), "r") as f:
                 pg_pw = f.read().strip()
-        except Exception as e:
-            logger.error(traceback.format_exc())
+        except:
             raise RuntimeError("Was unable to get Postgres pass from the postgres_pw file!")
 
         self.generated_env_config["YC_POSTGRES_HOST"] = f"YC-{self.env.name}-postgres"

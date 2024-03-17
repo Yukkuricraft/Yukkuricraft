@@ -3,7 +3,6 @@ import re
 import pwd
 import docker
 from docker.models.containers import Container
-import traceback
 
 from typing import Callable, Optional
 from functools import wraps
@@ -11,6 +10,7 @@ from collections import OrderedDict
 from pprint import pformat
 from flask import request
 from src.api.constants import HOST_PASSWD  # type: ignore
+from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 
 
@@ -28,8 +28,13 @@ def log_request(func: Callable) -> Callable:
         request_json = None
         try:
             request_json = request.get_json()
-        except Exception as e:
-            logger.info(e)
+        except Exception:
+            log_exception(
+                message="Failed to get json from request object",
+                data={
+                    "request": request
+                }
+            )
 
         logger.info(
             "\n\n"
@@ -96,10 +101,16 @@ def container_name_to_container(client: docker.client, container_name: str) -> O
         container = client.containers.get(container_name)
         return container
     except docker.errors.NotFound:
-        logger.error(f"Tried sending a command to container '{container_name}' but a container by that name did not exist!")
+        log_exception(
+            message=f"Tried sending a command to container '{container_name}' but a container by that name did not exist!",
+        )
     except docker.errors.APIError:
-        logger.error("Caught Docker API Error!")
-        logger.error(traceback.format_exc())
+        log_exception(
+            message="Caught Docker API Error!",
+            data={
+                "container_name": container_name
+            },
+        )
 
     return None
 
