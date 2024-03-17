@@ -57,7 +57,9 @@ class DockerComposeGen(BaseGenerator):
     def add_host_and_container_names(self):
         for service_key, service in self.generated_docker_compose["services"].items():
             name = service["labels"][YC_CONTAINER_NAME_LABEL]
-            container_name = self.container_name_format.format(env=self.env.name, name=name)
+            container_name = self.container_name_format.format(
+                env=self.env.name, name=name
+            )
 
             service["container_name"] = container_name
             service["hostname"] = container_name

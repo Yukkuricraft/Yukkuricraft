@@ -30,7 +30,12 @@ def listen_to_server_console(env: Env, world_group_name: str) -> Generator:
     """
 
     logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE()")
-    log_file = ServerPaths.get_data_files_path(env.name, world_group_name, DataFileType.LOG_FILES) / "latest.log"
+    log_file = (
+        ServerPaths.get_data_files_path(
+            env.name, world_group_name, DataFileType.LOG_FILES
+        )
+        / "latest.log"
+    )
 
     # Output N last lines of file
     for line in tail(log_file, "-n100"):

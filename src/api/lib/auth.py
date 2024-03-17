@@ -27,6 +27,7 @@ WHITELISTED_USERS = set(open(WHITELISTED_USERS_FILE, "r").read().splitlines())
 
 ## Custom Errors
 
+
 class InvalidTokenError(RuntimeError):
     msg = "Got an invalid token that we could not inspect!"
 
@@ -129,18 +130,18 @@ def get_access_token_from_headers() -> Tuple[str, str]:
 
 def generate_access_token_if_valid(token: str) -> Optional[str]:
     """Validates the oauth token string, which encodes info like the subject, email, jti, etc, and generated a temporary access token if valid.
-a
-    Args:
-        token (str): Token string
+    a
+        Args:
+            token (str): Token string
 
-    Raises:
-        DuplicateJTIError: If the we've seen this unique JTI already before. Duplicate requests?
-        ExpiredJTIError: If the decoded JTI has expired
-        TimeTravelerError: If the decoded iat (issued at time) is somehow in the future
-        UnknownUserError: If the decoded subject is not whitelisted
+        Raises:
+            DuplicateJTIError: If the we've seen this unique JTI already before. Duplicate requests?
+            ExpiredJTIError: If the decoded JTI has expired
+            TimeTravelerError: If the decoded iat (issued at time) is somehow in the future
+            UnknownUserError: If the decoded subject is not whitelisted
 
-    Returns:
-        Optional[str]: None if provided `token` was invalid. Otherwise the generated access token as a string.
+        Returns:
+            Optional[str]: None if provided `token` was invalid. Otherwise the generated access token as a string.
     """
     try:
         idinfo = deserialize_id_token(token)
@@ -187,19 +188,16 @@ a
             message="Got an invalid token!",
             data={
                 "token": token,
-            }
+            },
         )
     except DuplicateJTIError:
         log_exception()
     except TimeTravelerError:
-        log_exception(
-            message="Huh?!"
-        )
+        log_exception(message="Huh?!")
     except ExpiredJTIError:
         log_exception()
 
     return None
-
 
 
 def verify_access_token_allowed(scheme: str, access_token: str):
@@ -225,6 +223,7 @@ def verify_access_token_allowed(scheme: str, access_token: str):
     elif scheme != YC_TOKEN_AUTH_SCHEME:
         raise InvalidTokenSchemeError(scheme)
 
+
 def validate_access_token(func: Callable):
     """Decorator for validating Flask request has a valid access token in its headers
 
@@ -234,6 +233,7 @@ def validate_access_token(func: Callable):
     Returns:
         Callable: Decorated function
     """
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         unauthed_resp = make_cors_response()
@@ -260,6 +260,7 @@ def intercept_cors_preflight(func: Callable):
     Returns:
         Callable: Decorated function
     """
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         # logger.info(request.method)

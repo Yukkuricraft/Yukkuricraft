@@ -13,8 +13,10 @@ from src.api.constants import HOST_PASSWD  # type: ignore
 from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 
+
 class InvalidContainerNameError(Exception):
     pass
+
 
 def log_request(func: Callable) -> Callable:
     """Decorator for logging funcname and *args/**kwargs
@@ -25,6 +27,7 @@ def log_request(func: Callable) -> Callable:
     Returns:
         Callable: Decorated function
     """
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         request_json = None
@@ -34,9 +37,7 @@ def log_request(func: Callable) -> Callable:
         except Exception:
             log_exception(
                 message="Failed to get json from request object",
-                data={
-                    "request": request
-                }
+                data={"request": request},
             )
 
         logger.info(
@@ -90,7 +91,10 @@ def seconds_to_string(seconds: int) -> str:
 
     return ", ".join(parts)
 
-def container_name_to_container(client: docker.client, container_name: str) -> Container:
+
+def container_name_to_container(
+    client: docker.client, container_name: str
+) -> Container:
     """Uses docker-py to convert a container name string to a Container object
 
     Args:
@@ -107,9 +111,14 @@ def container_name_to_container(client: docker.client, container_name: str) -> C
         container = client.containers.get(container_name)
         return container
     except docker.errors.NotFound:
-        raise InvalidContainerNameError(f"Tried sending a command to container '{container_name}' but a container by that name did not exist!")
+        raise InvalidContainerNameError(
+            f"Tried sending a command to container '{container_name}' but a container by that name did not exist!"
+        )
+
 
 PASSWD_RE = r"\n(?P<user>[^:]+):\w+:{uid}:\d+:.*\n"
+
+
 def get_running_username() -> str:
     """Get the name of linux user running the API
 

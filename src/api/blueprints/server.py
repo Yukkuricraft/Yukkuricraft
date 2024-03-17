@@ -43,10 +43,12 @@ def convert_dockerpy_container_to_container_definition(container: Container):
     state = container.attrs.get("State", {})
     labels = config.get("Labels", [])
 
-    mounts = list(map(
-        lambda d: f"{d['Source']}:{d['Destination']}",
-        container.attrs.get("Mounts", [])
-    ))
+    mounts = list(
+        map(
+            lambda d: f"{d['Source']}:{d['Destination']}",
+            container.attrs.get("Mounts", []),
+        )
+    )
     hostname = config.get("Hostname", "unknown")
     names = [
         labels[YC_CONTAINER_NAME_LABEL],
@@ -55,8 +57,11 @@ def convert_dockerpy_container_to_container_definition(container: Container):
     ]
     command = config.get("Cmd", None)
     entrypoint = config.get("Entrypoint", [])
-    entry_command = command if command is not None else " ".join(entrypoint if entrypoint is not None else [])
-
+    entry_command = (
+        command
+        if command is not None
+        else " ".join(entrypoint if entrypoint is not None else [])
+    )
 
     started_at = state.get("StartedAt", None)
     running_for = None
@@ -68,7 +73,9 @@ def convert_dockerpy_container_to_container_definition(container: Container):
         # datetime.datetime.fromisoformat() doesn't take `2024-02-11T22:16:57.510507768Z` as a format
         # which is what dockerpy gives us. 2024-02-11T22:16:57 is valid though so just drop the milliseconds.
         started_at_truncated_ms = started_at.split(".")[0]
-        running_for_seconds = datetime.now() - datetime.fromisoformat(started_at_truncated_ms)
+        running_for_seconds = datetime.now() - datetime.fromisoformat(
+            started_at_truncated_ms
+        )
         running_for = seconds_to_string(running_for_seconds.total_seconds())
 
         health_status = state.get("Health", {}).get("Status", "unknown")
@@ -89,6 +96,7 @@ def convert_dockerpy_container_to_container_definition(container: Container):
         "State": state.get("Status", "unknown"),
         "Status": status,
     }
+
 
 @server_bp.route("/<env_str>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
@@ -115,7 +123,9 @@ def list_active_containers(env_str):
     env = Env(env_str)
     containers = DockerMgmtApi.list_active_containers(env)
 
-    resp.data = json.dumps(list(map(convert_dockerpy_container_to_container_definition, containers)))
+    resp.data = json.dumps(
+        list(map(convert_dockerpy_container_to_container_definition, containers))
+    )
 
     return resp
 
@@ -181,13 +191,16 @@ def down_one_container(env_str):
     container_name = request.json["container_name"]
 
     resp_data = {}
-    resp_data["success"] = DockerMgmtApi.down_one_container(container_name=container_name)
+    resp_data["success"] = DockerMgmtApi.down_one_container(
+        container_name=container_name
+    )
     resp_data["env"] = env.to_json()
     resp_data["container_name"] = container_name
 
     resp.data = json.dumps(resp_data)
 
     return resp
+
 
 @server_bp.route("/<env_str>/containers/restart_one", methods=["POST", "OPTIONS"])
 @intercept_cors_preflight
@@ -202,7 +215,9 @@ def restart_one_container(env_str):
     ServerTypeActions().run(env)
 
     resp_data = {}
-    resp_data["success"] = DockerMgmtApi.restart_one_container(container_name=container_name)
+    resp_data["success"] = DockerMgmtApi.restart_one_container(
+        container_name=container_name
+    )
     resp_data["env"] = env.to_json()
     resp_data["container_name"] = container_name
 
@@ -211,9 +226,7 @@ def restart_one_container(env_str):
     return resp
 
 
-@server_bp.route(
-    "/containers/copy-configs-to-bindmount", methods=["OPTIONS", "POST"]
-)
+@server_bp.route("/containers/copy-configs-to-bindmount", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
@@ -226,9 +239,7 @@ def copy_configs_to_bindmount():
         type = request.json["data_file_type"]
 
         data_file_type = DataFileType.from_str(type)
-        output = DockerMgmtApi.copy_configs_to_bindmount(
-            container_name, data_file_type
-        )
+        output = DockerMgmtApi.copy_configs_to_bindmount(container_name, data_file_type)
 
         resp.data = json.dumps(output)
         return resp

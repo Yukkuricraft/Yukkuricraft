@@ -9,6 +9,8 @@ from src.common.helpers import write_config
 from src.common.config.toml_config import TomlConfig
 
 T = TypeVar("T")
+
+
 class BaseGenerator:
     WORLDGROUP_NAME_BLOCKLIST = [
         "defaultconfigs",  # :`) Ugly folder structures yay`
@@ -29,7 +31,9 @@ class BaseGenerator:
             T: The `inp` with targets replaced.
         """
         if type(inp) == list:
-            return [self.replace_interpolations(item, target, replace_value) for item in inp]
+            return [
+                self.replace_interpolations(item, target, replace_value) for item in inp
+            ]
         elif type(inp) == dict:
             return {
                 self.replace_interpolations(

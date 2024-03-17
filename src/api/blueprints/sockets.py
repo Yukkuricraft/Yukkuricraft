@@ -34,7 +34,9 @@ def disconnect(*args, **kwargs):
 @socketio.on("connect to console")
 @log_request
 def connect_to_console(data):
-    env_str, world_group_name = data.get("env", None), data.get("world_group_name", None)
+    env_str, world_group_name = data.get("env", None), data.get(
+        "world_group_name", None
+    )
     logger.info("SOCKET GOT CONSOLE CONNECT REQUEST")
     logger.info(data)
 

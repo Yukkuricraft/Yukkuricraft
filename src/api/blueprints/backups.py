@@ -29,6 +29,7 @@ backups_bp: Blueprint = Blueprint("backups", __name__)
 
 BackupsApi = BackupManagement()
 
+
 @backups_bp.route("/list-by-tags", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @validate_access_token

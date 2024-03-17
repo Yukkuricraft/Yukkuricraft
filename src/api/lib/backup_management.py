@@ -11,12 +11,18 @@ from src.common.logger_setup import logger
 from src.common.environment import Env
 from src.common.constants import HOST_REPO_ROOT_PATH
 
+
 class InvalidContainerException(Exception):
     pass
+
+
 class ContainerMissingEnvLabelException(InvalidContainerException):
     pass
+
+
 class ContainerMissingNameLabelException(InvalidContainerException):
     pass
+
 
 @dataclass
 class Backup:
@@ -29,7 +35,7 @@ class Backup:
     program_version: str
     short_id: str
     tags: List[str]
-    time: str # datetime?
+    time: str  # datetime?
     tree: str
     username: str
 
@@ -72,7 +78,7 @@ class BackupManagement:
                 f"{HOST_REPO_ROOT_PATH}/secrets/restic.password": {
                     "bind": "/restic.password",
                     "mode": "ro",
-                }
+                },
             },
         )
 
@@ -84,7 +90,6 @@ class BackupManagement:
         logger.info("RESPONSE FROM RESTIC SNAPSHOTS")
         logger.info(pformat(backups))
 
-        return list(filter(
-            lambda backup: BackupManagement.contains_tags(backup, tags),
-            backups
-        ))
+        return list(
+            filter(lambda backup: BackupManagement.contains_tags(backup, tags), backups)
+        )

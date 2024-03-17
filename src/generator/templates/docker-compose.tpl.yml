@@ -61,7 +61,6 @@ custom_extensions:
       UID: ${UID}
       GID: ${GID}
       RCON_PASSWORD_FILE: /rcon.password
-      MAX_MEMORY: 4G
       USE_AIKAR_FLAGS: true
       REPLACE_ENV_VARIABLES: true
       ENV_VARIABLE_PREFIX: YC_

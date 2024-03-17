@@ -30,6 +30,7 @@ from src.generator.base_generator import BaseGenerator
 TODO: Configurable copying of certain folders/configs from a source env
 """
 
+
 class NewDevEnvGen(BaseGenerator):
     server_root: Path
 
@@ -159,12 +160,12 @@ class NewDevEnvGen(BaseGenerator):
             logger.info(f"Generating dirs for {world}")
 
             paths = [
-                ServerPaths.get_env_and_world_group_configs_path(
-                    new_env, world
-                ),
+                ServerPaths.get_env_and_world_group_configs_path(new_env, world),
             ]
             for data_file_type in DataFileType:
-                paths.append(ServerPaths.get_data_files_path(new_env, world, data_file_type))
+                paths.append(
+                    ServerPaths.get_data_files_path(new_env, world, data_file_type)
+                )
 
             for path in paths:
                 if not path.exists():

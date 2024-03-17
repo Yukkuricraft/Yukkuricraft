@@ -20,11 +20,18 @@ from src.common.decorators import serialize_tuple_out_as_dict
 from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataFileType
 
+
 class DockerManagement:
     def __init__(self):
         self.client = docker.from_env()
 
-    def exec_run(self, container: Container, command: List[str], silent: bool = False, **extra_args):
+    def exec_run(
+        self,
+        container: Container,
+        command: List[str],
+        silent: bool = False,
+        **extra_args,
+    ):
         params = {
             "cmd": command,
             "demux": True,
@@ -50,9 +57,7 @@ class DockerManagement:
             except:
                 log_exception(
                     message="Failed to decode byte string as utf8!",
-                    data={
-                        "rtn_msg": rtn_msg
-                    }
+                    data={"rtn_msg": rtn_msg},
                 )
 
         return exit_code, rtn_msg.strip()
@@ -110,19 +115,21 @@ class DockerManagement:
             env (Env): Environment
 
         Returns:
-            List[Dict]: Container definitions as returned from `docker ps`
+            List[Container]: Container definitions as returned from `docker ps`
         """
 
         containers = self.client.containers.list(
-            all=True,
-            filters={
-                "label": f"{YC_ENV_LABEL}={env.name}"
-            }
+            all=True, filters={"label": f"{YC_ENV_LABEL}={env.name}"}
         )
 
         return containers
 
-    def perform_cb_on_container(self, container_name: str, callback: Callable[[Container], Any], additional_data_to_log: Optional[Dict] = None) -> Optional[Any]:
+    def perform_cb_on_container(
+        self,
+        container_name: str,
+        callback: Callable[[Container], Any],
+        additional_data_to_log: Optional[Dict] = None,
+    ):
         """Wrapper for performing an action on a single dockerpy Container
 
         Args:
@@ -148,19 +155,16 @@ class DockerManagement:
 
             return callback(container)
         except docker.errors.APIError:
-            log_exception(
-                message="Caught Docker API Error!",
-                data=data
-            )
+            log_exception(message="Caught Docker API Error!", data=data)
         except InvalidContainerNameError:
             log_exception(
                 message=f"Could not find a container by the name '{container_name}'!",
-                data=data
+                data=data,
             )
 
         return None
 
-    def send_command_to_container(self, container_name: str, command: str) -> str:
+    def send_command_to_container(self, container_name: str, command: str):
         """Send a command to the minecraft console using rcon-cli
 
         Args:
@@ -171,16 +175,14 @@ class DockerManagement:
             str: Response from rcon-cli
         """
 
-        _, output = self.perform_cb_on_container(
+        return self.perform_cb_on_container(
             container_name=container_name,
-            callback=lambda container: self.exec_run(container, ["rcon-cli", command]),
+            callback=lambda container: self.exec_run(container, ["rcon-cli", command])[
+                1
+            ],
         )
 
-        return output
-
-    def copy_configs_to_bindmount(
-        self, container_name: str, type: DataFileType
-    ) -> str:
+    def copy_configs_to_bindmount(self, container_name: str, type: DataFileType):
         """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
 
         Args:
@@ -189,7 +191,7 @@ class DockerManagement:
             type (DataFileType): The type of configs to copy back.
 
         Returns:
-            str: Verbose output from `cp -v`
+            Optional[str]: Verbose output from `cp -v` or None if it failed to run
         """
         if type == DataFileType.PLUGIN_CONFIGS:
             # TODO Hardcoded paths :-/
@@ -202,22 +204,18 @@ class DockerManagement:
             copy_src = "/data/mods"
             copy_dest = "/mods-bindmount"
 
-        _, output = self.perform_cb_on_container(
+        return self.perform_cb_on_container(
             container_name=container_name,
-            callback=lambda container: self.exec_run(container, [
-                "bash",
-                "-c",
-                f"cp -rv {copy_src} {copy_dest}"
-            ]),
+            callback=lambda container: self.exec_run(
+                container, ["bash", "-c", f"cp -rv {copy_src} {copy_dest}"]
+            )[1],
             additional_data_to_log={
                 "copy_src": copy_src,
                 "copy_dest": copy_dest,
-            }
+            },
         )
 
-        return output
-
-    def up_one_container(self, container_name: str) -> Tuple[str, str, int]:
+    def up_one_container(self, container_name: str):
         """Start a single container by `container_name`
 
         If a container that's part of a docker compose config, the compose file must be running.
@@ -241,7 +239,7 @@ class DockerManagement:
 
         return False
 
-    def down_one_container(self, container_name: str) -> bool:
+    def down_one_container(self, container_name: str):
         """Stop a single container by `container_name`
 
         If a container that's part of a docker compose config, the compose file must be running.
@@ -265,9 +263,7 @@ class DockerManagement:
 
         return False
 
-    def restart_one_container(
-        self, container_name: str
-    ) -> bool:
+    def restart_one_container(self, container_name: str):
         """Restart a single container by `container_name`
 
         If a container that's part of a docker compose config, the compose file must be running.
@@ -352,7 +348,6 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env)
 
-
     def restart_containers(self, env: Env):
         """
         REFACTOR TO NOT USE MAKE
@@ -366,4 +361,3 @@ class DockerManagement:
         ServerTypeActions().run(env)
 
         return Runner.run_make_cmd(cmd, env)
-

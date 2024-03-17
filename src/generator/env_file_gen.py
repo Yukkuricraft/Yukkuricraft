@@ -62,7 +62,6 @@ class EnvFileGen(BaseGenerator):
         self.generate_mysql_env_vars()
         self.generate_postgres_env_vars()
 
-
     def generate_mysql_env_vars(self):
         mysql_user = ""
         mysql_pw = ""
@@ -76,13 +75,14 @@ class EnvFileGen(BaseGenerator):
             mysql_pw = db_env_config["MYSQL_PASSWORD"]
             mysql_db = db_env_config["MYSQL_DATABASE"]
         except:
-            raise RuntimeError("Was unable to get MySQL user/pass from the db env file!")
+            raise RuntimeError(
+                "Was unable to get MySQL user/pass from the db env file!"
+            )
 
         self.generated_env_config["YC_MYSQL_DB"] = mysql_db
         self.generated_env_config["YC_MYSQL_HOST"] = f"YC-{self.env.name}-mysql"
         self.generated_env_config["YC_MYSQL_USER"] = mysql_user
         self.generated_env_config["YC_MYSQL_PASS"] = mysql_pw
-
 
     def generate_postgres_env_vars(self):
         pg_user = "mine"
@@ -92,12 +92,13 @@ class EnvFileGen(BaseGenerator):
             with open(ServerPaths.get_pg_pw_file_path(), "r") as f:
                 pg_pw = f.read().strip()
         except:
-            raise RuntimeError("Was unable to get Postgres pass from the postgres_pw file!")
+            raise RuntimeError(
+                "Was unable to get Postgres pass from the postgres_pw file!"
+            )
 
         self.generated_env_config["YC_POSTGRES_HOST"] = f"YC-{self.env.name}-postgres"
         self.generated_env_config["YC_POSTGRES_USER"] = pg_user
         self.generated_env_config["YC_POSTGRES_PASS"] = pg_pw
-
 
     @staticmethod
     def dump_write_cb(f, config):
