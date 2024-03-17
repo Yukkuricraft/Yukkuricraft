@@ -85,15 +85,19 @@ class DockerComposeGen(BaseGenerator):
                 mc_service_template, "<<WORLDGROUP>>", world
             )
 
-            mc_service_template["environment"]["MOTD"] = self.env.envvars.get(
+            envvars = self.env.config.world_groups.bmt.environment
+            mc_service_template["environment"]["MOTD"] = envvars.get(
                 "MOTD",
-                f"{world}-{self.env.name}-{self.env.server_type}_{self.env.envvars.MC_VERSION}"
+                f"{world}-{self.env.name}-{self.env.server_type}_{self.env.cluster_vars.MC_VERSION}"
             )
+            for key, val in envvars.items():
+                mc_service_template["environment"][key] = val
+
             mc_service_template["labels"][YC_CONTAINER_NAME_LABEL] = world
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
-            if self.env.is_prod() or self.env.config_node["general"].get(
+            if self.env.is_prod() or self.env.config.general.get(
                 "enable_backups", None
             ):
                 backup_service_template = copy.deepcopy(
@@ -132,7 +136,7 @@ class DockerComposeGen(BaseGenerator):
             "driver_opts": {
                 "type": "none",
                 "o": "bind",
-                "device": f"{self.env.envvars['MC_FS_ROOT']}/env/{self.env.name}/certs",
+                "device": f"{self.env.cluster_vars.MC_FS_ROOT}/env/{self.env.name}/certs",
             },
         }
 

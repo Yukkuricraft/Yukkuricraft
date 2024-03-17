@@ -43,7 +43,7 @@ custom_extensions:
       - ycnet
     stop_grace_period: 20s
     environment:
-      MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}[${PAPER_BUILD}]"
+      MOTD: "setbygenerator"
       DEBUG: "true"
       EULA: "true"
       REMOVE_OLD_MODS: true

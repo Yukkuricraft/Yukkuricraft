@@ -21,7 +21,7 @@ from src.generator.base_generator import BaseGenerator
 Generate .env files for use with docker-compose.
 
 Since .env files only accept key-value pairs, our implementation makes a Dict[str, str] assumption for the generated config.
-As such an ENV.toml that defines non-string values for keys in '[runtime-environment-variables]' may cause issues.
+As such an ENV.toml that defines non-string values for keys in '[cluster-variables]' may cause issues.
 """
 
 
@@ -46,9 +46,7 @@ class EnvFileGen(BaseGenerator):
     dev_api_host = "dev.api.yukkuricraft.net"
 
     def generate_env_file(self):
-        self.generated_env_config = self.env.config[
-            "runtime-environment-variables"
-        ]
+        self.generated_env_config = self.env.cluster_vars.as_dict()
 
         self.generated_env_config["ENV"] = self.env.name
         self.generated_env_config["API_HOST"] = (

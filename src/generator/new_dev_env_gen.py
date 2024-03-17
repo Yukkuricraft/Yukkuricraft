@@ -77,11 +77,11 @@ class NewDevEnvGen(BaseGenerator):
     ENV_CONFIG_SECTION_ORDER = [
         "general",
         "world-groups",
-        "runtime-environment-variables",
+        "cluster-variables",
     ]
 
     def copy_env_config(self) -> Dict:
-        src_config = self.env.config
+        src_config = self.env.config.as_dict()
         copied_config = OrderedDict()
 
         # Copy configured/sorted sections first
@@ -119,12 +119,12 @@ class NewDevEnvGen(BaseGenerator):
         copied_config["general"]["enable_env_protection"] = enable_env_protection
         copied_config["general"]["enable_backups"] = False
 
-        if "runtime-environment-variables" not in copied_config:
-            copied_config["runtime-environment-variables"] = {}
-        copied_config["runtime-environment-variables"]["ENV"] = new_env
-        copied_config["runtime-environment-variables"]["ENV_ALIAS"] = env_alias
-        copied_config["runtime-environment-variables"]["VELOCITY_PORT"] = velocity_port
-        copied_config["runtime-environment-variables"]["MC_TYPE"] = server_type
+        if "cluster-variables" not in copied_config:
+            copied_config["cluster-variables"] = {}
+        copied_config["cluster-variables"]["ENV"] = new_env
+        copied_config["cluster-variables"]["ENV_ALIAS"] = env_alias
+        copied_config["cluster-variables"]["VELOCITY_PORT"] = velocity_port
+        copied_config["cluster-variables"]["MC_TYPE"] = server_type
 
         new_config_path = ServerPaths.get_env_toml_config_path(new_env)
 

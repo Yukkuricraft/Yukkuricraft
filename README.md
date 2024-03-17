@@ -56,7 +56,7 @@ We also utilize a custom `scripts/start.sh` script to do some filesystem setup f
 
 We configure our individual environments using appropriately named configs found under `env/<ENV>.toml`. The config currently consists of the following sections:
 
-1. The `runtime-environment-variables` section which defines ENV VARS passed into `docker-compose` invocations. We use this TOML definition to dynamically generate a valid `.env` file for `docker-compose`.
+1. The `cluster-variables` section which defines ENV VARS passed into `docker-compose` invocations. We use this TOML definition to dynamically generate a valid `.env` file for `docker-compose`.
 
 - Note: We inject some ENV VARS into this generated `.env` file, such as the `ENV` value which takes the ENV specified by the TOML filename.
 

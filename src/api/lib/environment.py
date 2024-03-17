@@ -71,7 +71,7 @@ def create_new_env(
         proxy_port (int): Port to use for the proxy
         env_alias (str): Human readable alias (name) for this env
         enable_env_protection (bool): Whether to enable env protection, which disables deleting the env.
-        server_type (str): Server type use. Will be set as `runtime-environment-variables.MC_TYPE`
+        server_type (str): Server type use. Will be set as `cluster-variables.MC_TYPE`
         description (str, optional): Description for humans. Defaults to "".
 
     Raises:
