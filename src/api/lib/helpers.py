@@ -13,6 +13,8 @@ from src.api.constants import HOST_PASSWD  # type: ignore
 from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 
+class InvalidContainerNameError(Exception):
+    pass
 
 def log_request(func: Callable) -> Callable:
     """Decorator for logging funcname and *args/**kwargs
@@ -27,7 +29,8 @@ def log_request(func: Callable) -> Callable:
     def decorated_function(*args, **kwargs):
         request_json = None
         try:
-            request_json = request.get_json()
+            if request.is_json:
+                request_json = request.get_json()
         except Exception:
             log_exception(
                 message="Failed to get json from request object",
@@ -87,7 +90,7 @@ def seconds_to_string(seconds: int) -> str:
 
     return ", ".join(parts)
 
-def container_name_to_container(client: docker.client, container_name: str) -> Optional[Container]:
+def container_name_to_container(client: docker.client, container_name: str) -> Container:
     """Uses docker-py to convert a container name string to a Container object
 
     Args:
@@ -95,25 +98,16 @@ def container_name_to_container(client: docker.client, container_name: str) -> O
         container_name (str): Name of container
 
     Returns:
-        Optional[Container]: Returns a Container if a matching one is found. None otherwise.
+        Container: Returns a Container if a matching one is found. None otherwise.
+
+    Raises:
+        InvalidContainerNameError: If we cannot find a container by the name `container_name`
     """
     try:
         container = client.containers.get(container_name)
         return container
     except docker.errors.NotFound:
-        log_exception(
-            message=f"Tried sending a command to container '{container_name}' but a container by that name did not exist!",
-        )
-    except docker.errors.APIError:
-        log_exception(
-            message="Caught Docker API Error!",
-            data={
-                "container_name": container_name
-            },
-        )
-
-    return None
-
+        raise InvalidContainerNameError(f"Tried sending a command to container '{container_name}' but a container by that name did not exist!")
 
 PASSWD_RE = r"\n(?P<user>[^:]+):\w+:{uid}:\d+:.*\n"
 def get_running_username() -> str:
