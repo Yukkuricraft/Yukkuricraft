@@ -99,6 +99,12 @@ class DockerComposeGen(BaseGenerator):
                 else:
                     mc_service_template[section_name] = section_data
 
+            jmx_port = docker_overrides.environment.get("JMX_PORT", None)
+            if jmx_port is not None:
+                if "ports" not in mc_service_template:
+                    mc_service_template["ports"] = []
+                mc_service_template["ports"].append(f"{jmx_port}:{jmx_port}")
+
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
