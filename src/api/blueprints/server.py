@@ -23,6 +23,7 @@ from src.api.lib.helpers import log_request, seconds_to_string
 from src.common.constants import YC_CONTAINER_NAME_LABEL
 
 from src.common.environment import Env
+from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataFileType
 from src.common.logger_setup import logger
 
@@ -115,7 +116,6 @@ def list_active_containers(env_str):
     containers = DockerMgmtApi.list_active_containers(env)
 
     resp.data = json.dumps(list(map(convert_dockerpy_container_to_container_definition, containers)))
-    logger.debug(resp.data)
 
     return resp
 
@@ -144,7 +144,8 @@ def up_one_container(env_str):
     container_name = request.json["container_name"]
 
     env = Env(env_str)
-    resp_data = DockerMgmtApi.up_one_container(env, container_name=container_name)
+    resp_data = {}
+    resp_data["success"] = DockerMgmtApi.up_one_container(container_name=container_name)
     resp_data["env"] = env.to_json()
     resp_data["container_name"] = container_name
 
@@ -179,7 +180,29 @@ def down_one_container(env_str):
     resp = make_cors_response()
     container_name = request.json["container_name"]
 
-    resp_data = DockerMgmtApi.down_one_container(env, container_name=container_name)
+    resp_data = {}
+    resp_data["success"] = DockerMgmtApi.down_one_container(container_name=container_name)
+    resp_data["env"] = env.to_json()
+    resp_data["container_name"] = container_name
+
+    resp.data = json.dumps(resp_data)
+
+    return resp
+
+@server_bp.route("/<env_str>/containers/restart_one", methods=["POST", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+@log_request
+def restart_one_container(env_str):
+    env = Env(env_str)
+
+    resp = make_cors_response()
+    container_name = request.json["container_name"]
+
+    ServerTypeActions().run(env)
+
+    resp_data = {}
+    resp_data["success"] = DockerMgmtApi.restart_one_container(container_name=container_name)
     resp_data["env"] = env.to_json()
     resp_data["container_name"] = container_name
 

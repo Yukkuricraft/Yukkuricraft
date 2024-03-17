@@ -4,12 +4,12 @@ import docker
 from docker.models.containers import Container
 
 from pprint import pformat
-from typing import List, Optional, Dict, Tuple
+from typing import Any, Callable, List, Optional, Dict, Tuple
 from subprocess import Popen, PIPE
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
-from src.api.lib.helpers import container_name_to_container
+from src.api.lib.helpers import container_name_to_container, InvalidContainerNameError
 from src.common.environment import Env
 from src.common.helpers import log_exception
 from src.common.paths import ServerPaths
@@ -79,7 +79,6 @@ class DockerManagement:
 
         defined_containers: List = []
         for svc_name, svc_data in docker_compose.services.items():
-            # logger.debug(pformat({"svc_name": svc_name, "svc_data": svc_data}))
             container = {}
             container["image"] = svc_data.get("image", "NO IMAGE")
             container["names"] = (
@@ -123,6 +122,44 @@ class DockerManagement:
 
         return containers
 
+    def perform_cb_on_container(self, container_name: str, callback: Callable[[Container], Any], additional_data_to_log: Optional[Dict] = None) -> Optional[Any]:
+        """Wrapper for performing an action on a single dockerpy Container
+
+        Args:
+            container_name (str): A docker container name or id
+            command (str): Command string such as 'say hello', 'list', 'op remi_scarlet' etc
+            additional_data_to_log(Optional[Dict]): If an error is encountered, will include these in the data logged
+
+        Returns:
+            Optional[Any]: Return from the `callback` function, or None if cannot find container.
+        """
+
+        data = {
+            "container_name": container_name,
+        }
+        if additional_data_to_log is not None:
+            data.add(additional_data_to_log)
+
+        container = None
+        try:
+            container = self.container_name_to_container(container_name)
+            data["container"] = container
+            logger.info(pformat(container.attrs))
+
+            return callback(container)
+        except docker.errors.APIError:
+            log_exception(
+                message="Caught Docker API Error!",
+                data=data
+            )
+        except InvalidContainerNameError:
+            log_exception(
+                message=f"Could not find a container by the name '{container_name}'!",
+                data=data
+            )
+
+        return None
+
     def send_command_to_container(self, container_name: str, command: str) -> str:
         """Send a command to the minecraft console using rcon-cli
 
@@ -134,22 +171,10 @@ class DockerManagement:
             str: Response from rcon-cli
         """
 
-        output = ""
-        container = None
-        try:
-            container = self.container_name_to_container(container_name)
-            logger.info(pformat(container.attrs))
-            if container is None:
-                return ""
-            exit_code, output = self.exec_run(container, ["rcon-cli", command])
-        except docker.errors.APIError:
-            log_exception(
-                message="Caught Docker API Error!",
-                data={
-                    "container_name": container_name,
-                    "container": container
-                }
-            )
+        _, output = self.perform_cb_on_container(
+            container_name=container_name,
+            callback=lambda container: self.exec_run(container, ["rcon-cli", command]),
+        )
 
         return output
 
@@ -177,29 +202,94 @@ class DockerManagement:
             copy_src = "/data/mods"
             copy_dest = "/mods-bindmount"
 
-        output = ""
-        container = None
-        try:
-            container = self.container_name_to_container(container_name)
-            if container is None:
-                return ""
-            exit_code, output = self.exec_run(container, [
+        _, output = self.perform_cb_on_container(
+            container_name=container_name,
+            callback=lambda container: self.exec_run(container, [
                 "bash",
                 "-c",
                 f"cp -rv {copy_src} {copy_dest}"
-            ])
-        except docker.errors.APIError:
-            log_exception(
-                message="Caught Docker API Error!",
-                data={
-                    "container_name": container_name,
-                    "container": container,
-                    "copy_src": copy_src,
-                    "copy_dest": copy_dest,
-                }
-            )
+            ]),
+            additional_data_to_log={
+                "copy_src": copy_src,
+                "copy_dest": copy_dest,
+            }
+        )
 
         return output
+
+    def up_one_container(self, container_name: str) -> Tuple[str, str, int]:
+        """Start a single container by `container_name`
+
+        If a container that's part of a docker compose config, the compose file must be running.
+        Ie, the cluster that the container is in must be running.
+
+        Args:
+            container_name (str): A docker container name or id
+
+        Returns:
+            bool: True if successful
+        """
+
+        try:
+            self.perform_cb_on_container(
+                container_name=container_name,
+                callback=lambda container: container.start(),
+            )
+            return True
+        except:
+            log_exception()
+
+        return False
+
+    def down_one_container(self, container_name: str) -> bool:
+        """Stop a single container by `container_name`
+
+        If a container that's part of a docker compose config, the compose file must be running.
+        Ie, the cluster that the container is in must be running.
+
+        Args:
+            container_name (str): A docker container name or id
+
+        Returns:
+            bool: True if successful
+        """
+
+        try:
+            self.perform_cb_on_container(
+                container_name=container_name,
+                callback=lambda container: container.stop(),
+            )
+            return True
+        except:
+            log_exception()
+
+        return False
+
+    def restart_one_container(
+        self, container_name: str
+    ) -> bool:
+        """Restart a single container by `container_name`
+
+        If a container that's part of a docker compose config, the compose file must be running.
+        Ie, the cluster that the container is in must be running.
+
+        Args:
+            container_name (str): A docker container name or id
+
+        Returns:
+            bool: True if successful
+        """
+
+        try:
+            self.perform_cb_on_container(
+                container_name=container_name,
+                callback=lambda container: container.restart(),
+            )
+            return True
+        except:
+            log_exception()
+
+        return False
 
     """
     ARGS=$(filter-out $@,$(MAKECMDGOALS))
@@ -236,7 +326,7 @@ class DockerManagement:
 
     """
 
-    def up_containers(self, env: Env) -> Tuple[str, str, int]:
+    def up_containers(self, env: Env):
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -251,7 +341,7 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env)
 
-    def down_containers(self, env: Env) -> Tuple[str, str, int]:
+    def down_containers(self, env: Env):
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -262,34 +352,8 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env)
 
-    def up_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
-        """
-        REFACTOR TO NOT USE MAKE
-        """
-        cmd = [
-            "make",
-            "up_one",
-            container_name,
-        ]
 
-        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
-        ServerTypeActions().run(env)
-
-        return Runner.run_make_cmd(cmd, env)
-
-    def down_one_container(self, env: Env, container_name: str) -> Tuple[str, str, int]:
-        """
-        REFACTOR TO NOT USE MAKE
-        """
-        cmd = [
-            "make",
-            "up_one",
-            container_name,
-        ]
-
-        return Runner.run_make_cmd(cmd, env)
-
-    def restart_containers(self, env: Env) -> Tuple[str, str, int]:
+    def restart_containers(self, env: Env):
         """
         REFACTOR TO NOT USE MAKE
         """
@@ -303,20 +367,3 @@ class DockerManagement:
 
         return Runner.run_make_cmd(cmd, env)
 
-    def restart_one_container(
-        self, env: Env, container_name: str
-    ) -> Tuple[str, str, int]:
-
-        container = container_name_to_container(self.client, container_name)
-        container.sto
-
-        cmd = [
-            "make",
-            "restart_one",
-            container_name,
-        ]
-
-        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
-        ServerTypeActions().run(env)
-
-        return Runner.run_make_cmd(cmd, env)

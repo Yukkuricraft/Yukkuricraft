@@ -139,7 +139,6 @@ def list_envs_with_configs():
         valid_envs = list_valid_envs()
         valid_envs_as_dicts = list(map(lambda env: env.to_json(), valid_envs))
 
-        logger.info(pformat(valid_envs_as_dicts))
         resp.data = json.dumps(valid_envs_as_dicts)
 
         return resp

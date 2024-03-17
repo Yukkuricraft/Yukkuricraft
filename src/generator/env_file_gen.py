@@ -101,7 +101,7 @@ class EnvFileGen(BaseGenerator):
 
     @staticmethod
     def dump_write_cb(f, config):
-        logger.info(pformat(config))
+        logger.debug(pformat(config))
         for key, value in config.items():
             f.write(f'{key}="{value}"\n'.encode("utf8"))
 

@@ -13,7 +13,7 @@ from src.common.runner import Runner as BaseRunner
 
 class Runner(BaseRunner):
     @staticmethod
-    def run_make_cmd(cmd: List, env: Env) -> Tuple[str, str, int]:
+    def run_make_cmd(cmd: List, env: Env):
         """Wrapper for `Runner.run()` but adds the `env` as an env var
 
         Args:
@@ -27,5 +27,4 @@ class Runner(BaseRunner):
             raise Exception("Must provide an env string!")
 
         env_vars = {"ENV": env.name}
-        logger.info(env_vars)
         return Runner.run([cmd], env_vars=env_vars)

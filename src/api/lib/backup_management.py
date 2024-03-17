@@ -9,7 +9,7 @@ from pprint import pformat
 from src.api.lib.helpers import container_name_to_container
 from src.common.logger_setup import logger
 from src.common.environment import Env
-from src.common.constants import YC_ENV_LABEL, YC_CONTAINER_NAME_LABEL, HOST_REPO_ROOT_PATH
+from src.common.constants import HOST_REPO_ROOT_PATH
 
 class InvalidContainerException(Exception):
     pass
