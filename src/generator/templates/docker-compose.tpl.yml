@@ -43,7 +43,7 @@ custom_extensions:
       - ycnet
     stop_grace_period: 20s
     environment:
-      MOTD: "setbygenerator"
+      MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}"
       DEBUG: "true"
       EULA: "true"
       REMOVE_OLD_MODS: true
@@ -75,6 +75,7 @@ custom_extensions:
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
+      net.yukkuricraft.container_name: <<WORLDGROUP>>
     volumes:
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/worlds:/worlds-bindmount
@@ -116,6 +117,7 @@ custom_extensions:
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: backup
+      net.yukkuricraft.container_name: <<WORLDGROUP>>_backup
     volumes:
       - ${YC_REPO_ROOT}/secrets/restic.password:/restic.password
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password

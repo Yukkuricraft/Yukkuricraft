@@ -21,8 +21,12 @@ RUN mkdir /worlds-bindmount
 RUN chown $HOST_UID:$HOST_GID /plugins-bindmount
 RUN chown $HOST_UID:$HOST_GID /worlds-bindmount
 
+COPY secrets/jmxremote.password /opt/java/openjdk/conf/management/jmxremote.password
+RUN chown $HOST_UID:$HOST_GID /opt/java/openjdk/conf/management/jmxremote.password && \
+    chmod 700 /opt/java/openjdk/conf/management/jmxremote.password
+
 # Just in-case remotely SSH'ing in and dev'ing from vscode (windows) causes CRLF issues
-RUN sed -i 's/\r$//' /scripts/start.sh  && \
+RUN sed -i 's/\r$//' /scripts/start.sh && \
     chmod +x /scripts/start.sh
 
 RUN mkfifo /tmp/minecraft-console-in

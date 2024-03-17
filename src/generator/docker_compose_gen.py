@@ -1,11 +1,13 @@
 #!/bin/env python3
 
 import os
+from pprint import pformat
 import pwd
 import copy
 import yaml  # type: ignore
 
 from pathlib import Path
+from src.common.config.config_node import ConfigNode
 from src.common.paths import ServerPaths
 
 from src.generator.constants import (
@@ -57,12 +59,10 @@ class DockerComposeGen(BaseGenerator):
             name = service["labels"][YC_CONTAINER_NAME_LABEL]
             container_name = self.container_name_format.format(env=self.env.name, name=name)
 
-            logger.info(container_name)
             service["container_name"] = container_name
             service["hostname"] = container_name
 
             self.generated_docker_compose["services"][service_key] = service
-            logger.info(service)
 
     def generate_velocity_service_config(self):
         velocity_service = (
@@ -85,15 +85,20 @@ class DockerComposeGen(BaseGenerator):
                 mc_service_template, "<<WORLDGROUP>>", world
             )
 
-            envvars = self.env.config.world_groups[world].environment
-            mc_service_template["environment"]["MOTD"] = envvars.get(
-                "MOTD",
-                f"{world}-{self.env.name}-{self.env.server_type}_{self.env.cluster_vars.MC_VERSION}"
-            )
-            for key, val in envvars.items():
-                mc_service_template["environment"][key] = val
+            docker_overrides = self.env.config.world_groups[world]
+            for section_name in docker_overrides.listnodes():
+                section_data = self.env.config.world_groups[world][section_name]
 
-            mc_service_template["labels"][YC_CONTAINER_NAME_LABEL] = world
+                if isinstance(section_data, ConfigNode):
+                    for key, val in section_data.items():
+                        mc_service_template[section_name][key] = val
+                elif isinstance(section_data, list):
+                    if section_name not in mc_service_template:
+                        mc_service_template[section_name] = []
+                    mc_service_template[section_name].extend(section_data)
+                else:
+                    mc_service_template[section_name] = section_data
+
             mc_service_key = f"mc_{world}"
             services[mc_service_key] = mc_service_template
 
@@ -109,9 +114,6 @@ class DockerComposeGen(BaseGenerator):
                 backup_service_template["environment"][
                     "RCON_HOST"
                 ] = self.container_name_format.format(env=self.env.name, name=world)
-                backup_service_template["labels"][
-                    YC_CONTAINER_NAME_LABEL
-                ] = f"{world}_backup"
                 backup_service_template["depends_on"][mc_service_key] = {
                     "condition": "service_healthy"
                 }
