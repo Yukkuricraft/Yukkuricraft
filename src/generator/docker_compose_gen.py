@@ -21,6 +21,7 @@ from src.common.environment import Env
 
 from src.generator.base_generator import BaseGenerator
 from src.common.config import YamlConfig, load_yaml_config
+from src.common.constants import MC_DOCKER_CONTAINER_NAME_FMT
 from src.common.logger_setup import logger
 
 
@@ -32,8 +33,6 @@ class DockerComposeGen(BaseGenerator):
 
     generated_docker_compose_name: str
     generated_docker_compose: dict = {}
-
-    container_name_format = "YC-{env}-{name}"
 
     def __init__(self, env: Env):
         super().__init__(env)
@@ -57,7 +56,7 @@ class DockerComposeGen(BaseGenerator):
     def add_host_and_container_names(self):
         for service_key, service in self.generated_docker_compose["services"].items():
             name = service["labels"][YC_CONTAINER_NAME_LABEL]
-            container_name = self.container_name_format.format(
+            container_name = MC_DOCKER_CONTAINER_NAME_FMT.format(
                 env=self.env.name, name=name
             )
 
@@ -121,7 +120,7 @@ class DockerComposeGen(BaseGenerator):
                 )
                 backup_service_template["environment"][
                     "RCON_HOST"
-                ] = self.container_name_format.format(env=self.env.name, name=world)
+                ] = MC_DOCKER_CONTAINER_NAME_FMT.format(env=self.env.name, name=world)
                 backup_service_template["depends_on"][mc_service_key] = {
                     "condition": "service_healthy"
                 }

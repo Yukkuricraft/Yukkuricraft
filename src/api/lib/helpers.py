@@ -105,8 +105,9 @@ def container_name_to_container(
         Container: Returns a Container if a matching one is found. None otherwise.
 
     Raises:
-        InvalidContainerNameError: If we cannot find a container by the name `container_name`
+        InvalidContainerNameError: If we cannot find a container by the name `container_name`. Usually because the env is down.
     """
+
     try:
         container = client.containers.get(container_name)
         return container

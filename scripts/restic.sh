@@ -124,8 +124,8 @@ backup() {
 }
 
 restore() {
-  log INFO "Copying backup id '${BACKUP_TARGET_ID}' from '${RESTIC_HOSTNAME}' to local '${BACKUP_DEST_PATH}'"
-  command restic restore --host "${RESTIC_HOSTNAME}" "${BACKUP_TARGET_ID}" --target "${BACKUP_DEST_PATH}"
+  log INFO "Restoring backup id '${BACKUP_TARGET_ID}' to '${BACKUP_DEST_PATH}'"
+  command restic restore "${BACKUP_TARGET_ID}" --target "${BACKUP_DEST_PATH}" | log INFO
 }
 
 prune() {

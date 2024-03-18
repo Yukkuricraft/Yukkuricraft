@@ -63,7 +63,26 @@ class DockerManagement:
         return exit_code, rtn_msg.strip()
 
     def container_name_to_container(self, container_name):
-        return container_name_to_container(self.client, container_name)
+        return self.client.containers.get(container_name)
+
+    def is_container_up(self, container_name: str) -> bool:
+        """Checks if the `container_name` container is "up"
+
+        Up is defined as:
+        - Container exists
+        - Container state is one of "running", "created", "restarting"
+
+        Args:
+            container_name (str): Container to check
+
+        Returns:
+            bool: True if container is up. False otherwise.
+        """
+        try:
+            container = self.container_name_to_container(container_name)
+            return container.status in ["running", "created", "restarting"]
+        except docker.errors.NotFound:
+            return False
 
     def list_defined_containers(self, env: Env) -> List[Dict]:
         """Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
@@ -154,6 +173,8 @@ class DockerManagement:
             logger.info(pformat(container.attrs))
 
             return callback(container)
+        except docker.errors.NotFound:
+            log_exception(message="Container could not be found! The env may be down if not an invalid name.", data=data)
         except docker.errors.APIError:
             log_exception(message="Caught Docker API Error!", data=data)
         except InvalidContainerNameError:
@@ -163,6 +184,7 @@ class DockerManagement:
             )
 
         return None
+
 
     def send_command_to_container(self, container_name: str, command: str):
         """Send a command to the minecraft console using rcon-cli
