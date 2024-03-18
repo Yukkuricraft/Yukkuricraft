@@ -3,11 +3,11 @@
 from typing import Dict
 from pathlib import Path
 
+from src.common.constants import MC_DOCKER_CONTAINER_NAME_FMT
 from src.generator.base_generator import BaseGenerator
 from src.generator.constants import (
     VELOCITY_CONFIG_TEMPLATE_PATH,
 )
-from src.generator.docker_compose_gen import DockerComposeGen
 
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
@@ -54,7 +54,7 @@ class VelocityConfigGen(BaseGenerator):
 
             # Using the generated name (when no container_name is supplied) or config object name (eg, "mc_survival"), Velocity isn't able to
             #     resolve the supplied alias. For whatever reason, explicitly declared container_names do work, however.
-            container_name = DockerComposeGen.container_name_format.format(
+            container_name = MC_DOCKER_CONTAINER_NAME_FMT.format(
                 env=self.env.name, name=world
             )
             servers[world_underscored] = f"{container_name}:25565"

@@ -154,12 +154,11 @@ class BackupManagement:
                 "RCON_PASSWORD_FILE": "/rcon.password",
             },
             volumes=[
-                f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
+                # Use explicit volumes instead of volumes_from as the target container name may not be up if compose cluster is down.
                 f"{RESTIC_REPO_PATH}:/backups",
-                #f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
-                #f"{ServerPaths.get_rcon_password_file_path()}:/rcon.password",
-                "/home/remi/development/Yukkuricraft/secrets/restic.password:/restic.password",
-                "/home/remi/development/Yukkuricraft/secrets/rcon.password:/rcon.password",
+                f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
+                f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
+                f"{ServerPaths.get_rcon_password_file_path()}:/rcon.password",
             ],
             network=(
                 f"{env.name}_ycnet"
