@@ -18,7 +18,7 @@ from src.common.config import load_yaml_config
 from src.common.constants import YC_ENV_LABEL
 from src.common.decorators import serialize_tuple_out_as_dict
 from src.common.server_type_actions import ServerTypeActions
-from src.common.types import DataFileType
+from src.common.types import DataDirType
 
 
 class DockerManagement:
@@ -182,7 +182,7 @@ class DockerManagement:
             ],
         )
 
-    def copy_configs_to_bindmount(self, container_name: str, type: DataFileType):
+    def copy_configs_to_bindmount(self, container_name: str, type: DataDirType):
         """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
 
         Args:
@@ -193,14 +193,14 @@ class DockerManagement:
         Returns:
             Optional[str]: Verbose output from `cp -v` or None if it failed to run
         """
-        if type == DataFileType.PLUGIN_CONFIGS:
+        if type == DataDirType.PLUGIN_CONFIGS:
             # TODO Hardcoded paths :-/
             copy_src = "/data/plugins/*"
             copy_dest = "/yc-plugins"
-        elif type == DataFileType.MOD_CONFIGS:
+        elif type == DataDirType.MOD_CONFIGS:
             copy_src = "/data/config/*"
             copy_dest = "/modsconfig-bindmount"
-        elif type == DataFileType.MOD_FILES:
+        elif type == DataDirType.MOD_FILES:
             copy_src = "/data/mods"
             copy_dest = "/mods-bindmount"
 

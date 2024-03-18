@@ -1,16 +1,6 @@
-import io
-import os
-import pprint
 import json
-import codecs
 
-from flask import Flask, Blueprint, request, abort  # type: ignore
-from datetime import datetime
-from docker.models.containers import Container
-from pprint import pformat
-from subprocess import check_output, Popen, PIPE
-from typing import Optional, Dict, List, Tuple, Callable
-from pathlib import Path
+from flask import Blueprint, request  # type: ignore
 
 from src.api.lib.auth import (
     validate_access_token,
@@ -18,12 +8,9 @@ from src.api.lib.auth import (
     make_cors_response,
 )
 from src.api.lib.backup_management import BackupManagement
-from src.api.lib.docker_management import DockerManagement
-from src.api.lib.helpers import log_request, seconds_to_string
+from src.api.lib.helpers import log_request
 
 from src.common.environment import Env
-from src.common.types import DataFileType
-from src.common.logger_setup import logger
 
 backups_bp: Blueprint = Blueprint("backups", __name__)
 

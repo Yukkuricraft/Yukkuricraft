@@ -1,30 +1,21 @@
-import io
-import os
-import pprint
 import json
-import codecs
 
-from flask import Flask, Blueprint, request, abort  # type: ignore
+from flask import Blueprint, request  # type: ignore
 from datetime import datetime
 from docker.models.containers import Container
-from pprint import pformat
-from subprocess import check_output, Popen, PIPE
-from typing import Optional, Dict, List, Tuple, Callable
-from pathlib import Path
 
 from src.api.lib.auth import (
     validate_access_token,
     intercept_cors_preflight,
     make_cors_response,
 )
-from src.api.lib.backup_management import BackupManagement
 from src.api.lib.docker_management import DockerManagement
 from src.api.lib.helpers import log_request, seconds_to_string
 from src.common.constants import YC_CONTAINER_NAME_LABEL
 
 from src.common.environment import Env
 from src.common.server_type_actions import ServerTypeActions
-from src.common.types import DataFileType
+from src.common.types import DataDirType
 from src.common.logger_setup import logger
 
 server_bp: Blueprint = Blueprint("server", __name__)
@@ -238,7 +229,7 @@ def copy_configs_to_bindmount():
         container_name = request.json["container_name"]
         type = request.json["data_file_type"]
 
-        data_file_type = DataFileType.from_str(type)
+        data_file_type = DataDirType.from_str(type)
         output = DockerMgmtApi.copy_configs_to_bindmount(container_name, data_file_type)
 
         resp.data = json.dumps(output)

@@ -9,7 +9,7 @@ from src.common.environment import Env
 from src.common.logger_setup import logger
 from sh import tail
 from src.common.paths import ServerPaths
-from src.common.types import DataFileType  # type: ignore
+from src.common.types import DataDirType  # type: ignore
 
 
 ansi_escape = re.compile(
@@ -31,8 +31,8 @@ def listen_to_server_console(env: Env, world_group_name: str) -> Generator:
 
     logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE()")
     log_file = (
-        ServerPaths.get_data_files_path(
-            env.name, world_group_name, DataFileType.LOG_FILES
+        ServerPaths.get_data_dir_path(
+            env.name, world_group_name, DataDirType.LOG_FILES
         )
         / "latest.log"
     )
