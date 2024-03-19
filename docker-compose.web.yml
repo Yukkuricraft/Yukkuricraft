@@ -28,6 +28,27 @@ services:
         max-size: "5m"
         max-file: "10"
 
+  yc-api-filebrowser:
+    container_name: yc-api-filebrowser
+    hostname: yc-api-filebrowser
+    image: filebrowser/filebrowser
+    restart: 'on-failure'
+    user: '${UID}:${GID}'
+    networks:
+      - yc-web-dev
+    environment:
+      VIRTUAL_HOST: ${FILEBROWSER_HOST}
+      VIRTUAL_PORT: ${FILEBROWSER_PORT}
+      LETSENCRYPT_HOST: ${FILEBROWSER_HOST}
+    volumes:
+    - /var/lib/yukkuricraft/db/filebrowser.db:/database.db
+    - /var/lib/yukkuricraft/env:/srv
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "100"
+
   yc-api-mysql:
     container_name: yc-api-mysql
     image: mysql:5.7

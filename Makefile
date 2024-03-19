@@ -7,6 +7,15 @@ CURRENT_UID=$(shell id -u)
 CURRENT_GID=$(shell id -g)
 DOCKER_GID=$(shell getent group docker | cut -d: -f3)
 
+
+.EXPORT_ALL_VARIABLES:
+ifeq ($(shell hostname), neo-yukkuricraft)
+  export FILEBROWSER_HOST=files.yakumo.yukkuricraft.net
+else
+  export FILEBROWSER_HOST=dev.files.yakumo.yukkuricraft.net
+endif
+export FILEBROWSER_PORT=80
+
 .PHONY: __pre_ensure
 __pre_ensure: __ensure_env
 __pre_ensure: __ensure_valid_env
@@ -181,7 +190,7 @@ build_mysql_backup:
 up_web: ENV=env1
 up_web:
 	docker compose -f $(WEB_COMPOSE_FILE) \
-		--env-file=gen/$(ENV).env \
+		--env-file=gen/env1.env \
 		up \
 		-d
 
@@ -259,8 +268,7 @@ restore_mysql_from_backup:
 		-e RESTIC_REPOSITORY=/backups \
 		-e ENTRYPOINT_TARGET="/restic.sh restore 2>&1 /foo.out" \
 		-v /tmp_backup_path \
-		-v /media/backups-primary/restic-mysql:/backups \
-		--network="env1_ycnet" \
+		-v /media/backups-primary/restic:/backups \
 		yukkuricraft/mysql-backup-restic
 
 .PHONY: get_restic_snapshots_json
