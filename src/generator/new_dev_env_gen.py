@@ -41,7 +41,7 @@ class NewDevEnvGen(BaseGenerator):
 
         curr_dir = Path(__file__).parent
         self.server_properties_template = load_env_config(
-            str(SERVER_PROPERTIES_TEMPLATE_PATH), curr_dir
+            curr_dir / str(SERVER_PROPERTIES_TEMPLATE_PATH)
         )
 
     def run(

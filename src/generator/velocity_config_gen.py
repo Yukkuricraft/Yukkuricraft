@@ -37,7 +37,7 @@ class VelocityConfigGen(BaseGenerator):
 
         curr_dir = Path(__file__).parent
         self.velocity_config_template = load_toml_config(
-            VELOCITY_CONFIG_TEMPLATE_PATH, curr_dir
+            curr_dir / VELOCITY_CONFIG_TEMPLATE_PATH,
         )
 
     def generate_velocity_config(self):
