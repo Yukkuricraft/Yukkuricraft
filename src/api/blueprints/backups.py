@@ -79,9 +79,14 @@ def restore_minecraft_backup():
 
     post_data = request.get_json()
 
-    target_env = post_data.get("target_env", "")
-    target_world_group = post_data.get("target_world_group", "")
+    target_hostname = post_data.get("target_hostname", "")
     target_snapshot_id = post_data.get("target_snapshot_id", "")
+
+    target_env = None
+    target_world_group = None
+    if target_hostname:
+        split = target_hostname.split("-")
+        target_env, target_world_group = split[1], split[2]
 
     out = None
     success = False

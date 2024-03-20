@@ -68,11 +68,12 @@ class BackupManagement:
         if "tags" not in backup:
             return False
 
+        contains_tag = False
         for tag in target_tags:
-            if tag not in backup["tags"]:
-                return False
+            if tag in backup["tags"]:
+                contains_tag = True
 
-        return True
+        return contains_tag
 
     def list_backups_by_env_and_tags(self, env: Env, tags: List[str]):
         env = env.name
@@ -133,7 +134,7 @@ class BackupManagement:
         entrypoint_command = (
             "/usr/bin/backup now" # Performs rcon save-off/save-on
             if mc_container_up
-            else "/scripts/restic.sh backup" # Just performs the restic command directly
+            else "/restic.sh backup" # Just performs the restic command directly
         )
 
         logger.info(f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'")
@@ -191,19 +192,20 @@ class BackupManagement:
 
         out_b = self.docker_client.containers.run(
             name=restore_container_name,
-            image="yukkuricraft/mc-backup-restic",
+            image="restic/restic",
+            command=f"restore {target_id} --target /",
             remove=True,
             environment={
-                "BACKUP_TARGET_ID": target_id,
-                "BACKUP_DEST_PATH": "/worlds-bindmount",
                 "RESTIC_REPOSITORY": "/backups",
                 "RESTIC_PASSWORD_FILE": "/restic.password",
-                "ENTRYPOINT_TARGET": "/scripts/restic.sh restore",
             },
             volumes=[
+                f"{RESTIC_REPO_PATH}:/backups",
                 f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}/remiliawashere:/worlds-bindmount",
                 f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
             ],
         )
+
+        logger.info(out_b)
 
         return out_b.decode("utf-8")
