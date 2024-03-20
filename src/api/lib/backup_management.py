@@ -1,7 +1,10 @@
 import json
+import time
+import shutil
 import docker
 from docker.models.containers import Container
 
+from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Dict
 from pprint import pformat
@@ -159,6 +162,48 @@ class BackupManagement:
         )
         return out_b.decode("utf-8")
 
+    def archive_directory(self, dir_to_archive: Path, archive_dir_suffix: str = "_archives", max_archives = 10):
+        """Archives the `dir_to_archive` dir.
+
+        - The name of the archive dir will be of format f"{dir_to_archive}{archive_dir_suffix}".
+        - The directory being archived will have the current epoch timestamp appended to it.
+
+        If `dir_to_archive` is `/a/b/c` and `archive_dir_suffic` is `_archive`, the archived directory
+            will exist in `/a/b/c_archive/c-123456789`
+
+        NOTE: This method is naive in a few ways:
+        - We assume all dirs/files in the archive directory are archives of our target dir to archive.
+          - If we have two types of archives in the same dir, our "max archives" logic will fail
+
+        Args:
+            dir_to_archive (Path): Directory to archive
+            archive_dir_suffix (str): Suffix of the archive dir.
+            max_archives (int): Maximum number of archived directories. Will remove oldest after this # is reached.
+        """
+        archive_dir = Path(f"{str(dir_to_archive)}{archive_dir_suffix}")
+        if not archive_dir.exists():
+            archive_dir.mkdir()
+
+        existing_archives = [ path for path in archive_dir.iterdir() if path.is_dir() ]
+        if len(existing_archives) >= max_archives:
+            sorted_archives = sorted(existing_archives)
+            num_to_delete = max(0, len(existing_archives) - max_archives + 1) # +1 because we're about to archive the curr dir too.
+
+            # We naively assume all items in the sorted archives dir are archives that have the same format as each other,
+            # thus doing a naive sort will sort the archives by age (epoch timestamp).
+            archives_to_delete = sorted_archives[:num_to_delete]
+            for archive in archives_to_delete:
+                logger.info(f">> Deleting old archive! '{archive}'")
+                shutil.rmtree(archive)
+
+        logger.info(f">> Archiving directory '{dir_to_archive}'")
+        new_archive_name = f"{dir_to_archive.name}-{int(time.time())}"
+        archive_destination = archive_dir / new_archive_name
+
+        logger.info(f">> Archiving directory '{dir_to_archive}' -> '{archive_destination}'")
+        dir_to_archive.rename(archive_destination)
+
+
     def restore_minecraft(self, env: Env, world_group: str, target_id: str):
         """Restores the `target_id` backup to `world_group` in env `env`
 
@@ -180,6 +225,12 @@ class BackupManagement:
         if self.docker_management.is_container_up(restore_container_name):
             raise RestoreAlreadyInProgressError(restore_container_name)
 
+        world_files_dir = ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)
+
+        self.archive_directory(
+            world_files_dir,
+        )
+
         out_b = self.docker_client.containers.run(
             name=restore_container_name,
             image="restic/restic",
@@ -191,7 +242,7 @@ class BackupManagement:
             },
             volumes=[
                 f"{RESTIC_REPO_PATH}:/backups",
-                f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
+                f"{world_files_dir}:/worlds-bindmount",
                 f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
             ],
         )

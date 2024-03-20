@@ -85,7 +85,7 @@ custom_extensions:
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs/server:/defaultconfigs-server-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs/server:/defaultconfigs-bindmount
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
 

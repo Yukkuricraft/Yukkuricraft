@@ -52,8 +52,6 @@ if [ -f ${DOCKER_COMPOSE_FILE} ]; then
     log "Done."
 fi
 
-
-
 # Delete everything under secrets/configs/ENV (nginx + world group configs)
 SECRETS_DIR=secrets/configs/${ENV}
 if [ -d ${SECRETS_DIR} ]; then
