@@ -63,26 +63,18 @@ class BackupManagement:
     def container_name_to_container(self, container_name):
         return self.docker_client.containers.get(container_name)
 
-    @staticmethod
-    def contains_tags(backup: Dict, target_tags: List[str]) -> bool:
-        if "tags" not in backup:
-            return False
-
-        contains_tag = False
-        for tag in target_tags:
-            if tag in backup["tags"]:
-                contains_tag = True
-
-        return contains_tag
-
     def list_backups_by_env_and_tags(self, env: Env, tags: List[str]):
         env = env.name
 
-        # Restic only supports logical ORs on the filters. Ie, can't do "env1 AND survival", only "env1 OR survival"
-        # Filter out the results ourselves in python.
+        tags_str = (
+            ''
+            if not tags
+            else f"--tag {','.join(tags)}"
+        )
+
         response_as_json = self.docker_client.containers.run(
             image="restic/restic",
-            command=f"snapshots --json",
+            command=f"snapshots --json {tags_str}",
             environment={
                 "RESTIC_REPOSITORY": "/backups",
                 "RESTIC_PASSWORD_FILE": "/restic.password",
@@ -107,9 +99,7 @@ class BackupManagement:
         logger.info("RESPONSE FROM RESTIC SNAPSHOTS")
         logger.info(pformat(backups))
 
-        return list(
-            filter(lambda backup: BackupManagement.contains_tags(backup, tags), backups)
-        )
+        return backups
 
     def backup_minecraft(self, env: Env, world_group: str):
         """Performs an ad-hoc backup of `world_group` in env `env`
@@ -201,7 +191,7 @@ class BackupManagement:
             },
             volumes=[
                 f"{RESTIC_REPO_PATH}:/backups",
-                f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}/remiliawashere:/worlds-bindmount",
+                f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
                 f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
             ],
         )

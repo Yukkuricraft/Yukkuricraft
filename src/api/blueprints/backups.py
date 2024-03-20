@@ -30,7 +30,15 @@ def list_backups():
     post_data = request.get_json()
 
     env_str = post_data.get("env_str", "")
-    target_tags = post_data.get("target_tags", "")
+    target_tags = post_data.get("target_tags", [])
+
+    if type(target_tags) == str:
+        target_tags = [ target_tags ]
+
+    if type(target_tags) != list:
+        raise ValueError(f"Got a value for 'target_tags' that we don't know how to parse! Got: '{resp(target_tags)}'")
+
+    target_tags.append(env_str)
 
     backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
     resp.data = json.dumps(backups)
