@@ -142,8 +142,11 @@ class NewDevEnvGen(BaseGenerator):
         )
 
     def generate_prereq_dirs(self, new_env: str):
+        default_configs_path = ServerPaths.get_env_default_configs_path(new_env)
         paths = [
-            ServerPaths.get_env_data_path(new_env),
+            default_configs_path / "server",
+            default_configs_path / "plugins",
+            default_configs_path / "mods",
             ServerPaths.get_mc_env_data_path(new_env),
             ServerPaths.get_mysql_env_data_path(new_env),
             ServerPaths.get_pg_env_data_path(new_env),
@@ -151,7 +154,7 @@ class NewDevEnvGen(BaseGenerator):
 
         for path in paths:
             if not path.exists():
-                logger.info("Generating {path}...")
+                logger.info(f"Generating {path}...")
                 path.mkdir(parents=True)
 
         # World dirs
@@ -169,7 +172,7 @@ class NewDevEnvGen(BaseGenerator):
 
             for path in paths:
                 if not path.exists():
-                    logger.info("Generating {path}...")
+                    logger.info(f"Generating {path}...")
                     path.mkdir(parents=True)
 
             server_properties_path = ServerPaths.get_server_properties_path(
@@ -194,22 +197,3 @@ class NewDevEnvGen(BaseGenerator):
                 )
 
                 os.chmod(server_properties_path, DEFAULT_CHMOD_MODE)
-
-        # Should this get copied? Maybe delegate to ServerTypeActions?
-
-        # Copy default secret world configs from {self.env} to {new_env}
-        src_default_path = ServerPaths.get_env_default_configs_path(self.env.name)
-        dst_default_path = ServerPaths.get_env_default_configs_path(new_env)
-        if not dst_default_path.exists():
-            logger.info(
-                f"Copying default config files from {src_default_path} to {dst_default_path}..."
-            )
-            shutil.copytree(src_default_path, dst_default_path)
-            recursive_chmod(dst_default_path, DEFAULT_CHMOD_MODE)
-        else:
-            logger.info(
-                f"Skipped copying files from {src_default_path} to {dst_default_path} as destination directory already existed."
-            )
-            logger.info(
-                f"This script did not validate that the contents of {dst_default_path} was valid - please confirm this manually."
-            )
