@@ -49,7 +49,7 @@ custom_extensions:
       REMOVE_OLD_MODS: true
       COPY_PLUGINS_SRC: /plugins-bindmount
       COPY_PLUGINS_DEST: /data/plugins
-      COPY_MODS_SRC: /mods-bindmount
+      COPY_MODS_SRC: /yc-mods
       COPY_MODS_DEST: /data/mods
       COPY_CONFIG_SRC: /yc-configs
       COPY_CONFIG_DEST: /data
@@ -79,13 +79,14 @@ custom_extensions:
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/worlds:/worlds-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/plugins-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/mods:/mods-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/server-only-mods:/server-only-mods-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/client-and-server-mods:/client-and-server-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/logs:/data/logs
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/crash-reports:/data/crash-reports
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs/server:/defaultconfigs-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs:/defaultconfigs-bindmount
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
 

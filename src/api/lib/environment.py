@@ -7,7 +7,6 @@ from src.common.environment import Env, InvalidPortException
 from src.common.helpers import log_exception
 from src.common.logger_setup import logger
 from src.common.paths import ServerPaths
-from src.common.server_type_actions import ServerTypeActions
 
 from src.generator.generator import GeneratorType, get_generator
 
@@ -119,8 +118,6 @@ def delete_dev_env(env_str: str):
 
 def generate_env_configs(env: Env):
     generate_all(env)
-
-    ServerTypeActions().run(env)
 
     return {}
 

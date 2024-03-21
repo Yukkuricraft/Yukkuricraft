@@ -56,7 +56,8 @@ if [[ ${TYPE} != "PAPER" && ${TYPE} != "BUKKIT" ]]; then
     create_symlinks symlinkmap
 fi
 
-source /scripts/merge_configs_for_sync.sh
+source /scripts/server_type_actions.sh
+source /scripts/merge_configs_into_yc_configs.sh
 
 # Chowns
 debuglog "Chown /data to ${UID}:${GID}"

@@ -203,8 +203,6 @@ def restart_one_container(env_str):
     resp = make_cors_response()
     container_name = request.json["container_name"]
 
-    ServerTypeActions().run(env)
-
     resp_data = {}
     resp_data["success"] = DockerMgmtApi.restart_one_container(
         container_name=container_name

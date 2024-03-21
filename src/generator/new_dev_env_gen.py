@@ -30,14 +30,11 @@ from src.generator.base_generator import BaseGenerator
 TODO: Configurable copying of certain folders/configs from a source env
 """
 
-
 class NewDevEnvGen(BaseGenerator):
     server_root: Path
 
     def __init__(self, base_env: Env):
         super().__init__(base_env)
-
-        self.server_type_actions = ServerTypeActions()
 
         curr_dir = Path(__file__).parent
         self.server_properties_template = load_env_config(
@@ -73,7 +70,7 @@ class NewDevEnvGen(BaseGenerator):
         )
         self.generate_prereq_dirs(new_env)
 
-        self.server_type_actions.run(Env(new_env))
+        ServerTypeActions().perform_only_once_actions(Env(new_env))
 
     ENV_CONFIG_SECTION_ORDER = [
         "general",
