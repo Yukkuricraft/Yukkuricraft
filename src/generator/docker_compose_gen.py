@@ -50,7 +50,7 @@ class DockerComposeGen(BaseGenerator):
 
         curr_dir = Path(__file__).parent
         self.docker_compose_template = load_yaml_config(
-            curr_dir / DOCKER_COMPOSE_TEMPLATE_PATH
+            curr_dir / DOCKER_COMPOSE_TEMPLATE_PATH, no_cache=True
         )
 
     def add_host_and_container_names(self):

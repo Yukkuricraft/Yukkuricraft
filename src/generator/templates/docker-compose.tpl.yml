@@ -47,7 +47,7 @@ custom_extensions:
       DEBUG: "true"
       EULA: "true"
       REMOVE_OLD_MODS: true
-      COPY_PLUGINS_SRC: /plugins-bindmount
+      COPY_PLUGINS_SRC: /yc-plugins
       COPY_PLUGINS_DEST: /data/plugins
       COPY_MODS_SRC: /yc-mods
       COPY_MODS_DEST: /data/mods
@@ -87,6 +87,8 @@ custom_extensions:
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs:/defaultconfigs-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultmods:/defaultmods-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultplugins:/defaultplugins-bindmount
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
 

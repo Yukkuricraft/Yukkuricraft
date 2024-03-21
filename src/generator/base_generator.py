@@ -13,6 +13,8 @@ T = TypeVar("T")
 
 class BaseGenerator:
     WORLDGROUP_NAME_BLOCKLIST = [
+        "defaultplugins",
+        "defaultmods",
         "defaultconfigs",  # :`) Ugly folder structures yay`
     ]
 

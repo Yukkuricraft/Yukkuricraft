@@ -144,6 +144,8 @@ class NewDevEnvGen(BaseGenerator):
             default_configs_path / "server",
             default_configs_path / "plugins",
             default_configs_path / "mods",
+            ServerPaths.get_env_default_mods_path(new_env),
+            ServerPaths.get_env_default_plugins_path(new_env),
             ServerPaths.get_mc_env_data_path(new_env),
             ServerPaths.get_mysql_env_data_path(new_env),
             ServerPaths.get_pg_env_data_path(new_env),
