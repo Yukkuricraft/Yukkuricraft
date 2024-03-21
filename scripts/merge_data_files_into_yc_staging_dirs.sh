@@ -23,6 +23,13 @@ if [[ ! -d $YC_CONFIGS_DIR ]]; then
 fi
 
 #
+# We technically could just move the mods into `/data/mods`/plugins into `/data/plugins`, but since we're trying to explicitly
+# build on top of `itzg/minecraft` as a layer, we'll move things into `/yc-mods` and let
+# itzg's scripts handle moving to `/data/mods` or `/data/plugins` using `COPY_MODS_SRC` and `COPY_MODS_DEST` (etc)
+#
+
+
+#
 # Server configs
 #
 
@@ -33,10 +40,12 @@ debuglog "Copying /serverconfig-bindmount to $YC_CONFIGS_DIR"
 run cp -rv  /serverconfig-bindmount/* $YC_CONFIGS_DIR
 
 #
-# Plugin configs
+# Plugins
 #
 
 if [[ ${TYPE} == "BUKKIT" || ${TYPE} == "PAPER" ]]; then
+    debuglog ">> DETECTED BUKKIT/PAPER SERVER TYPE"
+
     PLUGIN_CONFIGS_DIR="${YC_CONFIGS_DIR}plugins/"
     if [[ ! -d $PLUGIN_CONFIGS_DIR ]]; then
         mkdir $PLUGIN_CONFIGS_DIR
@@ -47,6 +56,28 @@ if [[ ${TYPE} == "BUKKIT" || ${TYPE} == "PAPER" ]]; then
 
     debuglog "Copying /pluginsconfig-bindmount to ${PLUGIN_CONFIGS_DIR}"
     run cp -rv  /pluginsconfig-bindmount/* $PLUGIN_CONFIGS_DIR
+
+    PLUGINS_STAGING_DIR="/yc-plugins"
+    if [[ ! -d $PLUGINS_STAGING_DIR ]]; then
+        mkdir $PLUGINS_STAGING_DIR
+    fi
+
+    debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
+    run cp -rv /defaultplugins-bindmount/* $PLUGINS_STAGING_DIR
+
+    debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
+    run cp -rv /plugins-bindmount/* $PLUGINS_STAGING_DIR
+
+    PLUGINS_STAGING_DIR="/yc-plugins"
+    if [[ ! -d $PLUGINS_STAGING_DIR ]]; then
+        mkdir $PLUGINS_STAGING_DIR
+    fi
+
+    debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
+    run cp -rv /defaultplugins-bindmount/* $PLUGINS_STAGING_DIR
+
+    debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
+    run cp -rv /plugins-bindmount/* $PLUGINS_STAGING_DIR
 fi
 
 #
@@ -54,6 +85,8 @@ fi
 #
 
 if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
+    debuglog ">> DETECTED FORGE/FABRIC SERVER TYPE"
+
     MOD_CONFIGS_DIR="${YC_CONFIGS_DIR}config/"
     if [[ ! -d $MOD_CONFIGS_DIR ]]; then
         mkdir $MOD_CONFIGS_DIR
@@ -64,4 +97,20 @@ if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
 
     debuglog "Copying /modsconfig-bindmount to ${MOD_CONFIGS_DIR}"
     run cp -rv /modsconfig-bindmount/* $MOD_CONFIGS_DIR
+
+
+    if [[ ! -d /yc-mods ]]; then
+        mkdir /yc-mods
+    fi
+
+    rm -rf /yc-mods/*
+
+    echo "Copying contents of /defaultmods-bindmount into /yc-mods"
+    cp -r /defaultmods-bindmount/* /yc-mods/
+
+    echo "Copying contents of /server-only-mods-bindmount into /yc-mods"
+    cp -r /server-only-mods-bindmount/* /yc-mods/
+
+    echo "Copying contents of /client-and-server-mods-bindmount into /yc-mods"
+    cp -r /client-and-server-mods-bindmount/* /yc-mods/
 fi

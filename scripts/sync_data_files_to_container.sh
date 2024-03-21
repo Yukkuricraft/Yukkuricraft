@@ -11,7 +11,7 @@ sync() {
     $2
 }
 
-source /scripts/merge_configs_into_yc_configs.sh
+source /scripts/merge_data_files_into_yc_staging_dirs.sh
 
 sync $COPY_MODS_SRC $COPY_MODS_DEST
 sync $COPY_PLUGINS_SRC $COPY_PLUGINS_DEST
