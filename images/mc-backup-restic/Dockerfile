@@ -1,5 +1,6 @@
 FROM itzg/mc-backup:latest
 COPY scripts/chown_restic_dir_then_entrypoint.sh /chown_restic_dir_then_entrypoint.sh
+COPY scripts/restic.sh /restic.sh
 
 # We're mashing two different images together and we want everything to run as the host uid/gid
 USER root

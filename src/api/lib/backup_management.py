@@ -127,7 +127,7 @@ class BackupManagement:
         entrypoint_command = (
             "/usr/bin/backup now" # Performs rcon save-off/save-on
             if mc_container_up
-            else "/restic.sh backup" # Just performs the restic command directly
+            else "bash /restic.sh backup" # Just performs the restic command directly
         )
 
         logger.info(f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'")
@@ -157,7 +157,7 @@ class BackupManagement:
             network=(
                 f"{env.name}_ycnet"
                 if mc_container_up
-                else "adhoc"
+                else ""
             )
         )
         return out_b.decode("utf-8")
