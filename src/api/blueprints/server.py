@@ -1,7 +1,8 @@
 import json
+from pprint import pformat
 
 from flask import Blueprint, request  # type: ignore
-from datetime import datetime
+from datetime import datetime, timedelta
 from docker.models.containers import Container
 
 from src.api.lib.auth import (
@@ -14,7 +15,6 @@ from src.api.lib.helpers import log_request, seconds_to_string
 from src.common.constants import YC_CONTAINER_NAME_LABEL
 
 from src.common.environment import Env
-from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataDirType
 from src.common.logger_setup import logger
 
@@ -63,10 +63,20 @@ def convert_dockerpy_container_to_container_definition(container: Container):
     else:
         # datetime.datetime.fromisoformat() doesn't take `2024-02-11T22:16:57.510507768Z` as a format
         # which is what dockerpy gives us. 2024-02-11T22:16:57 is valid though so just drop the milliseconds.
+
         started_at_truncated_ms = started_at.split(".")[0]
-        running_for_seconds = datetime.now() - datetime.fromisoformat(
-            started_at_truncated_ms
-        )
+
+        logger.info(pformat({
+            "started_at": started_at,
+            "started_at_truncated_ms": started_at_truncated_ms,
+        }))
+
+        try:
+            running_for_seconds = datetime.now() - datetime.fromisoformat(
+                started_at_truncated_ms
+            )
+        except ValueError:
+            running_for_seconds = timedelta(seconds=0)
         running_for = seconds_to_string(running_for_seconds.total_seconds())
 
         health_status = state.get("Health", {}).get("Status", "unknown")
