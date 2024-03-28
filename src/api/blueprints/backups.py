@@ -64,7 +64,7 @@ def create_new_minecraft_backup():
     try:
         out = BackupsApi.backup_minecraft(Env(target_env), target_world_group)
         success = True
-    except:
+    except Exception as e:
         log_exception(
             message="Failed to create backup!",
             data={
@@ -72,6 +72,7 @@ def create_new_minecraft_backup():
                 "world": target_world_group,
             },
         )
+        out = type(e).__name__
 
     resp.data = json.dumps({ "success": success, "output": out })
     return resp
@@ -101,7 +102,7 @@ def restore_minecraft_backup():
     try:
         out = BackupsApi.restore_minecraft(Env(target_env), target_world_group, target_snapshot_id)
         success = True
-    except:
+    except Exception as e:
         log_exception(
             message="Failed to restore backup!",
             data={
@@ -110,6 +111,8 @@ def restore_minecraft_backup():
                 "snapshot_id": target_snapshot_id,
             },
         )
+        out = type(e).__name__
+
 
     resp.data = json.dumps({ "success": success, "output": out })
     return resp
