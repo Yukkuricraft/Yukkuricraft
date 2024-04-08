@@ -17,7 +17,6 @@ from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.constants import YC_ENV_LABEL
 from src.common.decorators import serialize_tuple_out_as_dict
-from src.common.server_type_actions import ServerTypeActions
 from src.common.types import DataDirType
 
 
@@ -204,6 +203,7 @@ class DockerManagement:
             ],
         )
 
+
     def copy_configs_to_bindmount(self, container_name: str, type: DataDirType):
         """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
 
@@ -222,9 +222,9 @@ class DockerManagement:
         elif type == DataDirType.MOD_CONFIGS:
             copy_src = "/data/config/*"
             copy_dest = "/modsconfig-bindmount"
-        elif type == DataDirType.MOD_FILES:
+        elif type == DataDirType.SERVER_ONLY_MOD_FILES:
             copy_src = "/data/mods"
-            copy_dest = "/mods-bindmount"
+            copy_dest = "/server-only-mods-bindmount"
 
         return self.perform_cb_on_container(
             container_name=container_name,
@@ -349,9 +349,6 @@ class DockerManagement:
         REFACTOR TO NOT USE MAKE
         """
 
-        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
-        ServerTypeActions().run(env)
-
         cmd = [
             "make",
             "up",
@@ -378,8 +375,5 @@ class DockerManagement:
             "make",
             "restart",
         ]
-
-        # Hack to use ServerTypeActions here. Should only be getting called from `environment.generate_env_configs()``
-        ServerTypeActions().run(env)
 
         return Runner.run_make_cmd(cmd, env)
