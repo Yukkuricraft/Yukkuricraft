@@ -129,23 +129,27 @@ class BackupManagement:
             if mc_container_up
             else "bash /restic.sh backup" # Just performs the restic command directly
         )
+        underscored_env_alias = env.alias.replace(" ", '_')
 
         logger.info(f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'")
+        logger.info(underscored_env_alias)
         out_b = self.docker_client.containers.run(
             name=backup_container_name,
             image="yukkuricraft/mc-backup-restic",
             remove=True,
             environment={
-                "BACKUP_NAME": f"{world_group}-adhoc",
+                "BACKUP_NAME": world_group,
                 "BACKUP_METHOD": "restic",
                 "SRC_DIR": "/worlds-bindmount",
                 "RESTIC_REPOSITORY": "/backups",
                 "RESTIC_PASSWORD_FILE": "/restic.password",
-                "RESTIC_ADDITIONAL_TAGS": f"{env.name} {world_group} adhoc",
+                "RESTIC_ADDITIONAL_TAGS": f"{env.name} adhoc {underscored_env_alias}",
                 "ENTRYPOINT_TARGET": entrypoint_command,
                 "RESTIC_HOSTNAME": mc_container_name,
                 "RCON_HOST": mc_container_name,
                 "RCON_PASSWORD_FILE": "/rcon.password",
+                "PRUNE_BACKUPS_DAYS": "7",
+                "PRUNE_RESTIC_RETENTION": "--keep-last 8 --keep-daily 7 --keep-weekly 8 --keep-monthly 24 --keep-yearly 666",
             },
             volumes=[
                 # Use explicit volumes instead of volumes_from as the target container name may not be up if compose cluster is down.
