@@ -5,7 +5,7 @@ SHELL=/bin/bash
 ENV?=env2
 CURRENT_UID=$(shell id -u)
 CURRENT_GID=$(shell id -g)
-DOCKER_GID=$(shell getent group docker | cut -d: -f3)
+DOCKER_GID=$(shell python -c 'import os; print(os.stat(os.path.realpath("/var/run/docker.sock")).st_gid)')
 
 
 .EXPORT_ALL_VARIABLES:

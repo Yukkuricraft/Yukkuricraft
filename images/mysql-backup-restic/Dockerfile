@@ -19,13 +19,21 @@ ARG HOST_GID=1000
 ENV UID=$HOST_UID
 ENV GID=$HOST_GID
 
-RUN groupadd -g "$HOST_GID" hostuser
+# Because we sync GID's for both user/docker groups to the host fs, there's
+# a possibility those GID ints are already taken. Check for such cases.
+# (Eg, on Macs, /var/run/docker.sock is owned by 'staff' which is GID 20, which exists by default in debian.)
+RUN if [ "$(cat /etc/group | grep :${HOST_GID}:)" = "" ]; then \
+        groupadd --force --gid $HOST_GID hostuser \
+    else \
+        echo "Group with GID ${HOST_GID} already exists - skipping groupadd"; \
+    fi
+
 RUN useradd hostuser -u $HOST_UID -g $HOST_GID -m -s /bin/bash
 
-RUN mkdir /mysqldump && chown hostuser:hostuser /mysqldump
+RUN mkdir /mysqldump && chown ${HOST_UID}:${HOST_GID} /mysqldump
 
 RUN mkdir /backups
-RUN chown -R hostuser:hostuser /backups
+RUN chown -R ${HOST_UID}:${HOST_GID} /backups
 # RUN chown -R hostuser:hostuser /restic.sh
 
 # Note, still running as root here. Need to chown restic dirs using custom entrypoint.

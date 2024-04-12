@@ -5,7 +5,7 @@ ENV PYTHONPATH="/app:${PYTHONPATH}"
 
 # Install prereq packages
 RUN apt-get update && apt-get install --no-install-recommends --assume-yes \
-    socat ca-certificates curl gnupg
+    ca-certificates curl gnupg
 
 # Set up UID/GID - particularly for docker GID to match host docker GID
 ARG HOST_UID=1000
@@ -14,9 +14,23 @@ ENV UID=$HOST_UID
 ENV GID=$HOST_GID
 
 ARG DOCKER_GID=117
-RUN groupadd --force --gid $DOCKER_GID docker \
-    && groupadd --force --gid $GID yc-api \
-    && useradd --uid $UID --gid yc-api --groups docker --shell /bin/bash --create-home yc-api
+
+# Because we sync GID's for both user/docker groups to the host fs, there's
+# a possibility those GID ints are already taken. Check for such cases.
+# (Eg, on Macs, /var/run/docker.sock is owned by 'staff' which is GID 20, which exists by default in debian.)
+RUN if [ "$(cat /etc/group | grep :${GID}:)" = "" ]; then \
+        groupadd --force --gid $GID yc-api \
+    else \
+        echo "Group with GID ${GID} already exists - skipping groupadd"; \
+    fi
+
+RUN if [ "$(cat /etc/group | grep :${DOCKER_GID}:)" = "" ]; then \
+        groupadd --force --gid $DOCKER_GID docker \
+    else \
+        echo "Group with GID ${DOCKER_GID} already exists - skipping groupadd"; \
+    fi
+
+RUN useradd --uid $UID --gid $GID --groups $DOCKER_GID --shell /bin/bash --create-home yc-api
 
 # Install docker binaries
 RUN install -m 0755 -d /etc/apt/keyrings
@@ -33,25 +47,25 @@ RUN apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
 
 # Handle api files
 RUN mkdir /app
-RUN chown -R yc-api:yc-api /app
+RUN chown -R $UID:$GID /app
 
 COPY requirements.txt /app
 RUN ls /app/*
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY --chown=yc-api:yc-api src/ /app/src
-COPY --chown=yc-api:yc-api secrets/ /app/secrets
-COPY --chown=yc-api:yc-api scripts/ /app/scripts
-COPY --chown=yc-api:yc-api env/ /app/env
-# COPY --chown=yc-api:yc-api gen/ /app/gen
+COPY --chown=$UID:$GID src/ /app/src
+COPY --chown=$UID:$GID secrets/ /app/secrets
+COPY --chown=$UID:$GID scripts/ /app/scripts
+COPY --chown=$UID:$GID env/ /app/env
+# COPY --chown=$UID:$GID gen/ /app/gen
 
 
 # Eventually remove these 
-COPY --chown=yc-api:yc-api Makefile /app
-COPY --chown=yc-api:yc-api generate-docker-compose /app
-COPY --chown=yc-api:yc-api generate-env-file /app
-COPY --chown=yc-api:yc-api generate-new-dev-env /app
-COPY --chown=yc-api:yc-api generate-velocity-config /app
+COPY --chown=$UID:$GID Makefile /app
+COPY --chown=$UID:$GID generate-docker-compose /app
+COPY --chown=$UID:$GID generate-env-file /app
+COPY --chown=$UID:$GID generate-new-dev-env /app
+COPY --chown=$UID:$GID generate-velocity-config /app
 
 WORKDIR /app
 USER yc-api
