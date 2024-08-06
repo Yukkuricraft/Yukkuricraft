@@ -1,5 +1,4 @@
-FROM itzg/minecraft-server:java17 AS base
-# TODO: Try java17-graalvm
+FROM itzg/minecraft-server:java21-graalvm AS base
 COPY scripts/ /scripts
 
 ARG HOST_UID=1000

@@ -19,13 +19,13 @@ ARG DOCKER_GID=117
 # a possibility those GID ints are already taken. Check for such cases.
 # (Eg, on Macs, /var/run/docker.sock is owned by 'staff' which is GID 20, which exists by default in debian.)
 RUN if [ "$(cat /etc/group | grep :${GID}:)" = "" ]; then \
-        groupadd --force --gid $GID yc-api \
+        groupadd --force --gid $GID yc-api; \
     else \
         echo "Group with GID ${GID} already exists - skipping groupadd"; \
     fi
 
 RUN if [ "$(cat /etc/group | grep :${DOCKER_GID}:)" = "" ]; then \
-        groupadd --force --gid $DOCKER_GID docker \
+        groupadd --force --gid $DOCKER_GID docker; \
     else \
         echo "Group with GID ${DOCKER_GID} already exists - skipping groupadd"; \
     fi

@@ -16,7 +16,7 @@ ENV GID=$HOST_GID
 # a possibility those GID ints are already taken. Check for such cases.
 # (Eg, on Macs, /var/run/docker.sock is owned by 'staff' which is GID 20, which exists by default in debian.)
 RUN if [ "$(cat /etc/group | grep :${HOST_GID}:)" = "" ]; then \
-        groupadd --force --gid $HOST_GID hostuser \
+        groupadd --force --gid $HOST_GID hostuser; \
     else \
         echo "Group with GID ${HOST_GID} already exists - skipping groupadd"; \
     fi
