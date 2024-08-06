@@ -49,6 +49,8 @@ if [[ ${TYPE} == "BUKKIT" || ${TYPE} == "PAPER" ]]; then
     PLUGIN_CONFIGS_DIR="${YC_CONFIGS_DIR}plugins/"
     if [[ ! -d $PLUGIN_CONFIGS_DIR ]]; then
         mkdir $PLUGIN_CONFIGS_DIR
+    else
+        rm -rf ${PLUGIN_CONFIGS_DIR}/*
     fi
 
     debuglog "Copying /defaultconfigs-bindmount/plugins to ${PLUGIN_CONFIGS_DIR}"
@@ -60,17 +62,8 @@ if [[ ${TYPE} == "BUKKIT" || ${TYPE} == "PAPER" ]]; then
     PLUGINS_STAGING_DIR="/yc-plugins"
     if [[ ! -d $PLUGINS_STAGING_DIR ]]; then
         mkdir $PLUGINS_STAGING_DIR
-    fi
-
-    debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
-    run cp -rv /defaultplugins-bindmount/* $PLUGINS_STAGING_DIR
-
-    debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
-    run cp -rv /plugins-bindmount/* $PLUGINS_STAGING_DIR
-
-    PLUGINS_STAGING_DIR="/yc-plugins"
-    if [[ ! -d $PLUGINS_STAGING_DIR ]]; then
-        mkdir $PLUGINS_STAGING_DIR
+    else
+        rm -rf ${PLUGINS_STAGING_DIR}/*
     fi
 
     debuglog "Copying /defaultplugins-bindmount/ to ${PLUGINS_STAGING_DIR}"
@@ -90,6 +83,8 @@ if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
     MOD_CONFIGS_DIR="${YC_CONFIGS_DIR}config/"
     if [[ ! -d $MOD_CONFIGS_DIR ]]; then
         mkdir $MOD_CONFIGS_DIR
+    else
+        rm -rf ${MOD_CONFIGS_DIR}/*
     fi
 
     debuglog "Copying /defaultconfigs-bindmount/mods to ${MOD_CONFIGS_DIR}"
@@ -99,18 +94,21 @@ if [[ ${TYPE} == "FORGE" || ${TYPE} == "FABRIC" ]]; then
     run cp -rv /modsconfig-bindmount/* $MOD_CONFIGS_DIR
 
 
-    if [[ ! -d /yc-mods ]]; then
-        mkdir /yc-mods
+    MODS_STAGING_DIR="/yc-mods"
+    if [[ ! -d $MODS_STAGING_DIR ]]; then
+        mkdir $MODS_STAGING_DIR
+    else
+        rm -rf ${MODS_STAGING_DIR}/*
     fi
 
-    rm -rf /yc-mods/*
+    rm -rf ${MODS_STAGING_DIR}/*
 
-    echo "Copying contents of /defaultmods-bindmount into /yc-mods"
-    cp -r /defaultmods-bindmount/* /yc-mods/
+    echo "Copying contents of /defaultmods-bindmount into ${MODS_STAGING_DIR}"
+    cp -r /defaultmods-bindmount/* ${MODS_STAGING_DIR}/
 
-    echo "Copying contents of /server-only-mods-bindmount into /yc-mods"
-    cp -r /server-only-mods-bindmount/* /yc-mods/
+    echo "Copying contents of /server-only-mods-bindmount into ${MODS_STAGING_DIR}"
+    cp -r /server-only-mods-bindmount/* ${MODS_STAGING_DIR}/
 
-    echo "Copying contents of /client-and-server-mods-bindmount into /yc-mods"
-    cp -r /client-and-server-mods-bindmount/* /yc-mods/
+    echo "Copying contents of /client-and-server-mods-bindmount into ${MODS_STAGING_DIR}"
+    cp -r /client-and-server-mods-bindmount/* ${MODS_STAGING_DIR}/
 fi

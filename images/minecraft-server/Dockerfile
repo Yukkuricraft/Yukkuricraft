@@ -1,4 +1,5 @@
 FROM itzg/minecraft-server:java17 AS base
+# TODO: Try java17-graalvm
 COPY scripts/ /scripts
 
 ARG HOST_UID=1000
@@ -21,13 +22,15 @@ RUN mkdir /worlds-bindmount
 RUN chown $HOST_UID:$HOST_GID /plugins-bindmount
 RUN chown $HOST_UID:$HOST_GID /worlds-bindmount
 
-COPY secrets/jmxremote.password /opt/java/openjdk/conf/management/jmxremote.password
-RUN chown $HOST_UID:$HOST_GID /opt/java/openjdk/conf/management/jmxremote.password && \
-    chmod 600 /opt/java/openjdk/conf/management/jmxremote.password
+ARG JMXREMOTE_CONFIG_PATH=/opt/java/openjdk/conf/management/
 
-COPY secrets/jmxremote.access /opt/java/openjdk/conf/management/jmxremote.access
-RUN chown $HOST_UID:$HOST_GID /opt/java/openjdk/conf/management/jmxremote.access && \
-    chmod 600 /opt/java/openjdk/conf/management/jmxremote.access
+COPY secrets/jmxremote.password $JMXREMOTE_CONFIG_PATH/jmxremote.password
+RUN chown $HOST_UID:$HOST_GID $JMXREMOTE_CONFIG_PATH/jmxremote.password && \
+    chmod 600 $JMXREMOTE_CONFIG_PATH/jmxremote.password
+
+COPY secrets/jmxremote.access $JMXREMOTE_CONFIG_PATH/jmxremote.access
+RUN chown $HOST_UID:$HOST_GID $JMXREMOTE_CONFIG_PATH/jmxremote.access && \
+    chmod 600 $JMXREMOTE_CONFIG_PATH/jmxremote.access
 
 # Just in-case remotely SSH'ing in and dev'ing from vscode (windows) causes CRLF issues
 RUN sed -i 's/\r$//' /scripts/start.sh && \
