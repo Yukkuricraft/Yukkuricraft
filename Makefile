@@ -140,6 +140,7 @@ delete_env:
 .PHONY: build
 build: build_minecraft_server
 build: build_api
+build: build_nginx
 build: build_mysql_backup
 build: build_mc_backup
 
@@ -161,6 +162,16 @@ build_api:
 		--build-arg HOST_GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--tag='yukkuricraft/yc-docker-api' \
+		.
+
+.PHONY: build_nginx
+build_nginx:
+	docker build -f images/nginx-proxy/Dockerfile \
+		--no-cache \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
+		--build-arg DOCKER_GID=${DOCKER_GID} \
+		--tag='yukkuricraft/nginx-proxy' \
 		.
 
 .PHONY: build_mc_backup
