@@ -1,5 +1,7 @@
 from flask import request, make_response, current_app  # type: ignore
 
+from urllib.parse import urlparse, parse_qs
+
 from pprint import pformat
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple, Callable
@@ -118,14 +120,48 @@ def get_access_token_from_headers() -> Tuple[str, str]:
 
     Header will usually look like: `Authorization: {scheme} {token}`
 
+    If no auth header is found, will fall back to attempting querystring based authorization for websocket auth.
+
     Returns:
         Tuple[str, str]: Scheme and token
     """
     # Authorization: YC-Token <access_token>
     auth_header = request.headers.get("Authorization", "")
-    scheme, token = auth_header.split()
 
-    return scheme, token
+    if auth_header:
+        scheme, token = auth_header.split()
+        return scheme, token
+
+    return get_auth_string_from_websocket_request()
+
+
+def get_auth_string_from_websocket_request() -> Tuple[str, str]:
+    """Helper to get token of the `Authorization` query string from a flask request.
+
+    Used for websocket auth as websockets do not allow arbitrary headers such as `Authorization:` to be added
+
+    Expects to be used behind an nginx auth_request subrequest with the original uri passed as an X-Original-Uri header
+
+    Unlike with the `Authorization:` header, we do not expect a token scheme for querystring authorization. Instead we pass back a hardcoded scheme of `YC-Token` for compatibility.
+
+
+    Returns:
+        Tuple[str, str]: Scheme and token
+    """
+
+    x_original_uri_header = request.headers.get("X-Original-Uri") # Expected to be passed from nginx reverse proxy
+    if not x_original_uri_header:
+        raise InvalidTokenError("No auth header or proxy uri header set!")
+
+    parsed_url = urlparse(x_original_uri_header)
+    querystring_dict = parse_qs(parsed_url.query)
+
+    auth_token = querystring_dict.get("Authorization", "")
+    if not auth_token:
+        raise InvalidTokenError("Found valid proxy uri header but no authorization token!")
+
+    return 'YC-Token', auth_token
+
 
 
 def generate_access_token_if_valid(token: str) -> Optional[str]:
