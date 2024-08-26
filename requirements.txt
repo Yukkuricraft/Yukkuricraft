@@ -35,6 +35,7 @@ packaging==21.3
 pathspec==0.9.0
 platformdirs==2.5.2
 protobuf==4.21.2
+ptyprocess==0.7.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pyparsing==3.0.9

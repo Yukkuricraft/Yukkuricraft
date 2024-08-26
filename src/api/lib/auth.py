@@ -128,6 +128,7 @@ def get_access_token_from_headers() -> Tuple[str, str]:
     # Authorization: YC-Token <access_token>
     auth_header = request.headers.get("Authorization", "")
 
+    logger.info(f"auth_header: {auth_header}")
     if auth_header:
         scheme, token = auth_header.split()
         return scheme, token
@@ -149,12 +150,14 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
         Tuple[str, str]: Scheme and token
     """
 
-    x_original_uri_header = request.headers.get("X-Original-Uri") # Expected to be passed from nginx reverse proxy
+    x_original_uri_header = request.headers.get("X-Original-Uri", "") # Expected to be passed from nginx reverse proxy
     if not x_original_uri_header:
         raise InvalidTokenError("No auth header or proxy uri header set!")
+    logger.info(f"x_original_uri_header: {x_original_uri_header}")
 
     parsed_url = urlparse(x_original_uri_header)
     querystring_dict = parse_qs(parsed_url.query)
+    logger.info(pformat(querystring_dict))
 
     auth_token = querystring_dict.get("Authorization", "")
     if not auth_token:

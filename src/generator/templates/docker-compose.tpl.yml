@@ -70,7 +70,7 @@ custom_extensions:
       YC_MYSQL_PASS: ${YC_MYSQL_PASS}
       YC_POSTGRES_HOST: ${YC_POSTGRES_HOST}
       YC_POSTGRES_USER: ${YC_POSTGRES_USER}
-      YC_POSTGRES_HOST: ${YC_POSTGRES_PASS}
+      YC_POSTGRES_PASS: ${YC_POSTGRES_PASS}
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: minecraft
