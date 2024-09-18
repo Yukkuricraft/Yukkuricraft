@@ -348,6 +348,8 @@ class DockerManagement:
     def up_containers(self, env: Env):
         """
         REFACTOR TO NOT USE MAKE
+        
+        TODO: When refactoring, ensure existence of all mount dirs and create+chown appropriately if not exists
         """
 
         cmd = [
@@ -377,8 +379,9 @@ class DockerManagement:
                 logger.info(pformat(container))
                 p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
                 try:
-                    logger.info(p.read(0))
+                    logger.info(p.read(1))
                 except EOFError:
+                    logger.info("Got EOFError - Did not read from ptyprocess.")
                     pass
 
         return resp
