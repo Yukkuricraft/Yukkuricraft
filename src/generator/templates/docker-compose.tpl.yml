@@ -64,6 +64,7 @@ custom_extensions:
       USE_AIKAR_FLAGS: true
       REPLACE_ENV_VARIABLES: true
       ENV_VARIABLE_PREFIX: YC_
+      REPLACE_ENV_VARIABLES_EXCLUDE_PATHS: ${REPLACE_ENV_VARIABLES_EXCLUDE_PATHS}
       YC_MYSQL_DB: ${YC_MYSQL_DB}
       YC_MYSQL_HOST: ${YC_MYSQL_HOST}
       YC_MYSQL_USER: ${YC_MYSQL_USER}
@@ -156,7 +157,7 @@ custom_extensions:
 services:
   mysql:
     container_name: YC-${ENV}-mysql
-    image: mysql:8.1
+    image: mysql:9
     env_file:
       - ./secrets/minecraft_db.env
     user: "${UID}:${GID}"
@@ -167,7 +168,7 @@ services:
       net.yukkuricraft.container_type: mysql
       net.yukkuricraft.container_name: mysql
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3306"]
+      test: ["CMD", "mysqladmin", "ping", "-u", ${YC_MYSQL_USER}, "--password=${YC_MYSQL_PASS}"]
       interval: 10s
       timeout: 10s
       retries: 15
