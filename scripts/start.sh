@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 function debuglog {
     if [[ ! -z "$DEBUG" && ( "$DEBUG" == "1" || "$DEBUG" == "true" ) ]]; then echo $@; fi
 }
@@ -41,9 +42,12 @@ debuglog "UID: $UID"
 debuglog "GID: $GID"
 debuglog "SERVER TYPE: $TYPE"
 
-
 echo "################################################"
 echo "STARTING CUSTOM YC/MINECRAFT-SERVER START SCRIPT"
+
+# Load itzg/minecraft utils script
+. /start-utils
+echo "LOADED ITZG START-UTILS"
 
 # run mkdir /data/logs
 # run touch /data/logs/latest.log
@@ -56,6 +60,23 @@ if [[ ${TYPE} != "PAPER" && ${TYPE} != "BUKKIT" ]]; then
     create_symlinks symlinkmap
 fi
 
+if [[ ${TYPE} == "PAPER" || ${TYPE} == "BUKKIT" ]]; then
+    # Clear out /data/plugins every time
+    args=(
+       --delete
+       --type file,directory
+       --min-depth=1 --max-depth "${REMOVE_OLD_MODS_DEPTH:-16}"
+       --name "${REMOVE_OLD_MODS_INCLUDE:-*}"
+       --exclude-name "${REMOVE_OLD_MODS_EXCLUDE:-}"
+    )
+    if ! isDebugging; then
+      args+=(--quiet)
+    fi
+    echo "DELETING ALL /data/plugins CONTENTS"
+    mc-image-helper find "${args[@]}" "/data/plugins"
+fi
+
+# Merge all our "source" dirs into "staging" dirs
 source /scripts/merge_data_files_into_yc_staging_dirs.sh
 
 # Chowns

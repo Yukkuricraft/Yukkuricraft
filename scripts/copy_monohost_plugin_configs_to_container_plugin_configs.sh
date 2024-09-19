@@ -29,6 +29,8 @@ declare -a PLUGIN_CONFIGS_TO_COPY=(
     "LuckPerms"
     "LWC"
     "Multiverse-Core"
+    "Multiverse-NetherPortals"
+    "Multiverse-Portals"
     "OpenInv"
     "PlugMan"
     "ProtocolLib"
