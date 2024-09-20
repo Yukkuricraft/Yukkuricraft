@@ -168,7 +168,7 @@ services:
       net.yukkuricraft.container_type: mysql
       net.yukkuricraft.container_name: mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-u", ${YC_MYSQL_USER}, "--password=${YC_MYSQL_PASS}"]
+      test: ["CMD", "mysqladmin", "ping", "-u", "${YC_MYSQL_USER}", "--password=${YC_MYSQL_PASS}"]
       interval: 10s
       timeout: 10s
       retries: 15
