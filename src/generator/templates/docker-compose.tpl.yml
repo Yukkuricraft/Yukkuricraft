@@ -10,9 +10,6 @@
 #
 #
 
-
-version: "3.4"
-
 x_logging:
   &default-logging
   driver: "json-file"
@@ -44,7 +41,7 @@ custom_extensions:
     stop_grace_period: 20s
     environment:
       MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}"
-      DEBUG: "true"
+      DEBUG: "false"
       EULA: "true"
       REMOVE_OLD_MODS: true
       COPY_PLUGINS_SRC: /yc-plugins
@@ -93,7 +90,11 @@ custom_extensions:
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
 
-    logging: *default-logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "5" # Logs get stored/persisted through MC's own daily log rotation mechanism. We want to limit the docker log size for web console considerations.
 
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic

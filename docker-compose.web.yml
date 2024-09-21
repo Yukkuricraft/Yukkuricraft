@@ -45,7 +45,7 @@ services:
       driver: "json-file"
       options:
         max-size: "5m"
-        max-file: "100"
+        max-file: "10"
 
   yc-api-mysql:
     container_name: yc-api-mysql

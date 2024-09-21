@@ -230,7 +230,7 @@ class DockerManagement:
         return self.perform_cb_on_container(
             container_name=container_name,
             callback=lambda container: self.exec_run(
-                container, ["bash", "-c", f"cp -rv {copy_src} {copy_dest}"]
+                container, ["bash", "-c", f"cp -r {copy_src} {copy_dest}"]
             )[1],
             additional_data_to_log={
                 "copy_src": copy_src,
