@@ -25,6 +25,32 @@ class DockerManagement:
     def __init__(self):
         self.client = docker.from_env()
 
+    def pty_attach_container(self, container: Container):
+        # This is super weird.
+        # This only affects Paper/MC forks that use jline3
+        # There's a bug between docker/jline3 where a docker ws attach causes jline3's persistent input line not function.
+        # "Not function" meaning the socket connection will send input correctly but doesn't send back the persistent input line modifications
+        #   However, all input behaviors are still executed properly upon a `\n` being sent over the socket.
+        # A CLI workaround was to call `docker attach` on each container that started. From a python script, calling `subprocess.Popen` with docker attach
+        #   also worked. However, it only worked when executed from an interactive terminal ie was running inside a PTY. Thus, using `subprocess.Popen` from a
+        #   server context with no PTY caused it to not work.
+        # The final workaround that worked was to create a PTY process from the server using ptyprocess and run the `docker attach` inside of that.
+        # Reading from the pty was also a necessity for the workaround.
+        #
+        # Wtf lol.
+        if (
+            YC_CONTAINER_TYPE_LABEL in container.labels
+            and container.labels[YC_CONTAINER_TYPE_LABEL] == "minecraft"
+        ):
+            logger.info(pformat(container))
+            p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
+            try:
+                logger.info(p.read(1))
+            except EOFError:
+                logger.info("Got EOFError - Did not read from ptyprocess.")
+                pass
+
+
     def exec_run(
         self,
         container: Container,
@@ -251,11 +277,16 @@ class DockerManagement:
             bool: True if successful
         """
 
+        def callback(container: Container):
+            container.start()
+            self.pty_attach_container(container)
+
         try:
             self.perform_cb_on_container(
                 container_name=container_name,
-                callback=lambda container: container.start(),
+                callback=callback,
             )
+
             return True
         except:
             log_exception()
@@ -299,10 +330,14 @@ class DockerManagement:
             bool: True if successful
         """
 
+        def callback(container: Container):
+            container.restart()
+            self.pty_attach_container(container)
+
         try:
             self.perform_cb_on_container(
                 container_name=container_name,
-                callback=lambda container: container.restart(),
+                callback=callback,
             )
             return True
         except:
@@ -360,29 +395,7 @@ class DockerManagement:
         resp = Runner.run_make_cmd(cmd, env)
 
         for container in self.list_active_containers(env):
-            # This is super weird.
-            # This only affects Paper/MC forks that use jline3
-            # There's a bug between docker/jline3 where a docker ws attach causes jline3's persistent input line not function.
-            # "Not function" meaning the socket connection will send input correctly but doesn't send back the persistent input line modifications
-            #   However, all input behaviors are still executed properly upon a `\n` being sent over the socket.
-            # A CLI workaround was to call `docker attach` on each container that started. From a python script, calling `subprocess.Popen` with docker attach
-            #   also worked. However, it only worked when executed from an interactive terminal ie was running inside a PTY. Thus, using `subprocess.Popen` from a
-            #   server context with no PTY caused it to not work.
-            # The final workaround that worked was to create a PTY process from the server using ptyprocess and run the `docker attach` inside of that.
-            # Reading from the pty was also a necessity for the workaround.
-            #
-            # Wtf lol.
-            if (
-                YC_CONTAINER_TYPE_LABEL in container.labels
-                and container.labels[YC_CONTAINER_TYPE_LABEL] == "minecraft"
-            ):
-                logger.info(pformat(container))
-                p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
-                try:
-                    logger.info(p.read(1))
-                except EOFError:
-                    logger.info("Got EOFError - Did not read from ptyprocess.")
-                    pass
+            self.pty_attach_container(container)
 
         return resp
 
