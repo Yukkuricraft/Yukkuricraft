@@ -72,3 +72,8 @@ Everything should "Just Build"
 #### Running YC Backend
 - **FIRST TIME ONLY**: `./scripts/first_time_setup.sh`
 - `make up_web`
+
+#### Accessing Filebrowser
+- http://filebrowser.localhost
+- Login by default is `admin:admin`
+- If you can access this you're done. Now go set up YakumoDash.
