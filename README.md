@@ -2,6 +2,9 @@
 
 Containerized Yukkuricraft
 
+## Developing
+- See [Developing Locally](docs/developing_locally.md)
+
 # 2024-ish edit: This entire doc really just needs to be rewritten rip.
 
 ## Architecture (WIP)

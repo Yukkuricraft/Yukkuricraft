@@ -1,38 +1,17 @@
-## First time setup
+# Developing Locally
 - This assumes you're using VSCode on either a Windows or Linux machine. Macs will generally follow the Linux instructions but you'll need to make some tweaks as appropriate (M1's particularly)
 
-### Windows
-Note: This is just a suggestion for first time setup on windows. Feel free to ignore if you know what you're doing.
+## Windows/WSL
+- Follow the one-time [Windows setup instructions](windows_first_time_setup.md) first
 
-1. Install WSL2
-  - https://learn.microsoft.com/en-us/windows/wsl/install
-  - Powershell: `wsl --install`
-2. Install your favorite Linux distro (Ubuntu is a decent default)
-  - Powershell: `wsl --install Ubuntu`
-3. Install VSCode
-  - https://code.visualstudio.com/
-4. Install WSL Extension
-  - https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl
-5. Open up a new VSCode window and activate a WSL environment
-  - Command Palette: `>WSL: Connect to WSL using Distro`
-  - Select Ubuntu or whatever you previously installed
-6. Clone this (and YakumoDash's) Repository
-  - Command Palette: `>Git: clone`
-
-You should be ready to follow the "Linux" instructions now
-
-
-### Linux
-These are the actual platform-agnostic setup instructions
-
-#### Prerequisite software
-##### `Python`
+## Prerequisite software
+### `Python`
 - At least 3.8+
 - Eg, `sudo apt install python`
 - If on WSL, you may also need `sudo apt install python-is-python3`
-##### `Make`
+### `Make`
 - Eg, `sudo apt install make`
-##### `docker`
+### `docker`
 1. Install docker
 ```
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -52,7 +31,7 @@ su - $USER
 docker ps
 ```
 
-#### Prerequisite Git Setup
+### Prerequisite Git Setup
 You'll need to set up credentials with git to clone the secrets submodule.
 
 1. Create an ssh key if one doesn't exist already
@@ -64,16 +43,17 @@ You'll need to set up credentials with git to clone the secrets submodule.
   - `git submodule update --init`
 
 
-#### Building Images
+### Building Images
 - `make build`
 
 Everything should "Just Build"
 
-#### Running YC Backend
+### Running YC Backend
 - **FIRST TIME ONLY**: `./scripts/first_time_setup.sh`
 - `make up_web`
+- Backend containers should now be up and running.
 
-#### Accessing Filebrowser
+### Accessing Filebrowser
 - http://filebrowser.localhost
 - Login by default is `admin:admin`
-- If you can access this you're done. Now go set up YakumoDash.
+- If you can access the link above you're done. Now go set up YakumoDash.
