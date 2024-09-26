@@ -13,10 +13,12 @@
 - Eg, `sudo apt install make`
 ### `docker`
 1. Install docker
-```
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-```
+    - If on Linux
+    ```
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    ```
+    - If on Windows/WSL: https://docs.docker.com/desktop/wsl/
 2. Add yourself to the `docker` group
 ```
 sudo groupadd docker
@@ -35,12 +37,13 @@ docker ps
 You'll need to set up credentials with git to clone the secrets submodule.
 
 1. Create an ssh key if one doesn't exist already
-  - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-openssh-on-macos-or-linux
+    - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-openssh-on-macos-or-linux
+    - Eg, `ssh-keygen`
 2. Add your public key to your Github account's settings page
-  - `echo ~/.ssh/id_rsa.pub`
-  - Using the output of above, follow https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account#adding-a-new-ssh-key-to-your-account
+    - `echo ~/.ssh/id_rsa.pub`
+    - Using the output of above, follow https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account#adding-a-new-ssh-key-to-your-account
 3. Init and update submodules
-  - `git submodule update --init`
+    - `git submodule update --init`
 
 
 ### Building Images

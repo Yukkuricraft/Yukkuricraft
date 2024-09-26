@@ -22,7 +22,7 @@ sudo mkdir -p ${BASE_PATH}/env
 sudo mkdir -p ${BASE_PATH}/nginx
 
 # Make empty filebrowser db file so docker can mount it
-touch ${BASE_PATH}/db/filebrowser.db
+sudo touch ${BASE_PATH}/db/filebrowser.db
 
 # Ensure correct ownership
 sudo chown -R ${CURR_UID}:${CURR_GID} ${BASE_PATH}
