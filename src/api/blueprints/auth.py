@@ -41,7 +41,7 @@ def login():
         logger.warning(resp)
         logger.warning(data)
 
-        access_token = generate_access_token_if_valid(data["id_token"])
+        access_token = generate_access_token_if_valid(data.get("id_token", None))
         if access_token is not None:
             resp.status = 200
             resp.data = json.dumps({"access_token": access_token})
@@ -82,15 +82,3 @@ def me():
         resp.data = json.dumps(user.to_dict())
 
         return resp
-
-
-# @auth_bp.route("/createdbdeleteme", methods=["OPTIONS", "GET"])
-# @intercept_cors_preflight
-# @validate_access_token
-# @log_request
-def createdb():
-    from src.api.models import create_db_tables
-
-    logger.warning("?? CREATEDB")
-    create_db_tables()
-    return "Aaaa"

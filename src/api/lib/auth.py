@@ -9,9 +9,11 @@ from datetime import datetime
 from secrets import token_hex
 from google.oauth2 import id_token  # type: ignore
 from google.auth.transport import requests as g_requests  # type: ignore
+from uuid import uuid4
 
 
 from src.api.constants import (
+    IS_LOCAL,
     ACCESS_TOKEN_DUR_MINS,
     G_CLIENT_ID,
     CORS_ORIGIN,
@@ -19,7 +21,7 @@ from src.api.constants import (
     YC_TOKEN_AUTH_SCHEME,
 )
 from src.api.db import db
-from src.api.models import AccessToken, User, JTI, create_db_tables
+from src.api.models import AccessToken, User, JTI
 
 from src.common.helpers import log_exception
 from src.common.logger_setup import logger
@@ -112,6 +114,15 @@ def deserialize_id_token(token: str) -> Dict:
     Returns:
         Dict: _description_
     """
+    if IS_LOCAL:
+        # Local dev bypasses google oauth so we have a non-sensical `token` value. Just make shit up.
+        return {
+            "jti": uuid4().hex,
+            "exp": 1999999999,
+            "iat": int(datetime.now().strftime('%s')),
+            "sub": '123456789012345678901',
+            "email": "local@development.yc",
+        }
     return id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
 
 
