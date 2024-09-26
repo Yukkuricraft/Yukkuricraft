@@ -10,9 +10,6 @@
 #
 #
 
-
-version: "3.4"
-
 x_logging:
   &default-logging
   driver: "json-file"
@@ -44,9 +41,9 @@ custom_extensions:
     stop_grace_period: 20s
     environment:
       MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}"
-      DEBUG: "true"
+      DEBUG: "false"
       EULA: "true"
-      REMOVE_OLD_MODS: true
+      REMOVE_OLD_MODS: false
       COPY_PLUGINS_SRC: /yc-plugins
       COPY_PLUGINS_DEST: /data/plugins
       COPY_MODS_SRC: /yc-mods
@@ -77,15 +74,16 @@ custom_extensions:
       net.yukkuricraft.container_type: minecraft
       net.yukkuricraft.container_name: <<WORLDGROUP>>
     volumes:
-      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
+      # - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
+      # - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/plugins-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/data/plugins
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/worlds:/worlds-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/plugins-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/server-only-mods:/server-only-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/client-and-server-mods:/client-and-server-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/logs:/data/logs
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/crash-reports:/data/crash-reports
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
-      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
+      # - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultconfigs:/defaultconfigs-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/defaultmods:/defaultmods-bindmount
@@ -93,7 +91,11 @@ custom_extensions:
       - mcdata_<<WORLDGROUP>>:/data
       - ${YC_REPO_ROOT}/secrets/rcon.password:/rcon.password
 
-    logging: *default-logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "5" # Logs get stored/persisted through MC's own daily log rotation mechanism. We want to limit the docker log size for web console considerations.
 
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic

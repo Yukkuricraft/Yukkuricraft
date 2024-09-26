@@ -167,9 +167,6 @@ class DockerComposeGen(BaseGenerator):
         self.generated_docker_compose["networks"] = networks
 
     def generate_docker_compose(self):
-        # Add version
-        self.generated_docker_compose["version"] = self.docker_compose_template.version
-
         self.generated_docker_compose[
             "services"
         ] = self.docker_compose_template.services.as_dict()
