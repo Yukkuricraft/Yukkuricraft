@@ -5,7 +5,10 @@ CURR_GID=$(id -g)
 REPO_ROOT=$(pwd)
 
 # Make gitignore'd generated file directory
-mkdir ${REPO_ROOT}/gen
+mkdir -p ${REPO_ROOT}/gen/velocity
+mkdir -p ${REPO_ROOT}/gen/docker-compose
+mkdir -p ${REPO_ROOT}/gen/env-toml
+mkdir -p ${REPO_ROOT}/gen/env-files
 
 # Sudo things
 echo "gib sudo first"
