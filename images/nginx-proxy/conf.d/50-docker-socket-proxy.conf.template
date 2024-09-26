@@ -8,6 +8,10 @@ upstream dockersock {
   server unix:/tmp/docker.sock;
 }
 
+upstream yc-api {
+  server yc-api:5001;
+}
+
 server {
   server_name ${DOCKER_API_HOST};
   access_log /var/log/nginx/access.log;
@@ -31,7 +35,7 @@ server {
 
   location = /auth {
     internal;
-    proxy_pass              ${DOCKER_AUTH_PROTOCOL}://${DOCKER_AUTH_HOST}/auth/me;
+    proxy_pass              http://yc-api/auth/me;
     proxy_pass_request_body off;
     proxy_set_header        Content-Length "";
     proxy_set_header        X-Original-URI $request_uri;
