@@ -13,6 +13,7 @@ services:
       VIRTUAL_PORT: 5001
       LETSENCRYPT_HOST: ${API_HOST}
       HOST_YC_REPO_ROOT: ${YC_REPO_ROOT}
+      CONFIGURATION_TYPE: ${CONFIGURATION_TYPE}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./:/app

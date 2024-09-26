@@ -20,6 +20,11 @@ touch ${BASE_PATH}/db/filebrowser.db
 sudo chown -R ${CURR_UID}:${CURR_GID} ${BASE_PATH}
 
 # Create localhost env file to be used with web docker compose
-cp envs/localhost.env.template envs/localhost.env
+LOCAL_ENV_FILE=envs/localhost.env
+cp envs/localhost.env.template ${LOCAL_ENV_FILE}
 echo "" >> envs/localhost.env
-echo "YC_REPO_ROOT=$(pwd)" >> envs/localhost.env
+echo "YC_REPO_ROOT=$(pwd)" >> ${LOCAL_ENV_FILE}
+
+# Add UID/GID's for use with filebrowser/filebrowser's image
+echo "UID=${CURR_UID}" >> ${LOCAL_ENV_FILE}
+echo "GID=${CURR_GID}" >> ${LOCAL_ENV_FILE}

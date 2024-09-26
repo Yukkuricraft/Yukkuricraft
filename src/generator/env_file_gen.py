@@ -7,7 +7,7 @@ from pprint import pformat
 from typing import Dict
 from pathlib import Path
 
-from src.api.constants import IS_PROD_HOST
+from src.api.constants import API_HOST
 
 from src.common.config import load_env_config
 from src.common.paths import ServerPaths
@@ -42,16 +42,11 @@ class EnvFileGen(BaseGenerator):
         self.generate_env_file()
         self.dump_generated_env_file()
 
-    prod_api_host = "api.yukkuricraft.net"
-    dev_api_host = "dev.api.yukkuricraft.net"
-
     def generate_env_file(self):
         self.generated_env_config = self.env.cluster_vars.as_dict()
 
         self.generated_env_config["ENV"] = self.env.name
-        self.generated_env_config["API_HOST"] = (
-            self.prod_api_host if IS_PROD_HOST else self.dev_api_host
-        )
+        self.generated_env_config["API_HOST"] = API_HOST
         self.generated_env_config["UID"] = os.getuid()
         self.generated_env_config["GID"] = os.getgid()
 
