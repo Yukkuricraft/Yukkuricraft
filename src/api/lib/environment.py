@@ -126,8 +126,11 @@ def generate_all(env: Env):
     # Generate env file
     gen = get_generator(GeneratorType.ENV_FILE, env)
     gen.run()
-    generate_velocity_and_docker(env)
 
+    gen = get_generator(GeneratorType.WORLD_GROUPS_FILE_GEN, env)
+    gen.run()
+
+    generate_velocity_and_docker(env)
 
 def generate_velocity_and_docker(env: Env):
     # Generate docker compose file

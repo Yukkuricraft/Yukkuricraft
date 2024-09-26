@@ -8,6 +8,7 @@ from src.common.constants import (
     DEFAULT_CHMOD_MODE,
     BASE_DATA_PATH,
     REPO_ROOT_PATH,
+    HOST_REPO_ROOT_PATH
 )
 from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
@@ -23,6 +24,10 @@ from typing import Dict
 from pathlib import Path
 
 from src.common.environment import Env
+
+from src.api.constants import (
+    HOSTNAME
+)
 
 from src.generator.base_generator import BaseGenerator
 
@@ -68,8 +73,6 @@ class NewDevEnvGen(BaseGenerator):
             server_type,
             description,
         )
-        self.generate_prereq_dirs(new_env)
-
         ServerTypeActions().perform_only_once_actions(Env(new_env))
 
     ENV_CONFIG_SECTION_ORDER = [
@@ -77,24 +80,6 @@ class NewDevEnvGen(BaseGenerator):
         "world-groups",
         "cluster-variables",
     ]
-
-    def copy_env_config(self) -> Dict:
-        src_config = self.env.config.as_dict()
-        copied_config = OrderedDict()
-
-        # Copy configured/sorted sections first
-        for key in self.ENV_CONFIG_SECTION_ORDER:
-            if key in src_config:
-                copied_config[key] = src_config[key]
-            else:
-                copied_config[key] = {}
-
-        # Copy the rest at the end of the config
-        for key, values in src_config.items():
-            if key not in copied_config:
-                copied_config[key] = values
-
-        return copied_config
 
     def generate_env_config(
         self,
@@ -109,26 +94,33 @@ class NewDevEnvGen(BaseGenerator):
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
         """
 
-        copied_config = self.copy_env_config()
+        config = {}
 
-        if "general" not in copied_config:
-            copied_config["general"] = {}
-        copied_config["general"]["description"] = description
-        copied_config["general"]["enable_env_protection"] = enable_env_protection
-        copied_config["general"]["enable_backups"] = False
+        config["general"] = {}
+        config["general"]["description"] = description
+        config["general"]["enable_env_protection"] = enable_env_protection
+        config["general"]["enable_backups"] = False
+        config["general"]["hostname"] = HOSTNAME
 
-        if "cluster-variables" not in copied_config:
-            copied_config["cluster-variables"] = {}
-        copied_config["cluster-variables"]["ENV"] = new_env
-        copied_config["cluster-variables"]["ENV_ALIAS"] = env_alias
-        copied_config["cluster-variables"]["VELOCITY_PORT"] = velocity_port
-        copied_config["cluster-variables"]["MC_TYPE"] = server_type
+        config["world-groups"] = {}
+        config["world-groups"]["enabled_groups"] = [
+            "lobby"
+        ]
+
+        config["cluster-variables"] = {}
+        config["cluster-variables"]["ENV_ALIAS"] = env_alias
+        config["cluster-variables"]["VELOCITY_PORT"] = velocity_port
+        config["cluster-variables"]["MC_TYPE"] = server_type
+        config["cluster-variables"]["MC_FS_ROOT"] = str(BASE_DATA_PATH)
+        config["cluster-variables"]["MC_VERSION"] = "1.21.1"
+        config["cluster-variables"]["YC_REPO_ROOT"] = str(HOST_REPO_ROOT_PATH)
+        config["cluster-variables"]["BACKUPS_ROOT"] = str(BASE_DATA_PATH / "backups")
 
         new_config_path = ServerPaths.get_env_toml_config_path(new_env)
 
         self.write_config(
             new_config_path,
-            copied_config,
+            config,
             (
                 "#\n"
                 f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env.name}.toml AS A BASE\n"
@@ -137,62 +129,3 @@ class NewDevEnvGen(BaseGenerator):
                 "#\n\n"
             ),
         )
-
-    def generate_prereq_dirs(self, new_env: str):
-        default_configs_path = ServerPaths.get_env_default_configs_path(new_env)
-        paths = [
-            default_configs_path / "server",
-            default_configs_path / "plugins",
-            default_configs_path / "mods",
-            ServerPaths.get_env_default_mods_path(new_env),
-            ServerPaths.get_env_default_plugins_path(new_env),
-            ServerPaths.get_mc_env_data_path(new_env),
-            ServerPaths.get_mysql_env_data_path(new_env),
-            ServerPaths.get_pg_env_data_path(new_env),
-        ]
-
-        for path in paths:
-            if not path.exists():
-                logger.info(f"Generating {path}...")
-                path.mkdir(parents=True)
-
-        # World dirs
-        for world in self.env.world_groups:
-            logger.info("\n")
-            logger.info(f"Generating dirs for {world}")
-
-            paths = [
-                ServerPaths.get_env_and_world_group_configs_path(new_env, world),
-            ]
-            for data_file_type in DataDirType:
-                paths.append(
-                    ServerPaths.get_data_dir_path(new_env, world, data_file_type)
-                )
-
-            for path in paths:
-                if not path.exists():
-                    logger.info(f"Generating {path}...")
-                    path.mkdir(parents=True)
-
-            server_properties_path = ServerPaths.get_server_properties_path(
-                new_env, world
-            )
-            if not server_properties_path.parent.exists():
-                server_properties_path.parent.mkdir(parents=True)
-
-            template = self.server_properties_template.as_dict()
-            template["level-name"] = world
-
-            if not server_properties_path.exists():
-                logger.info(
-                    f">> Generating server.properties at {server_properties_path}..."
-                )
-
-                self.write_config(
-                    server_properties_path,
-                    template,
-                    "# This file was generated from a template",
-                    lambda f, config: EnvConfig.write_cb(f, config, quote=False),
-                )
-
-                os.chmod(server_properties_path, DEFAULT_CHMOD_MODE)

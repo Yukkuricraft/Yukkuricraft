@@ -2,7 +2,12 @@
 
 CURR_UID=$(id -u)
 CURR_GID=$(id -g)
+REPO_ROOT=$(pwd)
 
+# Make gitignore'd generated file directory
+mkdir ${REPO_ROOT}/gen
+
+# Sudo things
 echo "gib sudo first"
 sudo echo "ty"
 
@@ -23,7 +28,8 @@ sudo chown -R ${CURR_UID}:${CURR_GID} ${BASE_PATH}
 LOCAL_ENV_FILE=envs/localhost.env
 cp envs/localhost.env.template ${LOCAL_ENV_FILE}
 echo "" >> envs/localhost.env
-echo "YC_REPO_ROOT=$(pwd)" >> ${LOCAL_ENV_FILE}
+echo "YC_REPO_ROOT=${REPO_ROOT}" >> ${LOCAL_ENV_FILE}
+
 
 # Add UID/GID's for use with filebrowser/filebrowser's image
 echo "UID=${CURR_UID}" >> ${LOCAL_ENV_FILE}

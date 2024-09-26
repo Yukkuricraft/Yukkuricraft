@@ -47,25 +47,28 @@ RUN apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
 
 # Handle api files
 RUN mkdir /app
-RUN chown -R $UID:$GID /app
+
 
 COPY requirements.txt /app
 RUN ls /app/*
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY --chown=$UID:$GID src/ /app/src
-COPY --chown=$UID:$GID secrets/ /app/secrets
-COPY --chown=$UID:$GID scripts/ /app/scripts
-# COPY --chown=$UID:$GID env/ /app/env
-# COPY --chown=$UID:$GID gen/ /app/gen
+COPY src/ /app/src
+COPY secrets/ /app/secrets
+COPY scripts/ /app/scripts
+
+RUN mkdir /app/env
+RUN mkdir /app/gen
 
 
 # Eventually remove these 
-COPY --chown=$UID:$GID Makefile /app
-COPY --chown=$UID:$GID generate-docker-compose /app
-COPY --chown=$UID:$GID generate-env-file /app
-COPY --chown=$UID:$GID generate-new-dev-env /app
-COPY --chown=$UID:$GID generate-velocity-config /app
+COPY Makefile /app
+COPY generate-docker-compose /app
+COPY generate-env-file /app
+COPY generate-new-dev-env /app
+COPY generate-velocity-config /app
+
+RUN chown -R $UID:$GID /app
 
 WORKDIR /app
 USER yc-api

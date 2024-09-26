@@ -16,18 +16,21 @@ if IS_LOCAL:
     MIN_VALID_PROXY_PORT = 26600
     MAX_VALID_PROXY_PORT = 26700
     API_HOST = "api.localhost"
+    HOSTNAME = "localhost"
 elif IS_DEV:
     G_CLIENT_ID = "1084736521175-2b5rrrpcs422qdc5458dhisdsj8auo0p.apps.googleusercontent.com"
     CORS_ORIGIN = "https://dev.yakumo.yukkuricraft.net"
     MIN_VALID_PROXY_PORT = 26600
     MAX_VALID_PROXY_PORT = 26700
     API_HOST = "dev.api.yukkuricraft.net"
+    HOSTNAME = "yukkuricraft.net"
 else:
     G_CLIENT_ID = "1084736521175-2b5rrrpcs422qdc5458dhisdsj8auo0p.apps.googleusercontent.com"
     CORS_ORIGIN = "https://yakumo.yukkuricraft.net"
     MIN_VALID_PROXY_PORT = 25600
     MAX_VALID_PROXY_PORT = 25700
     API_HOST = "api.yukkuricraft.net"
+    HOSTNAME = "yukkuricraft.net"
 
 HOST_PASSWD = "/etc/host-passwd"
 WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"
