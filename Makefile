@@ -7,14 +7,14 @@ CURRENT_UID=$(shell id -u)
 CURRENT_GID=$(shell id -g)
 DOCKER_GID=$(shell python -c 'import os; print(os.stat(os.path.realpath("/var/run/docker.sock")).st_gid)')
 
-
 .EXPORT_ALL_VARIABLES:
 ifeq ($(shell hostname), neo-yukkuricraft)
-  export FILEBROWSER_HOST=files.yakumo.yukkuricraft.net
+  export WEB_DOCKER_ENV_FILE=envs/prod.env
+else ifeq ($(shell hostname), cirno.localdomain)
+  export WEB_DOCKER_ENV_FILE=envs/dev.env
 else
-  export FILEBROWSER_HOST=dev.files.yakumo.yukkuricraft.net
+  export WEB_DOCKER_ENV_FILE=envs/localhost.env
 endif
-export FILEBROWSER_PORT=80
 
 .PHONY: __pre_ensure
 __pre_ensure: __ensure_env
@@ -201,7 +201,7 @@ build_mysql_backup:
 up_web: ENV=env1
 up_web:
 	docker compose -f $(WEB_COMPOSE_FILE) \
-		--env-file=gen/env1.env \
+		--env-file=${WEB_DOCKER_ENV_FILE} \
 		up \
 		-d
 

@@ -48,6 +48,7 @@ services:
         max-file: "100"
 
   yc-api-mysql:
+    platform: linux/amd64
     container_name: yc-api-mysql
     image: mysql:5.7
     restart: 'unless-stopped'
@@ -82,9 +83,6 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-        #- ${MC_FS_ROOT}/nginx/certs:/etc/nginx/certs:rw
-      - ${MC_FS_ROOT}/nginx/html:/usr/share/nginx/html
-      - ${MC_FS_ROOT}/nginx/vhost:/etc/nginx/vhost.d
     networks:
       - yc-web-dev
     restart: 'unless-stopped'

@@ -56,7 +56,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY --chown=$UID:$GID src/ /app/src
 COPY --chown=$UID:$GID secrets/ /app/secrets
 COPY --chown=$UID:$GID scripts/ /app/scripts
-COPY --chown=$UID:$GID env/ /app/env
+# COPY --chown=$UID:$GID env/ /app/env
 # COPY --chown=$UID:$GID gen/ /app/gen
 
 
