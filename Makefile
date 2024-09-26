@@ -10,10 +10,19 @@ DOCKER_GID=$(shell python -c 'import os; print(os.stat(os.path.realpath("/var/ru
 .EXPORT_ALL_VARIABLES:
 ifeq ($(shell hostname), neo-yukkuricraft)
   export WEB_DOCKER_ENV_FILE=envs/prod.env
+  export DOCKER_API_HOST=docker.yukkuricraft.net
+  export DOCKER_AUTH_HOST=api.yukkuricraft.net
+  export DOCKER_AUTH_PROTOCOL=https
 else ifeq ($(shell hostname), cirno.localdomain)
   export WEB_DOCKER_ENV_FILE=envs/dev.env
+  export DOCKER_API_HOST=dev.docker.yukkuricraft.net
+  export DOCKER_AUTH_HOST=dev.api.yukkuricraft.net
+  export DOCKER_AUTH_PROTOCOL=https
 else
   export WEB_DOCKER_ENV_FILE=envs/localhost.env
+  export DOCKER_API_HOST=docker.localhost
+  export DOCKER_AUTH_HOST=api.localhost
+  export DOCKER_AUTH_PROTOCOL=http
 endif
 
 .PHONY: __pre_ensure
@@ -171,6 +180,9 @@ build_nginx:
 		--build-arg HOST_UID=${CURRENT_UID} \
 		--build-arg HOST_GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
+		--build-arg DOCKER_API_HOST=${DOCKER_API_HOST} \
+		--build-arg DOCKER_AUTH_HOST=${DOCKER_AUTH_HOST} \
+		--build-arg DOCKER_AUTH_PROTOCOL=${DOCKER_AUTH_PROTOCOL} \
 		--tag='yukkuricraft/nginx-proxy' \
 		.
 

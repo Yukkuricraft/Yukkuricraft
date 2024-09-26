@@ -59,4 +59,4 @@ Everything should "Just Build"
 ### Accessing Filebrowser
 - http://filebrowser.localhost
 - Login by default is `admin:admin`
-- If you can access the link above you're done. Now go set up YakumoDash.
+- If you can access the link above you're done. Now go set up [YakumoDash](https://github.com/Yukkuricraft/YakumoDash).

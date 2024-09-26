@@ -9,7 +9,7 @@ upstream dockersock {
 }
 
 server {
-  server_name ~^(?<is_dev>dev\.)?docker.yukkuricraft.net;
+  server_name ${DOCKER_API_HOST};
   access_log /var/log/nginx/access.log;
 
   listen 80;
@@ -31,7 +31,7 @@ server {
 
   location = /auth {
     internal;
-    proxy_pass              http://${is_dev}api.yukkuricraft.net/auth/me;
+    proxy_pass              ${DOCKER_AUTH_PROTOCOL}://${DOCKER_AUTH_HOST}/auth/me;
     proxy_pass_request_body off;
     proxy_set_header        Content-Length "";
     proxy_set_header        X-Original-URI $request_uri;
