@@ -73,6 +73,9 @@ class NewDevEnvGen(BaseGenerator):
             server_type,
             description,
         )
+
+        self.generate_dirs(new_env)
+
         ServerTypeActions().perform_only_once_actions(Env(new_env))
 
     ENV_CONFIG_SECTION_ORDER = [
@@ -123,9 +126,28 @@ class NewDevEnvGen(BaseGenerator):
             config,
             (
                 "#\n"
-                f"# THIS FILE WAS AUTOMAGICALLY GENERATED USING env/{self.env.name}.toml AS A BASE\n"
+                f"# THIS FILE WAS AUTOMAGICALLY GENERATED\n"
                 "# MODIFY AS NECESSARY BY HAND\n"
-                "# SEE env1.toml FOR HELPFUL COMMENTS RE: CONFIG PARAMS\n"
                 "#\n\n"
             ),
         )
+
+    def generate_dirs(self, env: str):
+
+        default_configs_path = ServerPaths.get_env_default_configs_path(env)
+        paths = [
+            default_configs_path / "server",
+            default_configs_path / "plugins",
+            default_configs_path / "mods",
+            ServerPaths.get_env_default_mods_path(env),
+            ServerPaths.get_env_default_plugins_path(env),
+            ServerPaths.get_mc_env_data_path(env),
+            ServerPaths.get_mysql_env_data_path(env),
+            ServerPaths.get_pg_env_data_path(env),
+        ]
+
+        for path in paths:
+            logger.info(f"Checking {path}")
+            if not path.exists():
+                logger.info(f"Generating {path}...")
+                path.mkdir(parents=True)

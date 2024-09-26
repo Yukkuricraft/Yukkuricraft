@@ -147,7 +147,7 @@ custom_extensions:
       net.yukkuricraft.container_name: velocity
     volumes:
       - velocity-${ENV}:/server
-      - ${YC_REPO_ROOT}/gen/velocity-${ENV}.toml:/config/velocity.toml
+      - ${YC_REPO_ROOT}/gen/velocity/velocity-${ENV}.toml:/config/velocity.toml
       - ${YC_REPO_ROOT}/secrets/velocity/forwarding.secret:/config/forwarding.secret
     ports:
       - "${VELOCITY_PORT}:25577"

@@ -33,7 +33,7 @@ class VelocityConfigGen(BaseGenerator):
             ServerPaths.get_generated_velocity_config_path(env.name)
         )
         if not self.generated_velocity_config_path.parent.exists():
-            self.generated_velocity_config_path.parent.mkdir()
+            self.generated_velocity_config_path.parent.mkdir(parents=True)
 
         curr_dir = Path(__file__).parent
         self.velocity_config_template = load_toml_config(

@@ -17,10 +17,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./src:/app/src
+      - ./gen:/app/gen
       - /var/lib/yukkuricraft/:/var/lib/yukkuricraft/
       - /etc/passwd:/etc/host-passwd
-      - ./gen:/app/gen
-      - envconfigs:/app/env
     networks:
       - yc-web-dev
     logging:

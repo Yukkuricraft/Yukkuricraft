@@ -59,22 +59,6 @@ class WorldGroupFilesGen(BaseGenerator):
 
     def generate_files_and_dirs(self):
         env = self.env.name
-        default_configs_path = ServerPaths.get_env_default_configs_path(env)
-        paths = [
-            default_configs_path / "server",
-            default_configs_path / "plugins",
-            default_configs_path / "mods",
-            ServerPaths.get_env_default_mods_path(env),
-            ServerPaths.get_env_default_plugins_path(env),
-            ServerPaths.get_mc_env_data_path(env),
-            ServerPaths.get_mysql_env_data_path(env),
-            ServerPaths.get_pg_env_data_path(env),
-        ]
-
-        for path in paths:
-            if not path.exists():
-                logger.info(f"Generating {path}...")
-                path.mkdir(parents=True)
 
         for world in self.env.world_groups:
             logger.info("\n")

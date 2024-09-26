@@ -46,7 +46,7 @@ class DockerComposeGen(BaseGenerator):
             ServerPaths.get_generated_docker_compose_path(self.env.name)
         )
         if not self.generated_docker_compose_path.parent.exists():
-            self.generated_docker_compose_path.parent.mkdir()
+            self.generated_docker_compose_path.parent.mkdir(parents=True)
 
         curr_dir = Path(__file__).parent
         self.docker_compose_template = load_yaml_config(

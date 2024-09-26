@@ -36,7 +36,7 @@ class EnvFileGen(BaseGenerator):
 
         self.generated_env_file_path = ServerPaths.get_generated_env_file_path(env.name)
         if not self.generated_env_file_path.parent.exists():
-            self.generated_env_file_path.parent.mkdir()
+            self.generated_env_file_path.parent.mkdir(parents=True)
 
     def run(self):
         self.generate_env_file()
@@ -113,7 +113,7 @@ class EnvFileGen(BaseGenerator):
                 "# DO NOT MODIFY MANUALLY\n"
                 "# CHANGES WILL BE OVERWRITTEN ON RESTART\n"
                 "#"
-                f"# MODIFY `env/{self.env.name}.toml` FOR PERMANENT CHANGES"
+                f"# MODIFY `gen/env-toml/{self.env.name}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
             ),
             EnvFileGen.dump_write_cb,

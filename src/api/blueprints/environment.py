@@ -59,6 +59,8 @@ def create_env():
     logger.warning("????????????")
     logger.warning([resp_data, new_env])
 
+    generate_env_configs(new_env)
+
     resp_data["created_env"] = {
         "env": new_env.to_json(),
         "alias": env_alias,

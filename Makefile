@@ -39,8 +39,8 @@ __ensure_valid_env:
 
 .PHONY: __ensure_env_file_exists
 __ensure_env_file_exists:
-	@if ! [[ -f "gen/$(ENV).env" ]]; then \
-		echo "Got '$(ENV)' for ENV but could not find 'gen/$(ENV).env'! Was ./generate-env-file run first? Aborting."; \
+	@if ! [[ -f "gen/env-files/$(ENV).env" ]]; then \
+		echo "Got '$(ENV)' for ENV but could not find 'gen/env-files/$(ENV).env'! Was ./generate-env-file run first? Aborting."; \
 		echo ''; \
 		exit 1; \
 	fi
@@ -49,7 +49,7 @@ __ensure_env_file_exists:
 ## TARGETS ##
 #############
 
-COMPOSE_FILE="gen/docker-compose-$(ENV).yml"
+COMPOSE_FILE="gen/docker-compose/docker-compose-$(ENV).yml"
 WEB_COMPOSE_FILE="docker-compose.web.yml"
 
 YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
@@ -59,7 +59,7 @@ ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
 			 --project-directory $(shell pwd) \
-			 --env-file gen/$(ENV).env
+			 --env-file gen/env-files/$(ENV).env
 
 PRE=ENV=$(ENV)
 

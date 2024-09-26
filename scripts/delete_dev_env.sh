@@ -33,7 +33,7 @@ fi
 
 
 # Delete ENV.toml
-ENV_FILE=env/${ENV}.toml
+ENV_FILE=gen/env-toml/${ENV}.toml
 if [ -f ${ENV_FILE} ]; then
     log ""
     log "Deleting env file..."
@@ -42,8 +42,8 @@ if [ -f ${ENV_FILE} ]; then
 fi
 
 # Delete any generated files
-DOCKER_COMPOSE_FILE=gen/docker-compose-${ENV}.yml
-VELOCITY_FILE=gen/velocity-${ENV}.toml
+DOCKER_COMPOSE_FILE=gen/docker-compose/docker-compose-${ENV}.yml
+VELOCITY_FILE=gen/velocity/velocity-${ENV}.toml
 if [ -f ${DOCKER_COMPOSE_FILE} ]; then
     log ""
     log "Deleting generated files..."
