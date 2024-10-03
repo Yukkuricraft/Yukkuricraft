@@ -3,6 +3,7 @@
 CURR_UID=$(id -u)
 CURR_GID=$(id -g)
 REPO_ROOT=$(pwd)
+USER=$(whoami)
 
 # Make gitignore'd generated file directory
 mkdir -p ${REPO_ROOT}/gen/velocity
@@ -14,7 +15,13 @@ mkdir -p ${REPO_ROOT}/gen/env-files
 echo "gib sudo first"
 sudo echo "ty"
 
-BASE_PATH=/var/lib/yukkuricraft
+# If on mac, don't mount /var/lib/yukkuricraft as data dir because >docker on mac
+# (Smth smth /var path has extra perm requirements)
+if [[ $(uname) == *"Darwin"* ]]; then
+    BASE_PATH=/Users/${USER}/Documents/YC2.0
+else
+    BASE_PATH=/var/lib/yukkuricraft
+fi
 
 # Make dirs
 sudo mkdir -p ${BASE_PATH}/db
@@ -37,3 +44,6 @@ echo "YC_REPO_ROOT=${REPO_ROOT}" >> ${LOCAL_ENV_FILE}
 # Add UID/GID's for use with filebrowser/filebrowser's image
 echo "UID=${CURR_UID}" >> ${LOCAL_ENV_FILE}
 echo "GID=${CURR_GID}" >> ${LOCAL_ENV_FILE}
+
+# Add MC_FS_ROOT which depends on Mac or not-Mac
+echo "MC_FS_ROOT=${BASE_PATH}" >> ${LOCAL_ENV_FILE}
