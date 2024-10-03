@@ -1,4 +1,23 @@
 services:
+  # https://qmacro.org/blog/posts/2023/12/22/using-the-docker-cli-in-a-container-on-macos/
+  # Docker on Mac doesn't actually run on the host but rather inside a linux VM.
+  # This means mounting "/var/run/docker.sock" from the host into yc-api doesn't actually mean we're
+  # mounting the "real" docker sock, but rather the one that exists within the linux VM,
+  # This only works if running as the root user due to permission issues but we don't want to do that for yc-api
+  # Thus the hacky workaround is to have a dedicated socat container piping the docker socket to a tcp connection while
+  # it runs as root.
+  # Gross.
+  socat:
+    container_name: socat
+    image: alpine/socat
+    restart: 'unless-stopped'
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: 'tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock'
+    networks:
+      - yc-web-dev
+
   # For yakumo-dash, run yakumo-dash-dev from yakumo-dash repo.
   yc-api:
     container_name: yc-api
@@ -8,6 +27,8 @@ services:
     depends_on:
       yc-api-mysql:
         condition: service_healthy
+      socat:
+        condition: service_started
     environment:
       VIRTUAL_HOST: ${API_HOST}
       VIRTUAL_PORT: 5001
@@ -15,8 +36,8 @@ services:
       HOST_YC_REPO_ROOT: ${YC_REPO_ROOT}
       MC_FS_ROOT: ${MC_FS_ROOT}
       CONFIGURATION_TYPE: ${CONFIGURATION_TYPE}
+      DOCKER_HOST: "tcp://socat:2375"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./src:/app/src
       - ./gen:/app/gen
       - ${MC_FS_ROOT}/:${MC_FS_ROOT}

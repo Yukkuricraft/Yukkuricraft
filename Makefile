@@ -13,16 +13,23 @@ ifeq ($(shell hostname), neo-yukkuricraft)
   export DOCKER_API_HOST=docker.yukkuricraft.net
   export DOCKER_AUTH_HOST=api.yukkuricraft.net
   export DOCKER_AUTH_PROTOCOL=https
+  export WEB_COMPOSE_FILE="docker-compose.web.yml"
 else ifeq ($(shell hostname), cirno.localdomain)
   export WEB_DOCKER_ENV_FILE=envs/dev.env
   export DOCKER_API_HOST=dev.docker.yukkuricraft.net
   export DOCKER_AUTH_HOST=dev.api.yukkuricraft.net
   export DOCKER_AUTH_PROTOCOL=https
+  export WEB_COMPOSE_FILE="docker-compose.web.yml"
 else
   export WEB_DOCKER_ENV_FILE=envs/localhost.env
   export DOCKER_API_HOST=docker.localhost
   export DOCKER_AUTH_HOST=api.localhost
   export DOCKER_AUTH_PROTOCOL=http
+  ifneq (,$(findstring Darwin,$(shell uname)))
+    export WEB_COMPOSE_FILE="docker-compose.web.mac.yml"
+  else
+    export WEB_COMPOSE_FILE="docker-compose.web.yml"
+  endif
 endif
 
 .PHONY: __pre_ensure
@@ -59,10 +66,8 @@ __ensure_env_file_exists:
 #############
 
 COMPOSE_FILE="gen/docker-compose/docker-compose-$(ENV).yml"
-WEB_COMPOSE_FILE="docker-compose.web.yml"
 
 YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
-YC_FS_ROOT?=/var/lib/yukkuricraft
 
 ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
@@ -72,33 +77,9 @@ COMPOSE_ARGS=--project-name $(ENV) \
 
 PRE=ENV=$(ENV)
 
-.PHONY: save_data_to_disk
-save_data_to_disk: __pre_ensure
-save_data_to_disk:
-	@if [[ ! -d "${YC_FS_ROOT}/env/${ENV}/worlds" ]]; then \
-		echo "Please create the '${YC_FS_ROOT}/${ENV}/worlds' directory owned by ${CURRENT_UID}:${CURRENT_GID} to continue. Aborting"; \
-		exit 1; \
-	elif [[ ! -d "${YC_FS_ROOT}/env/${ENV}/plugins" ]]; then \
-		echo "Please create the '${YC_FS_ROOT}/${ENV}/plugins' directory owned by ${CURRENT_UID}:${CURRENT_GID} to continue. Aborting"; \
-		exit 1; \
-	fi
-	@docker run \
-		--rm \
-		--mount type=bind,source=${YC_FS_ROOT}/env/${ENV}/worlds,target=/worlds-data \
-		--mount type=bind,source=${YC_FS_ROOT}/env/${ENV}/plugins,target=/plugins-data \
-		--volume $(PWD)/scripts/rsync.sh:/rsync.sh \
-		--volumes-from YC-${ENV} \
-		eeacms/rsync \
-		/rsync.sh
-
 .PHONY: save_world
 save_world:
 	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
-
-.PHONY: run_cmd_on_container
-run_cmd_on_container:
-	# TODO: This should prob be made more robust with python eventually
-	-echo '$(word 1,$(ARGS))' | socat EXEC:"docker attach $(word 2,$(ARGS))",pty STDIN
 
 # It's 'make generate' but it's more 'make generate_runtime_configs_for_envs'
 .PHONY: generate
@@ -152,6 +133,7 @@ build: build_api
 build: build_nginx
 build: build_mysql_backup
 build: build_mc_backup
+build: build_postgres
 
 .PHONY: build_minecraft_server
 build_minecraft_server:
@@ -195,6 +177,15 @@ build_mc_backup:
 		--tag='yukkuricraft/mc-backup-restic' \
 		.
 
+.PHONY: build_postgres
+build_postgres:
+	docker build -f images/yc-postgres/Dockerfile \
+		--no-cache \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
+		--tag='yukkuricraft/yc-postgres' \
+		.
+
 .PHONY: build_mysql_backup
 build_mysql_backup:
 	docker build -f images/mysql-backup-restic/Dockerfile \
@@ -219,11 +210,15 @@ up_web:
 
 .PHONY: down_web
 down_web:
-	docker compose -f docker-compose.web.yml down
+	docker compose -f $(WEB_COMPOSE_FILE) \
+		--env-file=${WEB_DOCKER_ENV_FILE} \
+		down
 
 .PHONY: restart_web
 restart_web:
-	docker compose -f docker-compose.web.yml restart
+	docker compose -f $(WEB_COMPOSE_FILE) \
+		--env-file=${WEB_DOCKER_ENV_FILE} \
+		restart
 
 .PHONY: up
 up: generate
@@ -373,7 +368,3 @@ exec_prod: exec
 .PHONY: attach_prod
 attach_prod: ENV=env1
 attach_prod: attach
-
-.PHONY: save_world_prod
-save_world_prod: ENV=env1
-save_world_prod: save_world
