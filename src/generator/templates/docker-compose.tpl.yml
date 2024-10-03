@@ -216,7 +216,7 @@ services:
 
   postgres:
     container_name: YC-${ENV}-postgres
-    image: postgres:16.0
+    image: yukkuricraft/yc-postgres
     environment:
       POSTGRES_USER: mine
       POSTGRES_PASSWORD_FILE: /secrets/postgres_pw
@@ -224,7 +224,6 @@ services:
     volumes:
       - ${MC_FS_ROOT}/env/${ENV}/postgres:/var/lib/postgresql/data
       - ${YC_REPO_ROOT}/secrets/postgres_pw:/secrets/postgres_pw
-      - /etc/passwd:/etc/passwd:ro # Neat hack. Initdb needs a valid system user but it just checks /etc/passwd so...
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: postgres
