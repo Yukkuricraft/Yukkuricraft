@@ -11,20 +11,14 @@ DOCKER_GID=$(shell python -c 'import os; print(os.stat(os.path.realpath("/var/ru
 ifeq ($(shell hostname), neo-yukkuricraft)
   export WEB_DOCKER_ENV_FILE=envs/prod.env
   export DOCKER_API_HOST=docker.yukkuricraft.net
-  export DOCKER_AUTH_HOST=api.yukkuricraft.net
-  export DOCKER_AUTH_PROTOCOL=https
   export WEB_COMPOSE_FILE="docker-compose.web.yml"
 else ifeq ($(shell hostname), cirno.localdomain)
   export WEB_DOCKER_ENV_FILE=envs/dev.env
   export DOCKER_API_HOST=dev.docker.yukkuricraft.net
-  export DOCKER_AUTH_HOST=dev.api.yukkuricraft.net
-  export DOCKER_AUTH_PROTOCOL=https
   export WEB_COMPOSE_FILE="docker-compose.web.yml"
 else
   export WEB_DOCKER_ENV_FILE=envs/localhost.env
   export DOCKER_API_HOST=docker.localhost
-  export DOCKER_AUTH_HOST=api.localhost
-  export DOCKER_AUTH_PROTOCOL=http
   ifneq (,$(findstring Darwin,$(shell uname)))
     export WEB_COMPOSE_FILE="docker-compose.web.mac.yml"
   else
@@ -67,8 +61,6 @@ __ensure_env_file_exists:
 
 COMPOSE_FILE="gen/docker-compose/docker-compose-$(ENV).yml"
 
-YC_CONTAINER=$(ENV)_mc_survival_1 # This needs to be refactored to hit all containers...
-
 ARGS=$(filter-out $@,$(MAKECMDGOALS))
 
 COMPOSE_ARGS=--project-name $(ENV) \
@@ -76,10 +68,6 @@ COMPOSE_ARGS=--project-name $(ENV) \
 			 --env-file gen/env-files/$(ENV).env
 
 PRE=ENV=$(ENV)
-
-.PHONY: save_world
-save_world:
-	-echo 'save-all' | socat EXEC:"docker attach $(YC_CONTAINER)",pty STDIN
 
 # It's 'make generate' but it's more 'make generate_runtime_configs_for_envs'
 .PHONY: generate
@@ -111,15 +99,6 @@ create_new_env:
 	./generate-new-dev-env
 	ENV=$(word 1,$(ARGS)) ./generate-docker-compose
 	ENV=$(word 1,$(ARGS)) ./generate-velocity-config
-
-.PHONY: chownmod_container_logs
-chownmod_container_logs:
-	sudo chown -R minecraft:minecraft container_logs
-	sudo chmod -R 775 container_logs
-
-.PHONY: test
-test:
-	echo $(word 2,$(ARGS))
 
 .PHONY: delete_env
 delete_env:
@@ -163,8 +142,6 @@ build_nginx:
 		--build-arg HOST_GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
 		--build-arg DOCKER_API_HOST=${DOCKER_API_HOST} \
-		--build-arg DOCKER_AUTH_HOST=${DOCKER_AUTH_HOST} \
-		--build-arg DOCKER_AUTH_PROTOCOL=${DOCKER_AUTH_PROTOCOL} \
 		--tag='yukkuricraft/nginx-proxy' \
 		.
 
@@ -195,11 +172,7 @@ build_mysql_backup:
 		--tag='yukkuricraft/mysql-backup-restic' \
 		.
 
-# UP DOWN RESTARTS
-
-# The following using `--env-file` really makes this a circular dependency.
-# We cannot `up_web` unless env1 already exists, but env1 can't exist
-# unless we created it via the API.
+# YC2.0 api/frontend
 .PHONY: up_web
 up_web: ENV=env1
 up_web:
@@ -219,6 +192,8 @@ restart_web:
 	docker compose -f $(WEB_COMPOSE_FILE) \
 		--env-file=${WEB_DOCKER_ENV_FILE} \
 		restart
+
+# Containerized YC Environments
 
 .PHONY: up
 up: generate
@@ -309,43 +284,6 @@ get_restic_snapshots:
 		-v $(PWD)/secrets/restic.password:/restic.password \
 		restic/restic \
 		snapshots
-
-.PHONY: restore_mc_from_backup
-restore_mc_from_backup:
-	echo "Implement me already"
-
-
-# COMPOUNDS
-
-.PHONY: purge
-purge:
-	docker volume prune -f
-
-.PHONY: restart_velocity
-restart_velocity:
-	docker restart Velocity-$(ENV)
-
-.PHONY: purgestart
-purgestart: down purge up
-
-# HELPERS
-
-.PHONY: logs
-logs: __pre_ensure
-logs:
-	$(PRE) docker compose -f $(COMPOSE_FILE) \
-		$(COMPOSE_ARGS) \
-		logs --follow
-
-.PHONY: attach
-attach: __pre_ensure
-attach:
-	$(PRE) docker attach --sig-proxy=false $(YC_CONTAINER)
-
-.PHONY: exec
-exec: __pre_ensure
-exec:
-	docker exec -it $(YC_CONTAINER) /bin/bash
 
 # Prod Shortcuts
 

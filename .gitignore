@@ -1,4 +1,5 @@
 tags
+get-docker.sh
 container_logs
 *.sw[a-z]
 *.DS_Store
