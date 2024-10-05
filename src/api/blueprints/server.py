@@ -1,9 +1,5 @@
 import json
-from pprint import pformat
-
 from flask import Blueprint, request  # type: ignore
-from datetime import datetime, timedelta
-from docker.models.containers import Container
 
 from src.api.lib.auth import (
     validate_access_token,
@@ -14,16 +10,11 @@ from src.api.lib.docker_management import (
     DockerManagement,
     convert_dockerpy_container_to_container_definition,
 )
-from src.api.lib.helpers import log_request, seconds_to_string
-
+from src.api.lib.helpers import log_request
 from src.common.environment import Env
-from src.common.types import DataDirType
-from src.common.logger_setup import logger
 
 server_bp: Blueprint = Blueprint("server", __name__)
-
 DockerMgmtApi = DockerManagement()
-
 
 @server_bp.route("/<env_str>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight

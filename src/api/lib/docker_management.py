@@ -1,23 +1,22 @@
 import os
 import json
 import docker
+from datetime import datetime, timedelta
 from docker.models.containers import Container
 
+
 from pprint import pformat
-from typing import Any, Callable, List, Optional, Dict, Tuple
+from typing import Any, Callable, List, Optional, Dict
 from ptyprocess import PtyProcessUnicode
 
-
-from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 from src.api.lib.runner import Runner
-from src.api.lib.helpers import container_name_to_container, InvalidContainerNameError
+from src.api.lib.helpers import InvalidContainerNameError, seconds_to_string
 from src.common.environment import Env
 from src.common.helpers import log_exception
 from src.common.paths import ServerPaths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
-from src.common.constants import YC_CONTAINER_TYPE_LABEL, YC_ENV_LABEL
-from src.common.decorators import serialize_tuple_out_as_dict
+from src.common.constants import YC_CONTAINER_TYPE_LABEL, YC_ENV_LABEL, YC_CONTAINER_NAME_LABEL
 from src.common.types import DataDirType
 
 

@@ -11,7 +11,6 @@ from src.common.environment import Env
 from src.api.lib.helpers import log_request
 
 DockerMgmtApi = DockerManagement()
-
 sockets_bp = Blueprint("sockets", __name__)
 
 

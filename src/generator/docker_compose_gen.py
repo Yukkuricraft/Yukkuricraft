@@ -1,10 +1,8 @@
 #!/bin/env python3
 
 import os
-from pprint import pformat
 import pwd
 import copy
-import yaml  # type: ignore
 
 from pathlib import Path
 from src.common.config.config_node import ConfigNode

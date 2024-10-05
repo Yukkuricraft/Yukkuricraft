@@ -133,7 +133,7 @@ custom_extensions:
 
   velocity_template:
     depends_on: {}
-    image: itzg/bungeecord
+    image: yukkuricraft/mc-proxy
     environment:
       DEBUG: "false"
       TYPE: "VELOCITY"
@@ -146,7 +146,6 @@ custom_extensions:
       net.yukkuricraft.container_type: velocity
       net.yukkuricraft.container_name: velocity
     volumes:
-      - velocity-${ENV}:/server
       - ${MC_FS_ROOT}/env/${ENV}/velocity/plugins:/server/plugins
       - ${YC_REPO_ROOT}/gen/velocity/velocity-${ENV}.toml:/config/velocity.toml
       - ${YC_REPO_ROOT}/secrets/velocity/forwarding.secret:/config/forwarding.secret
@@ -217,7 +216,7 @@ services:
 
   postgres:
     container_name: YC-${ENV}-postgres
-    image: yukkuricraft/yc-postgres
+    image: yukkuricraft/postgres
     environment:
       POSTGRES_USER: mine
       POSTGRES_PASSWORD_FILE: /secrets/postgres_pw

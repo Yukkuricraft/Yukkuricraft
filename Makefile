@@ -108,6 +108,7 @@ build: build_api
 build: build_nginx
 build: build_mysql_backup
 build: build_mc_backup
+build: build_mc_proxy
 build: build_postgres
 
 .PHONY: build_minecraft_server
@@ -156,7 +157,16 @@ build_postgres:
 		--no-cache \
 		--build-arg HOST_UID=${CURRENT_UID} \
 		--build-arg HOST_GID=${CURRENT_GID} \
-		--tag='yukkuricraft/yc-postgres' \
+		--tag='yukkuricraft/postgres' \
+		.
+
+.PHONY: build_mc_proxy
+build_mc_proxy:
+	docker build -f images/yc-mc-proxy/Dockerfile \
+		--no-cache \
+		--build-arg HOST_UID=${CURRENT_UID} \
+		--build-arg HOST_GID=${CURRENT_GID} \
+		--tag='yukkuricraft/mc-proxy' \
 		.
 
 .PHONY: build_mysql_backup
