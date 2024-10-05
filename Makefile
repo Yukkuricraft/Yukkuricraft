@@ -100,10 +100,6 @@ create_new_env:
 	ENV=$(word 1,$(ARGS)) ./generate-docker-compose
 	ENV=$(word 1,$(ARGS)) ./generate-velocity-config
 
-.PHONY: delete_env
-delete_env:
-	$(PRE) ./scripts/delete_dev_env.sh
-
 # BUILD
 
 .PHONY: build

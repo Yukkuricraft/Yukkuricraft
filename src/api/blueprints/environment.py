@@ -14,7 +14,7 @@ from src.api.lib.auth import (
 from src.api.lib.environment import (
     list_valid_envs,
     create_new_env,
-    delete_dev_env,
+    delete_env,
     generate_env_configs,
 )
 from src.api.lib.helpers import log_request
@@ -31,7 +31,7 @@ envs_bp: Blueprint = Blueprint("environment", __name__)
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def create_env():
+def create_env_handler():
     """List all containers running"""
     post_data = request.get_json()
 
@@ -76,7 +76,7 @@ def create_env():
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def delete_env(env_str):
+def delete_env_handler(env_str):
     env = Env(env_str)
     env_dict = env.to_json()
 
@@ -104,8 +104,11 @@ def delete_env(env_str):
         resp = make_cors_response(status_code=200)
         resp.headers.add("Content-Type", "application/json")
 
-        resp_data = delete_dev_env(env_str)
+        resp_data = {}
+        resp_data["success"] = delete_env(env_str)
         resp_data["env"] = env_dict
+
+        logger.info(resp_data)
 
         resp.data = json.dumps(resp_data)
 
@@ -116,7 +119,7 @@ def delete_env(env_str):
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def generate_configs(env_str):
+def generate_configs_handler(env_str):
     env = Env(env_str)
     env_dict = env.to_json()
 
@@ -133,7 +136,7 @@ def generate_configs(env_str):
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def list_envs_with_configs():
+def list_envs_with_configs_handler():
     if request.method == "GET":
         resp = make_cors_response()
         resp.status = 200

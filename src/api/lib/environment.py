@@ -1,3 +1,4 @@
+import shutil
 from typing import Callable, List, Optional
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
@@ -100,7 +101,7 @@ def create_new_env(
     return env
 
 
-def delete_dev_env(env_str: str):
+def delete_env(env_str: str):
     """Delete an environment defined by its env string
 
     Cannot delete some envs such as env1.
@@ -108,12 +109,33 @@ def delete_dev_env(env_str: str):
     Args:
         env (str): Environment name string
 
-    Returns:
-        _type_: _description_
     """
-    cmd = ["make", "delete_env"]
-    logger.info(f"DELETING ENV: {env_str}")
-    return Runner.run_make_cmd(cmd, env=Env(env_str))
+
+    if env_str == "env1":
+        # Do we want to explicitly keep denying env1 dleetions?
+        return False
+
+    # Delete BASE_DATA_DIR
+    base_data_dir = ServerPaths.get_env_data_path(env_str)
+    logger.info(f"Deleting {base_data_dir}...")
+    shutil.rmtree(str(base_data_dir), ignore_errors=True)
+
+    # Delete env toml
+    env_toml = ServerPaths.get_env_toml_config_path(env_str)
+    logger.info(f"Deleting {env_toml}...")
+    env_toml.unlink(missing_ok=True)
+
+    # Delete Velocity config
+    velocity_config = ServerPaths.get_generated_velocity_config_path(env_str)
+    logger.info(f"Deleting {velocity_config}...")
+    velocity_config.unlink(missing_ok=True)
+
+    # Delete docker compose file
+    docker_compose = ServerPaths.get_generated_docker_compose_path(env_str)
+    logger.info(f"Deleting {docker_compose}...")
+    docker_compose.unlink(missing_ok=True)
+
+    return True
 
 
 def generate_env_configs(env: Env):
@@ -131,6 +153,7 @@ def generate_all(env: Env):
     gen.run()
 
     generate_velocity_and_docker(env)
+
 
 def generate_velocity_and_docker(env: Env):
     # Generate docker compose file
