@@ -12,6 +12,12 @@ RUN if [ "$(cat /etc/group | grep :${GID}:)" = "" ]; then \
         echo "Group with GID ${GID} already exists - skipping groupadd"; \
     fi
 
-RUN useradd --uid $UID --gid $GID --shell /bin/bash --create-home mcproxy
+
+RUN if [ "$(cat /etc/passwd | grep :${UID}:)" = "" ]; then \
+        useradd --uid $UID --gid $GID --shell /bin/bash --create-home mcproxy; \
+    else \
+        echo "User with UID ${UID} already exists - just adding GID to user"; \
+        usermod -a -G $GID $(cat /etc/passwd | grep $UID | cut -d: -f1); \
+    fi
 
 RUN chown -R $UID:$GID /server
