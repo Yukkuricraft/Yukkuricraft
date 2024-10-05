@@ -144,6 +144,7 @@ class NewDevEnvGen(BaseGenerator):
             ServerPaths.get_mc_env_data_path(env),
             ServerPaths.get_mysql_env_data_path(env),
             ServerPaths.get_pg_env_data_path(env),
+            ServerPaths.get_velocity_plugins_path(env),
         ]
 
         for path in paths:
