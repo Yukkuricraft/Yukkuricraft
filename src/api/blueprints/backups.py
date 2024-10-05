@@ -22,7 +22,7 @@ BackupsApi = BackupManagement()
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def list_backups():
+def list_backups_handler():
     """List all backups per tags"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
@@ -33,10 +33,12 @@ def list_backups():
     target_tags = post_data.get("target_tags", [])
 
     if type(target_tags) == str:
-        target_tags = [ target_tags ]
+        target_tags = [target_tags]
 
     if type(target_tags) != list:
-        raise ValueError(f"Got a value for 'target_tags' that we don't know how to parse! Got: '{resp(target_tags)}'")
+        raise ValueError(
+            f"Got a value for 'target_tags' that we don't know how to parse! Got: '{resp(target_tags)}'"
+        )
 
     target_tags.append(env_str)
 
@@ -45,11 +47,12 @@ def list_backups():
 
     return resp
 
+
 @backups_bp.route("/create-new-minecraft-backup", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def create_new_minecraft_backup():
+def create_new_minecraft_backup_handler():
     """Creates a new ad-hoc minecraft backup"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
@@ -74,14 +77,15 @@ def create_new_minecraft_backup():
         )
         out = type(e).__name__
 
-    resp.data = json.dumps({ "success": success, "output": out })
+    resp.data = json.dumps({"success": success, "output": out})
     return resp
+
 
 @backups_bp.route("/restore-minecraft-backup", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def restore_minecraft_backup():
+def restore_minecraft_backup_handler():
     """Restores a minecraft backup"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
@@ -100,7 +104,9 @@ def restore_minecraft_backup():
     out = None
     success = False
     try:
-        out = BackupsApi.restore_minecraft(Env(target_env), target_world_group, target_snapshot_id)
+        out = BackupsApi.restore_minecraft(
+            Env(target_env), target_world_group, target_snapshot_id
+        )
         success = True
     except Exception as e:
         log_exception(
@@ -113,6 +119,5 @@ def restore_minecraft_backup():
         )
         out = type(e).__name__
 
-
-    resp.data = json.dumps({ "success": success, "output": out })
+    resp.data = json.dumps({"success": success, "output": out})
     return resp

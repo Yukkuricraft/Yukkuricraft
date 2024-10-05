@@ -17,7 +17,7 @@ sockets_bp = Blueprint("sockets", __name__)
 
 @socketio.on("connect")
 @log_request
-def connect(*args, **kwargs):
+def connect_handler(*args, **kwargs):
     logger.info("CLIENT CONNECTED")
     logger.info(args)
     logger.info(kwargs)
@@ -25,7 +25,7 @@ def connect(*args, **kwargs):
 
 @socketio.on("disconnect")
 @log_request
-def disconnect(*args, **kwargs):
+def disconnect_handler(*args, **kwargs):
     logger.info("CLIENT disconnectED")
     logger.info(args)
     logger.info(kwargs)
@@ -33,7 +33,7 @@ def disconnect(*args, **kwargs):
 
 @socketio.on("connect to console")
 @log_request
-def connect_to_console(data):
+def connect_to_console_handler(data):
     env_str, world_group_name = data.get("env", None), data.get(
         "world_group_name", None
     )
@@ -52,7 +52,7 @@ def connect_to_console(data):
 
 @socketio.on("exec server command")
 @log_request
-def exec_server_command(data):
+def exec_server_command_handler(data):
     container_name, command = data.get("container_name", None), data.get(
         "command", None
     )
@@ -76,7 +76,7 @@ def exec_server_command(data):
 
 @socketio.on("poop")
 @log_request
-def get_socket_poop(msg):
+def get_socket_poop_handler(msg):
     logger.info("SOCKET GOT POOP")
     logger.info(msg)
     emit("event", "scarlet reimi")
@@ -84,7 +84,7 @@ def get_socket_poop(msg):
 
 @socketio.on("message")
 @log_request
-def get_socket_message(msg):
+def get_socket_message_handler(msg):
     logger.info("SOCKET GOT MESSAGE0")
     logger.info(msg)
     emit("event", "remilia scarlet")
@@ -92,7 +92,7 @@ def get_socket_message(msg):
 
 @socketio.on("message1")
 @log_request
-def get_socket_message1(msg):
+def get_socket_message1_handler(msg):
     logger.info("SOCKET GOT MESSAGE1")
     logger.info(msg)
     emit("event", "scarlet remilia")
@@ -100,7 +100,7 @@ def get_socket_message1(msg):
 
 @socketio.on("message2")
 @log_request
-def get_socket_message2(msg):
+def get_socket_message2_handler(msg):
     logger.info("SOCKET GOT MESSAGE2")
     logger.info(msg)
     emit("event", "reimi scarlet")

@@ -16,9 +16,9 @@ def create_app():
 
     db_config = load_env_config(ServerPaths.get_api_db_env_file_path())
     app = Flask("YC API")
-    app.config[
-        "SQLALCHEMY_DATABASE_URI"
-    ] = f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"
+    )
 
     app.register_blueprint(server_bp, url_prefix="/server")
     app.register_blueprint(auth_bp, url_prefix="/auth")

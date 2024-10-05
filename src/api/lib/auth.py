@@ -119,8 +119,8 @@ def deserialize_id_token(token: str) -> Dict:
         return {
             "jti": uuid4().hex,
             "exp": 1999999999,
-            "iat": int(datetime.now().strftime('%s')),
-            "sub": '123456789012345678901',
+            "iat": int(datetime.now().strftime("%s")),
+            "sub": "123456789012345678901",
             "email": "local@development.yc",
         }
     return id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
@@ -161,7 +161,9 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
         Tuple[str, str]: Scheme and token
     """
 
-    x_original_uri_header = request.headers.get("X-Original-Uri", "") # Expected to be passed from nginx reverse proxy
+    x_original_uri_header = request.headers.get(
+        "X-Original-Uri", ""
+    )  # Expected to be passed from nginx reverse proxy
     if not x_original_uri_header:
         raise InvalidTokenError("No auth header or proxy uri header set!")
     logger.info(f"x_original_uri_header: {x_original_uri_header}")
@@ -172,10 +174,11 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
 
     auth_token = querystring_dict.get("Authorization", "")
     if not auth_token:
-        raise InvalidTokenError("Found valid proxy uri header but no authorization token!")
+        raise InvalidTokenError(
+            "Found valid proxy uri header but no authorization token!"
+        )
 
-    return 'YC-Token', auth_token
-
+    return "YC-Token", auth_token
 
 
 def generate_access_token_if_valid(token: str) -> Optional[str]:

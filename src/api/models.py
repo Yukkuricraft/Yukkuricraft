@@ -2,6 +2,7 @@ from sqlalchemy_serializer import SerializerMixin  # type: ignore
 
 from src.api.db import db
 
+
 class User(db.Model, SerializerMixin):
     serialize_only = ["sub", "email"]
 

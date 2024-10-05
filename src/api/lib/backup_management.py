@@ -13,7 +13,11 @@ from src.api.lib.docker_management import DockerManagement
 from src.api.lib.helpers import container_name_to_container
 from src.common.logger_setup import logger
 from src.common.environment import Env
-from src.common.constants import HOST_REPO_ROOT_PATH, MC_DOCKER_CONTAINER_NAME_FMT, RESTIC_REPO_PATH
+from src.common.constants import (
+    HOST_REPO_ROOT_PATH,
+    MC_DOCKER_CONTAINER_NAME_FMT,
+    RESTIC_REPO_PATH,
+)
 from src.common.paths import ServerPaths
 from src.common.types import DataDirType
 
@@ -69,11 +73,7 @@ class BackupManagement:
     def list_backups_by_env_and_tags(self, env: Env, tags: List[str]):
         env = env.name
 
-        tags_str = (
-            ''
-            if not tags
-            else f"--tag {','.join(tags)}"
-        )
+        tags_str = "" if not tags else f"--tag {','.join(tags)}"
 
         response_as_json = self.docker_client.containers.run(
             image="restic/restic",
@@ -118,20 +118,21 @@ class BackupManagement:
             name=world_group,
         )
 
-
         backup_container_name = f"{mc_container_name}_backup_adhoc"
         if self.docker_management.is_container_up(backup_container_name):
             raise BackupAlreadyInProgressError(backup_container_name)
 
         mc_container_up = self.docker_management.is_container_up(mc_container_name)
         entrypoint_command = (
-            "/usr/bin/backup now" # Performs rcon save-off/save-on
+            "/usr/bin/backup now"  # Performs rcon save-off/save-on
             if mc_container_up
-            else "bash /restic.sh backup" # Just performs the restic command directly
+            else "bash /restic.sh backup"  # Just performs the restic command directly
         )
-        underscored_env_alias = env.alias.replace(" ", '_')
+        underscored_env_alias = env.alias.replace(" ", "_")
 
-        logger.info(f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'")
+        logger.info(
+            f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'"
+        )
         logger.info(underscored_env_alias)
         out_b = self.docker_client.containers.run(
             name=backup_container_name,
@@ -158,15 +159,16 @@ class BackupManagement:
                 f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
                 f"{ServerPaths.get_rcon_password_file_path()}:/rcon.password",
             ],
-            network=(
-                f"{env.name}_ycnet"
-                if mc_container_up
-                else ""
-            )
+            network=(f"{env.name}_ycnet" if mc_container_up else ""),
         )
         return out_b.decode("utf-8")
 
-    def archive_directory(self, dir_to_archive: Path, archive_dir_suffix: str = "_archives", max_archives = 10):
+    def archive_directory(
+        self,
+        dir_to_archive: Path,
+        archive_dir_suffix: str = "_archives",
+        max_archives=10,
+    ):
         """Archives the `dir_to_archive` dir.
 
         - The name of the archive dir will be of format f"{dir_to_archive}{archive_dir_suffix}".
@@ -188,10 +190,12 @@ class BackupManagement:
         if not archive_dir.exists():
             archive_dir.mkdir()
 
-        existing_archives = [ path for path in archive_dir.iterdir() if path.is_dir() ]
+        existing_archives = [path for path in archive_dir.iterdir() if path.is_dir()]
         if len(existing_archives) >= max_archives:
             sorted_archives = sorted(existing_archives)
-            num_to_delete = max(0, len(existing_archives) - max_archives + 1) # +1 because we're about to archive the curr dir too.
+            num_to_delete = max(
+                0, len(existing_archives) - max_archives + 1
+            )  # +1 because we're about to archive the curr dir too.
 
             # We naively assume all items in the sorted archives dir are archives that have the same format as each other,
             # thus doing a naive sort will sort the archives by age (epoch timestamp).
@@ -204,9 +208,10 @@ class BackupManagement:
         new_archive_name = f"{dir_to_archive.name}-{int(time.time())}"
         archive_destination = archive_dir / new_archive_name
 
-        logger.info(f">> Archiving directory '{dir_to_archive}' -> '{archive_destination}'")
+        logger.info(
+            f">> Archiving directory '{dir_to_archive}' -> '{archive_destination}'"
+        )
         dir_to_archive.rename(archive_destination)
-
 
     def restore_minecraft(self, env: Env, world_group: str, target_id: str):
         """Restores the `target_id` backup to `world_group` in env `env`
@@ -229,7 +234,9 @@ class BackupManagement:
         if self.docker_management.is_container_up(restore_container_name):
             raise RestoreAlreadyInProgressError(restore_container_name)
 
-        world_files_dir = ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)
+        world_files_dir = ServerPaths.get_data_dir_path(
+            env.name, world_group, DataDirType.WORLD_FILES
+        )
 
         self.archive_directory(
             world_files_dir,

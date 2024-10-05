@@ -8,7 +8,7 @@ from src.common.constants import (
     DEFAULT_CHMOD_MODE,
     BASE_DATA_PATH,
     REPO_ROOT_PATH,
-    HOST_REPO_ROOT_PATH
+    HOST_REPO_ROOT_PATH,
 )
 from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
@@ -25,11 +25,10 @@ from pathlib import Path
 
 from src.common.environment import Env
 
-from src.api.constants import (
-    HOSTNAME
-)
+from src.api.constants import HOSTNAME
 
 from src.generator.base_generator import BaseGenerator
+
 
 class WorldGroupFilesGen(BaseGenerator):
     server_root: Path
@@ -68,18 +67,14 @@ class WorldGroupFilesGen(BaseGenerator):
                 ServerPaths.get_env_and_world_group_configs_path(env, world),
             ]
             for data_file_type in DataDirType:
-                paths.append(
-                    ServerPaths.get_data_dir_path(env, world, data_file_type)
-                )
+                paths.append(ServerPaths.get_data_dir_path(env, world, data_file_type))
 
             for path in paths:
                 if not path.exists():
                     logger.info(f"Generating {path}...")
                     path.mkdir(parents=True)
 
-            server_properties_path = ServerPaths.get_server_properties_path(
-                env, world
-            )
+            server_properties_path = ServerPaths.get_server_properties_path(env, world)
             if not server_properties_path.parent.exists():
                 server_properties_path.parent.mkdir(parents=True)
 

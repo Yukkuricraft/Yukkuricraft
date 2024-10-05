@@ -31,9 +31,7 @@ def listen_to_server_console(env: Env, world_group_name: str) -> Generator:
 
     logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE()")
     log_file = (
-        ServerPaths.get_data_dir_path(
-            env.name, world_group_name, DataDirType.LOG_FILES
-        )
+        ServerPaths.get_data_dir_path(env.name, world_group_name, DataDirType.LOG_FILES)
         / "latest.log"
     )
 

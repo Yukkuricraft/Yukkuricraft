@@ -27,7 +27,7 @@ files_bp: Blueprint = Blueprint("files", __name__)
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def list_files():
+def list_files_handler():
     post_data = request.get_json()
 
     path = post_data.get("PATH", "")
@@ -46,7 +46,7 @@ def list_files():
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def read_file():
+def read_file_handler():
     post_data = request.get_json()
 
     file_path = post_data.get("FILE_PATH", "")
@@ -64,7 +64,7 @@ def read_file():
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def write_file():
+def write_file_handler():
     post_data = request.get_json()
 
     file_path = post_data.get("FILE_PATH", "")

@@ -30,7 +30,7 @@ auth_bp: Blueprint = Blueprint("auth", __name__)
 @auth_bp.route("/login", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @log_request
-def login():
+def login_handler():
     if request.method == "POST":
         resp = make_cors_response()
         resp.status = 401
@@ -52,7 +52,7 @@ def login():
 @auth_bp.route("/logout", methods=["OPTIONS", "POST"])
 @intercept_cors_preflight
 @log_request
-def logout():
+def logout_handler():
     if request.method == "POST":
         resp = make_cors_response()
         resp.status = 200
@@ -69,7 +69,7 @@ def logout():
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def me():
+def me_handler():
     if request.method == "GET":
         resp = make_cors_response()
         scheme, access_token = get_access_token_from_headers()

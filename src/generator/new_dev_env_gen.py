@@ -8,7 +8,7 @@ from src.common.constants import (
     DEFAULT_CHMOD_MODE,
     BASE_DATA_PATH,
     REPO_ROOT_PATH,
-    HOST_REPO_ROOT_PATH
+    HOST_REPO_ROOT_PATH,
 )
 from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
@@ -25,15 +25,14 @@ from pathlib import Path
 
 from src.common.environment import Env
 
-from src.api.constants import (
-    HOSTNAME
-)
+from src.api.constants import HOSTNAME
 
 from src.generator.base_generator import BaseGenerator
 
 """
 TODO: Configurable copying of certain folders/configs from a source env
 """
+
 
 class NewDevEnvGen(BaseGenerator):
     server_root: Path
@@ -106,9 +105,7 @@ class NewDevEnvGen(BaseGenerator):
         config["general"]["hostname"] = HOSTNAME
 
         config["world-groups"] = {}
-        config["world-groups"]["enabled_groups"] = [
-            "lobby"
-        ]
+        config["world-groups"]["enabled_groups"] = ["lobby"]
 
         config["cluster-variables"] = {}
         config["cluster-variables"]["ENV_ALIAS"] = env_alias

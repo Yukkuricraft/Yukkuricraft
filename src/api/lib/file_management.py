@@ -14,7 +14,6 @@ class FileManager:
 
     ALLOWED_PATHS: List[Path] = [
         Path("gen/env-toml/"),
-        Path("secrets/configs"),
     ]
     ALLOWED_FILES: List[Path] = []
 

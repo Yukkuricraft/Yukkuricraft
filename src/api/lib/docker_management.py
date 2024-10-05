@@ -21,6 +21,87 @@ from src.common.decorators import serialize_tuple_out_as_dict
 from src.common.types import DataDirType
 
 
+# TODO: Figure out a better solution to this.
+# Dockerpy gives us a robust and thorough Container object. However, we don't need 98% of that information
+# on the frontend. We also have our old DTO models on the frontend side whose shape is not the same
+# as dockerpy's Container object. Old shape is whatever `docker ps --format json` outputs.
+# Basically if we want to have proper typing of the Container object on frontend, we'd have to extend our def
+# to have _all_ of the dockerpy Container fields but that feels overkill.
+# Instead, we'll just use this transformer function to convert dockerpy's Container back to our old ContainerDefinition shapes for now.
+def convert_dockerpy_container_to_container_definition(container: Container):
+    config = container.attrs.get("Config", {})
+    state = container.attrs.get("State", {})
+    labels = config.get("Labels", [])
+
+    mounts = list(
+        map(
+            lambda d: f"{d['Source']}:{d['Destination']}",
+            container.attrs.get("Mounts", []),
+        )
+    )
+    hostname = config.get("Hostname", "unknown")
+    names = [
+        labels[YC_CONTAINER_NAME_LABEL],
+        labels["com.docker.compose.service"],
+        hostname,
+    ]
+    command = config.get("Cmd", None)
+    entrypoint = config.get("Entrypoint", [])
+    entry_command = (
+        command
+        if command is not None
+        else " ".join(entrypoint if entrypoint is not None else [])
+    )
+
+    started_at = state.get("StartedAt", None)
+    running_for = None
+    status = None
+    if started_at is None:
+        running_for = "Container is down"
+        status = "Container is down (unhealthy)"
+    else:
+        # datetime.datetime.fromisoformat() doesn't take `2024-02-11T22:16:57.510507768Z` as a format
+        # which is what dockerpy gives us. 2024-02-11T22:16:57 is valid though so just drop the milliseconds.
+
+        started_at_truncated_ms = started_at.split(".")[0]
+
+        logger.info(
+            pformat(
+                {
+                    "started_at": started_at,
+                    "started_at_truncated_ms": started_at_truncated_ms,
+                }
+            )
+        )
+
+        try:
+            running_for_seconds = datetime.now() - datetime.fromisoformat(
+                started_at_truncated_ms
+            )
+        except ValueError:
+            running_for_seconds = timedelta(seconds=0)
+        running_for = seconds_to_string(running_for_seconds.total_seconds())
+
+        health_status = state.get("Health", {}).get("Status", "unknown")
+        status = f"Up {running_for} ({health_status})"
+    return {
+        "Command": entry_command,
+        "ContainerName": hostname,
+        "CreatedAt": container.attrs.get("Created", "unknown"),
+        "Hostname": hostname,
+        "ID": container.attrs.get("Id", "unknown"),
+        "Image": config.get("Image", "unknown"),
+        "Labels": labels,
+        "Mounts": mounts,
+        "Names": names,
+        "Networks": list(config.get("NetworkSettings", {}).get("Networks", {}).keys()),
+        "Ports": list(config.get("ExposedPorts", {}).keys()),
+        "RunningFor": running_for,
+        "State": state.get("Status", "unknown"),
+        "Status": status,
+    }
+
+
 class DockerManagement:
     def __init__(self):
         self.client = docker.from_env()
@@ -49,7 +130,6 @@ class DockerManagement:
             except EOFError:
                 logger.info("Got EOFError - Did not read from ptyprocess.")
                 pass
-
 
     def exec_run(
         self,
@@ -200,7 +280,10 @@ class DockerManagement:
 
             return callback(container)
         except docker.errors.NotFound:
-            log_exception(message="Container could not be found! The env may be down if not an invalid name.", data=data)
+            log_exception(
+                message="Container could not be found! The env may be down if not an invalid name.",
+                data=data,
+            )
         except docker.errors.APIError:
             log_exception(message="Caught Docker API Error!", data=data)
         except InvalidContainerNameError:
@@ -210,7 +293,6 @@ class DockerManagement:
             )
 
         return None
-
 
     def send_command_to_container(self, container_name: str, command: str):
         """Send a command to the minecraft console using rcon-cli
@@ -229,7 +311,6 @@ class DockerManagement:
                 1
             ],
         )
-
 
     def copy_configs_to_bindmount(self, container_name: str, type: DataDirType):
         """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
@@ -383,7 +464,7 @@ class DockerManagement:
     def up_containers(self, env: Env):
         """
         REFACTOR TO NOT USE MAKE
-        
+
         TODO: When refactoring, ensure existence of all mount dirs and create+chown appropriately if not exists
         """
 
