@@ -81,15 +81,12 @@ services:
     ports:
       - "3366:3306"
     volumes:
-      - ${MC_FS_ROOT}/db/api:/var/lib/mysql
+      # See https://github.com/docker-library/mysql/issues/939 for why it's not a host mount
+      - apidb:/var/lib/mysql
     networks:
       - yc-web-dev
     healthcheck:
-      test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:3306
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 10s
       retries: 15
@@ -118,11 +115,11 @@ services:
 
 volumes:
   envconfigs:
-  api-mysql-data:
   certs:
   html:
   vhost:
   acme:
+  apidb:
 
 networks:
   yc-web-dev:

@@ -64,11 +64,7 @@ services:
     networks:
       - yc-web-dev
     healthcheck:
-      test:
-      - CMD
-      - curl
-      - -f
-      - http://localhost:3306
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 10s
       retries: 15
