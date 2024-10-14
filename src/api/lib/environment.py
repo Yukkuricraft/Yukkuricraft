@@ -2,13 +2,13 @@ import shutil
 from typing import Callable, List, Optional
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
-from src.api.lib.runner import Runner
 
 from src.common.environment import Env, InvalidPortException
 from src.common.helpers import log_exception
 from src.common.logger_setup import logger
-from src.common.paths import ServerPaths
+from src.common import server_paths
 
+from src.common import server_type_actions
 from src.generator.generator import GeneratorType, get_generator
 
 
@@ -42,7 +42,7 @@ def list_valid_envs(as_obj=True) -> List[Env | str]:
     """
     envs = []
 
-    for item in ServerPaths.get_env_toml_config_dir_path().iterdir():
+    for item in server_paths.get_env_toml_config_dir_path().iterdir():
         if item.is_dir():
             continue
         elif item.suffix != ".toml":
@@ -116,22 +116,22 @@ def delete_env(env_str: str):
         return False
 
     # Delete BASE_DATA_DIR
-    base_data_dir = ServerPaths.get_env_data_path(env_str)
+    base_data_dir = server_paths.get_env_data_path(env_str)
     logger.info(f"Deleting {base_data_dir}...")
     shutil.rmtree(str(base_data_dir), ignore_errors=True)
 
     # Delete env toml
-    env_toml = ServerPaths.get_env_toml_config_path(env_str)
+    env_toml = server_paths.get_env_toml_config_path(env_str)
     logger.info(f"Deleting {env_toml}...")
     env_toml.unlink(missing_ok=True)
 
     # Delete Velocity config
-    velocity_config = ServerPaths.get_generated_velocity_config_path(env_str)
+    velocity_config = server_paths.get_generated_velocity_config_path(env_str)
     logger.info(f"Deleting {velocity_config}...")
     velocity_config.unlink(missing_ok=True)
 
     # Delete docker compose file
-    docker_compose = ServerPaths.get_generated_docker_compose_path(env_str)
+    docker_compose = server_paths.get_generated_docker_compose_path(env_str)
     logger.info(f"Deleting {docker_compose}...")
     docker_compose.unlink(missing_ok=True)
 
@@ -153,6 +153,8 @@ def generate_all(env: Env):
     gen.run()
 
     generate_velocity_and_docker(env)
+
+    server_type_actions.write_fabric_proxy_files(env)
 
 
 def generate_velocity_and_docker(env: Env):

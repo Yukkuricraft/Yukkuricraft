@@ -6,7 +6,7 @@ import copy
 
 from pathlib import Path
 from src.common.config.config_node import ConfigNode
-from src.common.paths import ServerPaths
+from src.common import server_paths
 
 from src.generator.constants import (
     DOCKER_COMPOSE_TEMPLATE_PATH,
@@ -41,7 +41,7 @@ class DockerComposeGen(BaseGenerator):
         self.MINECRAFT_GID = user.pw_gid
 
         self.generated_docker_compose_path = (
-            ServerPaths.get_generated_docker_compose_path(self.env.name)
+            server_paths.get_generated_docker_compose_path(self.env.name)
         )
         if not self.generated_docker_compose_path.parent.exists():
             self.generated_docker_compose_path.parent.mkdir(parents=True)

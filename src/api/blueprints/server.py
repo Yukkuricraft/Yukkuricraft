@@ -16,6 +16,7 @@ from src.common.environment import Env
 server_bp: Blueprint = Blueprint("server", __name__)
 DockerMgmtApi = DockerManagement()
 
+
 @server_bp.route("/<env_str>/containers", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
 @validate_access_token

@@ -1,5 +1,5 @@
 from flask import Flask
-from src.common.paths import ServerPaths  # type: ignore
+from src.common import server_paths  # type: ignore
 
 
 def create_app():
@@ -14,7 +14,7 @@ def create_app():
     from src.api.blueprints.files import files_bp
     from src.api.blueprints.sockets import sockets_bp
 
-    db_config = load_env_config(ServerPaths.get_api_db_env_file_path())
+    db_config = load_env_config(server_paths.get_api_db_env_file_path())
     app = Flask("YC API")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"

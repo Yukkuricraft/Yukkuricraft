@@ -10,10 +10,9 @@ from pathlib import Path
 from src.api.constants import API_HOST
 
 from src.common.config import load_env_config
-from src.common.paths import ServerPaths
 from src.common.environment import Env
 from src.common.logger_setup import logger
-from src.common.helpers import log_exception
+from src.common import server_paths
 
 from src.generator.base_generator import BaseGenerator
 
@@ -34,7 +33,9 @@ class EnvFileGen(BaseGenerator):
     def __init__(self, env: Env):
         super().__init__(env)
 
-        self.generated_env_file_path = ServerPaths.get_generated_env_file_path(env.name)
+        self.generated_env_file_path = server_paths.get_generated_env_file_path(
+            env.name
+        )
         if not self.generated_env_file_path.parent.exists():
             self.generated_env_file_path.parent.mkdir(parents=True)
 
@@ -64,7 +65,7 @@ class EnvFileGen(BaseGenerator):
 
         try:
             db_env_config = load_env_config(
-                ServerPaths.get_minecraft_db_env_file_path()
+                server_paths.get_minecraft_db_env_file_path()
             )
             mysql_user = db_env_config["MYSQL_USER"]
             mysql_pw = db_env_config["MYSQL_PASSWORD"]
@@ -84,7 +85,7 @@ class EnvFileGen(BaseGenerator):
         pg_pw = ""
 
         try:
-            with open(ServerPaths.get_pg_pw_file_path(), "r") as f:
+            with open(server_paths.get_pg_pw_file_path(), "r") as f:
                 pg_pw = f.read().strip()
         except:
             raise RuntimeError(

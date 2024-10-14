@@ -10,7 +10,6 @@ from typing import List, Dict
 from pprint import pformat
 
 from src.api.lib.docker_management import DockerManagement
-from src.api.lib.helpers import container_name_to_container
 from src.common.logger_setup import logger
 from src.common.environment import Env
 from src.common.constants import (
@@ -18,7 +17,7 @@ from src.common.constants import (
     MC_DOCKER_CONTAINER_NAME_FMT,
     RESTIC_REPO_PATH,
 )
-from src.common.paths import ServerPaths
+from src.common import server_paths
 from src.common.types import DataDirType
 
 
@@ -87,7 +86,7 @@ class BackupManagement:
                     "bind": "/backups",
                     "mode": "rw",
                 },
-                str(ServerPaths.get_restic_password_file_path()): {
+                str(server_paths.get_restic_password_file_path()): {
                     "bind": "/restic.password",
                     "mode": "ro",
                 },
@@ -155,9 +154,9 @@ class BackupManagement:
             volumes=[
                 # Use explicit volumes instead of volumes_from as the target container name may not be up if compose cluster is down.
                 f"{RESTIC_REPO_PATH}:/backups",
-                f"{ServerPaths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
-                f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
-                f"{ServerPaths.get_rcon_password_file_path()}:/rcon.password",
+                f"{server_paths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
+                f"{server_paths.get_restic_password_file_path()}:/restic.password",
+                f"{server_paths.get_rcon_password_file_path()}:/rcon.password",
             ],
             network=(f"{env.name}_ycnet" if mc_container_up else ""),
         )
@@ -234,7 +233,7 @@ class BackupManagement:
         if self.docker_management.is_container_up(restore_container_name):
             raise RestoreAlreadyInProgressError(restore_container_name)
 
-        world_files_dir = ServerPaths.get_data_dir_path(
+        world_files_dir = server_paths.get_data_dir_path(
             env.name, world_group, DataDirType.WORLD_FILES
         )
 
@@ -254,7 +253,7 @@ class BackupManagement:
             volumes=[
                 f"{RESTIC_REPO_PATH}:/backups",
                 f"{world_files_dir}:/worlds-bindmount",
-                f"{ServerPaths.get_restic_password_file_path()}:/restic.password",
+                f"{server_paths.get_restic_password_file_path()}:/restic.password",
             ],
         )
 

@@ -12,7 +12,7 @@ from src.generator.constants import (
 from src.common.config.toml_config import TomlConfig
 from src.common.config import load_toml_config
 from src.common.environment import Env
-from src.common.paths import ServerPaths
+from src.common import server_paths
 
 
 class VelocityConfigGen(BaseGenerator):
@@ -30,7 +30,7 @@ class VelocityConfigGen(BaseGenerator):
         super().__init__(env)
 
         self.generated_velocity_config_path = (
-            ServerPaths.get_generated_velocity_config_path(env.name)
+            server_paths.get_generated_velocity_config_path(env.name)
         )
         if not self.generated_velocity_config_path.parent.exists():
             self.generated_velocity_config_path.parent.mkdir(parents=True)

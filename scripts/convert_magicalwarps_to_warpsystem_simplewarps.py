@@ -10,7 +10,7 @@ from typing import List, Dict
 import datetime
 import pprint
 import json
-import yaml # type: ignore
+import yaml  # type: ignore
 
 yaml.SafeDumper.add_representer(
     type(None),
@@ -32,9 +32,10 @@ class MagicalWarp:
 
     TODO: Convert casing to match input exactly
     """
+
     allowedPermGroups: List[str]
     allowedUsers: List[str]
-    displayName: Dict[str,str]
+    displayName: Dict[str, str]
     groups: List[str]
     pitch: float
     world: str
@@ -42,13 +43,15 @@ class MagicalWarp:
     y: float
     yaw: float
     z: float
-    lore: Dict[str,str]
+    lore: Dict[str, str]
+
 
 @dataclass
 class WarpSystemLocation:
     """
     Location object used with the WarpSystem plugin
     """
+
     X: float
     Pitch: float
     Y: float
@@ -56,13 +59,15 @@ class WarpSystemLocation:
     World: str
     Yaw: float
 
+
 @dataclass
 class SimpleWarp:
     """
     A SimpleWarp from the WarpSystem plugin
     """
+
     LastChange: int
-    Permission:  str
+    Permission: str
     Name: str
     Location: WarpSystemLocation
     Created: int
@@ -70,10 +75,10 @@ class SimpleWarp:
 
     @staticmethod
     def from_magical_warp(warp: MagicalWarp):
-        now = 1726795383020 #datetime.utcNow()
+        now = 1726795383020  # datetime.utcNow()
         return SimpleWarp(
             LastChange=now,
-            Permission='',
+            Permission="",
             Name=warp.displayName.get("text", "NAME_NOT_FOUND"),
             Location=WarpSystemLocation(
                 X=warp.x,
@@ -86,6 +91,7 @@ class SimpleWarp:
             Created=now,
             LastChanger="Remi_Scarlet",
         )
+
 
 warps_src_data_path = Path(SRC_DATA_PATH)
 out_simplewarps_path = Path(OUT_SIMPLEWARPS_PATH)
@@ -103,9 +109,7 @@ with open(warps_src_data_path, "r") as f:
                 "text": warp_name,
             }
         if "lore" not in warp_definition:
-            warp_definition["lore"] = {
-                "text": ""
-            }
+            warp_definition["lore"] = {"text": ""}
         magical_warp = MagicalWarp(**warp_definition)
         magical_warps.append(magical_warp)
 
@@ -115,7 +119,7 @@ with open(warps_src_data_path, "r") as f:
 with open(out_simplewarps_path, "w") as f:
     out = yaml.safe_dump(
         {
-            'Warps': [ asdict(warp) for warp in simple_warps ],
+            "Warps": [asdict(warp) for warp in simple_warps],
         },
         default_flow_style=False,
         sort_keys=False,

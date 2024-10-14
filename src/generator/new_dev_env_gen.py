@@ -13,9 +13,9 @@ from src.common.constants import (
 from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
 )
-from src.common.server_type_actions import ServerTypeActions
+from src.common import server_type_actions
 from src.common.helpers import recursive_chmod  # type: ignore
-from src.common.paths import ServerPaths
+from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.types import DataDirType
 import shutil
@@ -75,7 +75,7 @@ class NewDevEnvGen(BaseGenerator):
 
         self.generate_dirs(new_env)
 
-        ServerTypeActions().perform_only_once_actions(Env(new_env))
+        server_type_actions.perform_only_once_actions(Env(new_env))
 
     ENV_CONFIG_SECTION_ORDER = [
         "general",
@@ -112,11 +112,11 @@ class NewDevEnvGen(BaseGenerator):
         config["cluster-variables"]["VELOCITY_PORT"] = velocity_port
         config["cluster-variables"]["MC_TYPE"] = server_type
         config["cluster-variables"]["MC_FS_ROOT"] = str(BASE_DATA_PATH)
-        config["cluster-variables"]["MC_VERSION"] = "1.21.1"
+        config["cluster-variables"]["MC_VERSION"] = "1.21"
         config["cluster-variables"]["YC_REPO_ROOT"] = str(HOST_REPO_ROOT_PATH)
         config["cluster-variables"]["BACKUPS_ROOT"] = str(BASE_DATA_PATH / "backups")
 
-        new_config_path = ServerPaths.get_env_toml_config_path(new_env)
+        new_config_path = server_paths.get_env_toml_config_path(new_env)
 
         self.write_config(
             new_config_path,
@@ -131,17 +131,17 @@ class NewDevEnvGen(BaseGenerator):
 
     def generate_dirs(self, env: str):
 
-        default_configs_path = ServerPaths.get_env_default_configs_path(env)
+        default_configs_path = server_paths.get_env_default_configs_path(env)
         paths = [
             default_configs_path / "server",
             default_configs_path / "plugins",
             default_configs_path / "mods",
-            ServerPaths.get_env_default_mods_path(env),
-            ServerPaths.get_env_default_plugins_path(env),
-            ServerPaths.get_mc_env_data_path(env),
-            ServerPaths.get_mysql_env_data_path(env),
-            ServerPaths.get_pg_env_data_path(env),
-            ServerPaths.get_velocity_plugins_path(env),
+            server_paths.get_env_default_mods_path(env),
+            server_paths.get_env_default_plugins_path(env),
+            server_paths.get_mc_env_data_path(env),
+            server_paths.get_mysql_env_data_path(env),
+            server_paths.get_pg_env_data_path(env),
+            server_paths.get_velocity_plugins_path(env),
         ]
 
         for path in paths:

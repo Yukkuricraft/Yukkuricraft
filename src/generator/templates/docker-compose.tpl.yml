@@ -74,10 +74,9 @@ custom_extensions:
       net.yukkuricraft.container_type: minecraft
       net.yukkuricraft.container_name: <<WORLDGROUP>>
     volumes:
-      # - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/temporarily-bindmounted-plugins-directory:/data/plugins
-      # - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/plugins-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/plugins:/data/plugins
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/worlds:/worlds-bindmount
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/mods:/server-only-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/server-only-mods:/server-only-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/client-and-server-mods:/client-and-server-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/logs:/data/logs

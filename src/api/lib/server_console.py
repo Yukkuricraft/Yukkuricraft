@@ -1,16 +1,14 @@
 import re
-from typing import Generator
-import docker  # type: ignore
-import subprocess
-import select
 import time
+
+from typing import Generator
+from sh import tail
 
 from src.common.environment import Env
 from src.common.logger_setup import logger
-from sh import tail
-from src.common.paths import ServerPaths
-from src.common.types import DataDirType  # type: ignore
 
+from src.common.types import DataDirType  # type: ignore
+from src.common import server_paths
 
 ansi_escape = re.compile(
     r"(?:\\x1b[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\\x1b\[|\\x9b)[0-?]*[ -/]*[@-~]|\\x[0-9a-z]{2}[=>]?|\\r)",
@@ -31,7 +29,9 @@ def listen_to_server_console(env: Env, world_group_name: str) -> Generator:
 
     logger.info(">> ENTERING LISTEN_TO_SERVER_CONSOLE()")
     log_file = (
-        ServerPaths.get_data_dir_path(env.name, world_group_name, DataDirType.LOG_FILES)
+        server_paths.get_data_dir_path(
+            env.name, world_group_name, DataDirType.LOG_FILES
+        )
         / "latest.log"
     )
 

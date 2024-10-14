@@ -13,12 +13,10 @@ from src.common.constants import (
 from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
 )
-from src.common.server_type_actions import ServerTypeActions
 from src.common.helpers import recursive_chmod  # type: ignore
-from src.common.paths import ServerPaths
+from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.types import DataDirType
-import shutil
 
 from typing import Dict
 from pathlib import Path
@@ -64,17 +62,17 @@ class WorldGroupFilesGen(BaseGenerator):
             logger.info(f"Generating dirs for {world}")
 
             paths = [
-                ServerPaths.get_env_and_world_group_configs_path(env, world),
+                server_paths.get_env_and_world_group_configs_path(env, world),
             ]
             for data_file_type in DataDirType:
-                paths.append(ServerPaths.get_data_dir_path(env, world, data_file_type))
+                paths.append(server_paths.get_data_dir_path(env, world, data_file_type))
 
             for path in paths:
                 if not path.exists():
                     logger.info(f"Generating {path}...")
                     path.mkdir(parents=True)
 
-            server_properties_path = ServerPaths.get_server_properties_path(env, world)
+            server_properties_path = server_paths.get_server_properties_path(env, world)
             if not server_properties_path.parent.exists():
                 server_properties_path.parent.mkdir(parents=True)
 

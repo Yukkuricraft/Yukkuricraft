@@ -22,7 +22,7 @@ from src.api.lib.helpers import log_request
 from src.common.config import load_toml_config
 from src.common.environment import Env
 from src.common.logger_setup import logger
-from src.common.paths import ServerPaths
+from src.common import server_paths
 
 envs_bp: Blueprint = Blueprint("environment", __name__)
 
@@ -80,7 +80,7 @@ def delete_env_handler(env_str):
     env = Env(env_str)
     env_dict = env.to_json()
 
-    env_config = load_toml_config(ServerPaths.get_env_toml_config_path(env.name))
+    env_config = load_toml_config(server_paths.get_env_toml_config_path(env.name))
     if env_config["general"].get("enable_env_protection", False):
         resp = make_cors_response(status_code=403)
         resp.headers.add("Content-Type", "application/json")

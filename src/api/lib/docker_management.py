@@ -13,10 +13,14 @@ from src.api.lib.runner import Runner
 from src.api.lib.helpers import InvalidContainerNameError, seconds_to_string
 from src.common.environment import Env
 from src.common.helpers import log_exception
-from src.common.paths import ServerPaths
+from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
-from src.common.constants import YC_CONTAINER_TYPE_LABEL, YC_ENV_LABEL, YC_CONTAINER_NAME_LABEL
+from src.common.constants import (
+    YC_CONTAINER_TYPE_LABEL,
+    YC_ENV_LABEL,
+    YC_CONTAINER_NAME_LABEL,
+)
 from src.common.types import DataDirType
 
 
@@ -203,7 +207,7 @@ class DockerManagement:
             TODO: Dataclass this.
         """
 
-        filepath = ServerPaths.get_generated_docker_compose_path(env.name)
+        filepath = server_paths.get_generated_docker_compose_path(env.name)
         docker_compose = load_yaml_config(filepath, no_cache=True)
 
         defined_containers: List = []
