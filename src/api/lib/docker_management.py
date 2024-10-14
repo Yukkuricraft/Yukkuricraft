@@ -112,7 +112,7 @@ class DockerManagement:
     def pty_attach_container(self, container: Container):
         # This is super weird.
         # This only affects Paper/MC forks that use jline3
-        # There's a bug between docker/jline3 where a docker ws attach causes jline3's persistent input line not function.
+        # There's a bug between docker/jline3 where a docker ws attach causes jline3's persistent input line to not function.
         # "Not function" meaning the socket connection will send input correctly but doesn't send back the persistent input line modifications
         #   However, all input behaviors are still executed properly upon a `\n` being sent over the socket.
         # A CLI workaround was to call `docker attach` on each container that started. From a python script, calling `subprocess.Popen` with docker attach
@@ -170,6 +170,29 @@ class DockerManagement:
                 )
 
         return exit_code, rtn_msg.strip()
+
+    def send_command_to_container(self, container_name: str, command: str):
+        """Send a command to the minecraft console using rcon-cli
+
+        Args:
+            container_name (str): A docker container name or id
+            command (str): Command string such as 'say hello', 'list', 'op remi_scarlet' etc
+
+        Returns:
+            str: Response from rcon-cli
+        """
+
+        return self.perform_cb_on_container(
+            container_name=container_name,
+            callback=lambda container: self.exec_run(container, ["rcon-cli", command])[
+                1
+            ],
+        )
+
+    def prepare_container_for_ws_attach(self, container_name: str):
+        container = self.container_name_to_container(container_name)
+        self.pty_attach_container(container)
+        return True
 
     def container_name_to_container(self, container_name):
         return self.client.containers.get(container_name)
@@ -297,56 +320,6 @@ class DockerManagement:
 
         return None
 
-    def send_command_to_container(self, container_name: str, command: str):
-        """Send a command to the minecraft console using rcon-cli
-
-        Args:
-            container_name (str): A docker container name or id
-            command (str): Command string such as 'say hello', 'list', 'op remi_scarlet' etc
-
-        Returns:
-            str: Response from rcon-cli
-        """
-
-        return self.perform_cb_on_container(
-            container_name=container_name,
-            callback=lambda container: self.exec_run(container, ["rcon-cli", command])[
-                1
-            ],
-        )
-
-    def copy_configs_to_bindmount(self, container_name: str, type: DataDirType):
-        """Copy `type` configs from the container back to the bindmounts, making them accessible on the host FS.
-
-        Args:
-            container_name (str): A docker container name or id
-            env_str (str): Environment name string
-            type (DataFileType): The type of configs to copy back.
-
-        Returns:
-            Optional[str]: Verbose output from `cp -v` or None if it failed to run
-        """
-        if type == DataDirType.PLUGIN_CONFIGS:
-            # TODO Hardcoded paths :-/
-            copy_src = "/data/plugins/*"
-            copy_dest = "/yc-plugins"
-        elif type == DataDirType.MOD_CONFIGS:
-            copy_src = "/data/config/*"
-            copy_dest = "/modsconfig-bindmount"
-        elif type == DataDirType.SERVER_ONLY_MOD_FILES:
-            copy_src = "/data/mods"
-            copy_dest = "/server-only-mods-bindmount"
-
-        return self.perform_cb_on_container(
-            container_name=container_name,
-            callback=lambda container: self.exec_run(
-                container, ["bash", "-c", f"cp -r {copy_src} {copy_dest}"]
-            )[1],
-            additional_data_to_log={
-                "copy_src": copy_src,
-                "copy_dest": copy_dest,
-            },
-        )
 
     def up_one_container(self, container_name: str):
         """Start a single container by `container_name`
@@ -360,15 +333,10 @@ class DockerManagement:
         Returns:
             bool: True if successful
         """
-
-        def callback(container: Container):
-            container.start()
-            self.pty_attach_container(container)
-
         try:
             self.perform_cb_on_container(
                 container_name=container_name,
-                callback=callback,
+                callback=lambda container: container.start(),
             )
 
             return True
@@ -414,14 +382,10 @@ class DockerManagement:
             bool: True if successful
         """
 
-        def callback(container: Container):
-            container.restart()
-            self.pty_attach_container(container)
-
         try:
             self.perform_cb_on_container(
                 container_name=container_name,
-                callback=callback,
+                callback=lambda container: container.restart(),
             )
             return True
         except:
@@ -477,9 +441,6 @@ class DockerManagement:
         ]
 
         resp = Runner.run_make_cmd(cmd, env)
-
-        for container in self.list_active_containers(env):
-            self.pty_attach_container(container)
 
         return resp
 

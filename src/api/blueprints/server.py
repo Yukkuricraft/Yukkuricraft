@@ -29,6 +29,31 @@ def list_defined_containers_handler(env_str):
 
     return resp
 
+@server_bp.route("/<env_str>/containers/prepare_ws_attach", methods=["POST", "OPTIONS"])
+@intercept_cors_preflight
+@validate_access_token
+@log_request
+def up_one_container_handler(env_str):
+    """
+    There's a bug where we need to `docker attach` from a PTY connected context in order for docker's websocket attach
+    to work when using jline3.
+
+    Yakumo will call this endpoint first to ensure whenever we try to attach to console, the container has been attached from
+    the necessary PTY context to ensure it's ready.
+    """
+    resp = make_cors_response()
+    container_name = request.json["container_name"]
+
+    env = Env(env_str)
+    resp_data = {}
+    resp_data["success"] = DockerMgmtApi.prepare_container_for_ws_attach(container_name=container_name)
+    resp_data["env"] = env.to_json()
+    resp_data["container_name"] = container_name
+
+    resp.data = json.dumps(resp_data)
+
+    return resp
+
 
 @server_bp.route("/<env_str>/containers/active", methods=["GET", "OPTIONS"])
 @intercept_cors_preflight
