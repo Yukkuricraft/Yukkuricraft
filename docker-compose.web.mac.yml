@@ -30,13 +30,14 @@ services:
       socat:
         condition: service_started
     environment:
+      DOCKER_HOST: tcp://socat:2375
       VIRTUAL_HOST: ${API_HOST}
       VIRTUAL_PORT: 5001
       LETSENCRYPT_HOST: ${API_HOST}
       HOST_YC_REPO_ROOT: ${YC_REPO_ROOT}
       MC_FS_ROOT: ${MC_FS_ROOT}
       CONFIGURATION_TYPE: ${CONFIGURATION_TYPE}
-      DOCKER_HOST: "tcp://socat:2375"
+
     volumes:
       - ./src:/app/src
       - ./gen:/app/gen
@@ -107,6 +108,9 @@ services:
     networks:
       - yc-web-dev
     restart: 'unless-stopped'
+    depends_on:
+      socat:
+        condition: service_started
     logging:
       driver: "json-file"
       options:

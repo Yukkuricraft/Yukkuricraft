@@ -33,7 +33,7 @@ def list_defined_containers_handler(env_str):
 @intercept_cors_preflight
 @validate_access_token
 @log_request
-def up_one_container_handler(env_str):
+def prepare_ws_attach(env_str):
     """
     There's a bug where we need to `docker attach` from a PTY connected context in order for docker's websocket attach
     to work when using jline3.

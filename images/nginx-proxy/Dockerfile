@@ -17,12 +17,15 @@ RUN if [ "$(cat /etc/group | grep :${DOCKER_GID}:)" = "" ]; then \
 ARG DOCKER_API_HOST=no-api-host-provided
 ENV DOCKER_API_HOST=$DOCKER_API_HOST
 
+ARG DOCKER_SOCKET_URI=no-docker-host-provided
+ENV DOCKER_SOCKET_URI=$DOCKER_SOCKET_URI
+
 # Copy custom nginx conf.d configs in
 COPY --chown=$UID:$GID images/nginx-proxy/conf.d/ /etc/nginx/conf.d
 RUN addgroup $(getent passwd $UID | cut -d: -f1) $(getent group $DOCKER_GID | cut -d: -f1)
 
 # Generate docker socket proxy conf based on build args/env vars
-RUN envsubst '$DOCKER_API_HOST' < /etc/nginx/conf.d/50-docker-socket-proxy.conf.template  > /etc/nginx/conf.d/50-docker-socket-proxy.conf
+RUN envsubst '$DOCKER_API_HOST,$DOCKER_SOCKET_URI' < /etc/nginx/conf.d/50-docker-socket-proxy.conf.template  > /etc/nginx/conf.d/50-docker-socket-proxy.conf
 
 # Copy in index.html for http/https connections to mc.yukkuricraft.net
 COPY images/nginx-proxy/html/ /usr/share/nginx/html
