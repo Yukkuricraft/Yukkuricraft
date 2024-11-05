@@ -5,21 +5,17 @@ Containerized Yukkuricraft
 ## Developing
 - See [Developing Locally](docs/developing_locally.md)
 
-# 2024-ish edit: This entire doc really just needs to be rewritten rip.
-
 ## Architecture (WIP)
 
-![Architecture Draft](docs/img/architecture_diagram.jpeg)
+![Architecture Draft](docs/img/architecture_diagram.png)
 
 ## Description
 
-This is our attempt at containerizing the Yukkuricraft minecraft server utilizing `itzg/minecraft-server` and `itzg/bungeecord`.
+This is our attempt at containerizing the Yukkuricraft minecraft server utilizing `itzg/minecraft-server` and `itzg/mc-proxy` (Velocity).
 
-We support two "types" of environments - `prod` and `dev`.
+This repo along with [YakumoDash](https://github.com/Yukkuricraft/YakumoDash) form a minecraft server management system utilizing Docker Compose with the ability to create, modify, and delete server "clusters". A "cluster" is a Velocity proxy fronted series of minecraft servers - Paper and Fabric supported atm - along with various auxiliary containers such as various databases, automated backup sidecars, etc.
 
-- The `prod` type env is a singular environment - ie only one prod.
-- There can however be multiple `dev` type envs. We standardize our names as `dev#` where # is an int starting at 1.
-- Eg, we can have environments named: `prod`, `dev1`, `dev2`
+This repo is the backend API utilizing Docker while `YakumoDash` is the frontend webapp.
 
 ### World Groups
 
@@ -31,11 +27,9 @@ A "world group" represents a group of Minecraft worlds that are thematically rel
 
 On the filesystem, a world group is represented as:
 
-- `/var/lib/yukkuricraft/<ENV>/<WORLD GROUP>/...`
-- `./secrets/configs/<ENV>/<WORLD GROUP>/`
-- <sub>The base paths can be configured in `env/<ENV>.env`</sub>
+- `/var/lib/yukkuricraft/<ENV>/minecraft/<WORLD GROUP>/...`
 
-We define our "enabled" world groups in our Environment Configurations..
+We define our "enabled" world groups in our cluster variables - See [Environments and Containers](#environments-and-containers).
 
 ### `docker-compose.yml` Generation
 
@@ -43,11 +37,9 @@ Using our configured enabled world groups, we dynamically generate a `gen/docker
 
 - <sub>Sourcecode can be found under `src/generator/docker_compose_gen.py`</sub>
 
-As a consequence, we encourage you to run things using `Makefile` commands. See [Running Containers](#running-containers). We are also in the works of creating [YakumoDash](https://github.com/Yukkuricraft/YakumoDash) to make server/env management easier.
-
 ### Proxy, Config Generation, and Container Setup
 
-We utilize the Velocity (TBD) Minecraft proxy. Our individual servers are run in containers, each of which represents a world group.
+We utilize the Velocity Minecraft proxy. Our individual servers are run in containers, each of which represents a world group.
 
 The Velocity config is likewise dynamically generated as per enabled world groups.
 
@@ -57,7 +49,7 @@ We also utilize a custom `scripts/start.sh` script to do some filesystem setup f
 
 ## Environments and Containers
 
-We configure our individual environments using appropriately named configs found under `env/<ENV>.toml`. The config currently consists of the following sections:
+We configure our individual environments using appropriately named configs found under `env/env-toml/<ENV>.toml`. The config currently consists of the following sections:
 
 1. The `cluster-variables` section which defines ENV VARS passed into `docker-compose` invocations. We use this TOML definition to dynamically generate a valid `.env` file for `docker-compose`.
 
@@ -65,24 +57,21 @@ We configure our individual environments using appropriately named configs found
 
 2. The `world_groups` section which contains our "enabled world groups" config.
 
-Conceptually, the `prod` and `dev` environment **types** have a special relationship with each other.
+# APIs
 
-Our production world data currently resides on the container host's filesystem as configured in the `env/prod.env` file. More specifically, our `docker-compose.yml` bind mounts this world data to the `/worlds-bindmount` directory inside the container. This is regardless of environment type.
-
-Additionally, we configure the minecraft server to treat `/yc-worlds` as the path for all world data.
-
-From here, behavior diverges based on environment type:
-
-# API Docs
-
-- Flask for API
-- Flask-SocketIO for websockets/socketio
+- We use Flask for API
+- We use Flask-SocketIO for websockets/socketio
 
 ### This should probably be its own dedicated file/doc
 
 ## Server API
 
 - Containers, interacting with servers
+
+## Backups API
+
+- Listing, creating, deleting, and restoring backups using Restic.
+  - Currently only supports Minecraft containers
 
 ## Environment API
 
@@ -91,76 +80,12 @@ From here, behavior diverges based on environment type:
 ## Files API
 
 - API for read/writing files on the server and within containers.
+  - Should eventually get deprecated, but used to modify cluster configs for now.
 
 ## Socket IO API
 
 - API for two-way communication between frontend/backend.
-- Used primarily for webconsole.
-  - Can be used for other "real time" stuff like more realtime container status updates.
-
-### Current Design
-
-- Environments are separated by namespace
-- Containers/servers are rooms
-
-# EVERYTHING BELOW IS CONSIDERED OUTDATED
-
-#### Prod
-
-We simply symlink `/worlds-bindmount` to `/yc-worlds`. This effectively bindmounts the container host's production world data to the server world data path within the container. Thus, anytime the world data is saved on the production server, the world state should be written back to the host FS.
-
-We recommend running the `make save_world` command for convenience when needing to immediately write world state to disk.
-
-#### Dev
-
-For development environments, we introduce two new "features".
-
-- First, the world data used for dev environments are stored on a docker volume rather than binding to host FS.
-- Second, we introduce the ability to toggle "Copy production world data" on startup with the correct flags set.
-
-To accomplish this, we setup our volumes and mounts slightly differently from production:
-
-- First, we bind mount the production world data to `/worlds-bindmount` same as production.
-- Next, we create a docker volume mounted to `/worlds-volume`. This volume will contain all our world data used by the minecraft server.
-- Finally, we create a symlink so `/yc-worlds` points to `/worlds-volume`.
-
-This roundabout setup is necessary as we want to effectively use `/yc-worlds` as both a bind mount for production and a docker volume for development. Since we cannot configure docker-compose to use both, we instead use the `scripts/start.sh` script to setup our symlinks based on environment type.
-
-#### Filesystem Diagram
-
-Below is a diagram illustrating the paragraphs above pertaining to filesystem layouts
-
-![Filesystem Layout](docs/img/filesystem_layout.png)
-
-### Creating New Environments
-
-To create new dev environments, simply create a corresponding `env/dev#.env` file. You can now use the new `dev#` in `make` commands, eg `make ENV=dev2 up`.
-
-**Note**: You will get a freshly generated world unless you also add the `COPY_PROD_WORLD=1` flag, eg `make COPY_PROD_WORLD=1 ENV=dev2 up`.
-
-## Running Containers
-
-- All containers are named with the environment added as a suffix. Eg, `YC-prod`, `MySQL-prod`, `YC-dev`, etc
-- All container management should generally be done using `Makefile` targets. **All commands by default will target the `dev1` environment.**
-  - You may prepend an ENV var declaration to any `make` target to change the environment. Eg, `make ENV=prod up` or `make ENV=prod save_world`
-
-Below are the commonly used commands:
-|Command|Description|
-|-------|-----------|
-|`make build`|Builds the `yukkuricraft/minecraft-server` image which adds small setup scripts to `itzg/minecraft-server`.|
-|`make up`|Starts the server on the specified environment.|
-|`make COPY_PROD_WORLD=1 ENV=dev1 up`|Assuming the ENV is a non-production env, setting `COPY_PROD_WORLD` to a **non-empty value** will run an `rsync` from `/worlds-bindmount` (production world data) to `/worlds-volume` (container-specific volume mount). This effectively performs a one-time ro mirror of the production data to our dev world. Because we use volumes, the first `rsync` will take time as it is copying the entire world. However, subsequent runs should be much faster (assuming volumes have not been pruned) as we only `rsync` new or modified files.|
-|`make down`|Kills containers in the specified environment.|
-|`make logs`|Runs `docker-compose logs` for the specified environment's containers.|
-|`make attach`|Runs `docker attach` to the `YC-${ENV}` container. **This is attaching to Console.** Be aware that `Ctrl+C` kills the server. Detaching is done with `Ctrl+P`, then `Ctrl+Q`.|
-|`make purge`|Purges all docker volumes that are not in use. Must down containers first.|
-|`make save_world`|Runs `save-all` inside the console of the `YC-${ENV}` container. **Writes the world to disk.**|
-
-There are `_prod` suffixed variants for most targets which simply sets `ENV=prod` for each target.
-
-- Eg, `make up_prod`, `make down_prod`
-
-See the contents of `Makefile` for a full list of valid targets.
+  - Is not currently used.
 
 ## Outstanding Questions
 
