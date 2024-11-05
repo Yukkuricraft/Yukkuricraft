@@ -16,7 +16,8 @@ from src.common import server_paths
 
 
 class VelocityConfigGen(BaseGenerator):
-    """
+    """Generates the velocity config file with our world groups defined as servers.
+
     TODO: Refactor to get more DRY between VelocityConfigGen and DockerComposeGen
     """
 

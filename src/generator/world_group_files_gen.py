@@ -1,6 +1,5 @@
 #!/bin/env python3
 
-from collections import OrderedDict
 import os
 from src.common.config import load_env_config
 from src.common.config.env_config import EnvConfig
@@ -8,22 +7,17 @@ from src.common.constants import (
     DEFAULT_CHMOD_MODE,
     BASE_DATA_PATH,
     REPO_ROOT_PATH,
-    HOST_REPO_ROOT_PATH,
 )
 from src.generator.constants import (
     SERVER_PROPERTIES_TEMPLATE_PATH,
 )
-from src.common.helpers import recursive_chmod  # type: ignore
 from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.types import DataDirType
 
-from typing import Dict
 from pathlib import Path
 
 from src.common.environment import Env
-
-from src.api.constants import HOSTNAME
 
 from src.generator.base_generator import BaseGenerator
 

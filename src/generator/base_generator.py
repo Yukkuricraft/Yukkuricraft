@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-import os
-from typing import Any, Dict, Callable, Optional, TypeVar
+from typing import Dict, Callable, Optional, TypeVar
 from pathlib import Path
 
 from src.common.environment import Env
