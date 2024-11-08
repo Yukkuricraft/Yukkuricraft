@@ -1,6 +1,14 @@
-## Endpoints?
-(May be outdated)
+# API Module
+## Code At A High Level
+- Globals/constants are defined based on provided `CONFIGURATION_TYPE` env var in [`src/constants.py`](constants.py).
+- [`src/blueprints/`](blueprints/) contain the api setup.
+- [`src/lib/`](lib/) contains the logic.
+  - Most interesting files are:
+    - [`src/auth.py`](lib/auth.py)
+    - [`src/lib/backup_management.py`](lib/backup_management.py)
+    - [`src/lib/docker_management.py`](lib/docker_management.py)
 
+## Endpoints?
 All authenticated endpoints also take an `OPTIONS` method request for CORS handling.
 
 ### Auth
@@ -10,7 +18,6 @@ Endpoints related to authenticating.
 |------|--------|-------|
 |`POST`|`/auth/login`|Logging into app|
 |`GET`|`/auth/me`|Endpoint hit to validate user still logged into app. All authenticated pages must succeed this request.|
-|`GET`|`/auth/createdbdeleteme`|Disabled endpoint that's enabled any time we need initial DB setup. Is a hack. Needs to be replaced.|
 
 
 ### Files
@@ -18,7 +25,7 @@ Endpoints for managing server files on the host FS.
 
 |Method|Endpoint|Purpose|
 |------|--------|-------|
-|`POST`|`/files/list`|An `ls` on the directory specified in the `POST`` body. Should really be a `GET`|
+|`POST`|`/files/list`|An `ls` on the directory specified in the `POST` body. Should really be a `GET`|
 |`POST`|`/files/read`|Read contents of a file. Should really be a `GET`|
 |`POST`|`/files/write`|Writes contents to a file.|
 

@@ -22,10 +22,11 @@ from src.common.config import YamlConfig, load_yaml_config
 from src.common.constants import MC_DOCKER_CONTAINER_NAME_FMT
 from src.common.logger_setup import logger
 
+WORLD_GROUP_INTERP_STR = "<<WORLDGROUP>>"
 
 class DockerComposeGen(BaseGenerator):
-    MINECRAFT_UID = None
-    MINECRAFT_GID = None
+    minecraft_uid = None
+    minecraft_gid = None
 
     docker_compose_template: YamlConfig
 
@@ -37,8 +38,8 @@ class DockerComposeGen(BaseGenerator):
 
         uid = os.getuid()
         user = pwd.getpwuid(uid)
-        self.MINECRAFT_UID = user.pw_name
-        self.MINECRAFT_GID = user.pw_gid
+        self.minecraft_uid = user.pw_name
+        self.minecraft_gid = user.pw_gid
 
         self.generated_docker_compose_path = (
             server_paths.get_generated_docker_compose_path(self.env.name)
@@ -81,7 +82,7 @@ class DockerComposeGen(BaseGenerator):
                 self.docker_compose_template.custom_extensions.mc_service_template.as_dict()
             )
             mc_service_template = self.replace_interpolations(
-                mc_service_template, "<<WORLDGROUP>>", world
+                mc_service_template, WORLD_GROUP_INTERP_STR, world
             )
 
             docker_overrides = self.env.config.world_groups[world]
@@ -114,7 +115,7 @@ class DockerComposeGen(BaseGenerator):
                     self.docker_compose_template.custom_extensions.mc_backups_sidecar_template.as_dict()
                 )
                 backup_service_template = self.replace_interpolations(
-                    backup_service_template, "<<WORLDGROUP>>", world
+                    backup_service_template, WORLD_GROUP_INTERP_STR, world
                 )
                 backup_service_template["environment"]["RCON_HOST"] = (
                     MC_DOCKER_CONTAINER_NAME_FMT.format(env=self.env.name, name=world)

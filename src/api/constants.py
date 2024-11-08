@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 import socket
 
+from src.common.logger_setup import logger
+
 CONFIGURATION_TYPE = os.getenv("CONFIGURATION_TYPE", None)
 if CONFIGURATION_TYPE is None:
     raise RuntimeError(
@@ -30,7 +32,7 @@ elif IS_DEV:
     MAX_VALID_PROXY_PORT = 26700
     API_HOST = "dev.api.yukkuricraft.net"
     HOSTNAME = "yukkuricraft.net"
-else:
+elif IS_PROD:
     G_CLIENT_ID = (
         "1084736521175-2b5rrrpcs422qdc5458dhisdsj8auo0p.apps.googleusercontent.com"
     )
@@ -39,6 +41,8 @@ else:
     MAX_VALID_PROXY_PORT = 25700
     API_HOST = "api.yukkuricraft.net"
     HOSTNAME = "yukkuricraft.net"
+else:
+    raise RuntimeError(f"Found running on an unknown environment! CONFIGURATION_TYPE was '${CONFIGURATION_TYPE}'")
 
 HOST_PASSWD = "/etc/host-passwd"
 WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"

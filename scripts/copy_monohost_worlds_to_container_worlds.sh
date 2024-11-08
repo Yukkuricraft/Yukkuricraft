@@ -20,7 +20,7 @@ rsync -arP "$MONOYC_BASE/Statues" "$CONTAINER_YC_BASE/$CREATIVE_WORLDGROUP/world
 rsync -arP "$MONOYC_BASE/buildingContest" "$CONTAINER_YC_BASE/$CREATIVE_WORLDGROUP/worlds/"
 rsync -arP "$MONOYC_BASE/Dungeons" "$CONTAINER_YC_BASE/$MINIGAMES_AND_EVENTS_WORLDGROUP/worlds/"
 rsync -arP "$MONOYC_BASE/SummerHeight" "$CONTAINER_YC_BASE/$MINIGAMES_AND_EVENTS_WORLDGROUP/worlds/"
-rsync -arP "$MONOYC_BASE/NyadminFlats" "$CONTAINER_YC_BASE/$MINIGAMES_AND_EVENTS_WORLDGROUP/worlds/"
+#rsync -arP "$MONOYC_BASE/NyadminFlats" "$CONTAINER_YC_BASE/$MINIGAMES_AND_EVENTS_WORLDGROUP/worlds/" # Disabled due to changes in dev server
 
 # Old Gensokyo
 OLDGENSOKYO_WORLDGROUP="yukkuricraft"
@@ -56,6 +56,6 @@ rsync -arP "$MONOYC_BASE/NovaSurvival-7.7.2019" "$CONTAINER_YC_BASE/$RETRO_SURVI
 # Lobby
 LOBBY_WORLDGROUP="yukkuricraft"
 mkdir -p "$CONTAINER_YC_BASE/$LOBBY_WORLDGROUP"
-rsync -arP "$MONOYC_BASE/GapRealm" "$CONTAINER_YC_BASE/$LOBBY_WORLDGROUP/worlds/"
+# rsync -arP "$MONOYC_BASE/GapRealm" "$CONTAINER_YC_BASE/$LOBBY_WORLDGROUP/worlds/" # Disabled due to changes in dev server
 rsync -arP "$MONOYC_BASE/BackDoorRealm" "$CONTAINER_YC_BASE/$LOBBY_WORLDGROUP/worlds/"
 rsync -arP "$MONOYC_BASE/Dreamworld" "$CONTAINER_YC_BASE/$LOBBY_WORLDGROUP/worlds/"

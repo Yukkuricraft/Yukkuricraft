@@ -4,6 +4,7 @@ Containerized Yukkuricraft
 
 ## Developing
 - See [Developing Locally](docs/developing_locally.md)
+- Some directories are documented with their own `README.md`'s such as [src/README.md](src/README.md), [src/api/README.md](src/api/README.md), and [images/README.md](images/README.md).
 
 ## Architecture (WIP)
 
@@ -29,11 +30,11 @@ On the filesystem, a world group is represented as:
 
 - `/var/lib/yukkuricraft/<ENV>/minecraft/<WORLD GROUP>/...`
 
-We define our "enabled" world groups in our cluster variables - See [Environments and Containers](#environments-and-containers).
+We define our "enabled" world groups in a config - See [Environments and Containers](#environments-and-containers).
 
 ### `docker-compose.yml` Generation
 
-Using our configured enabled world groups, we dynamically generate a `gen/docker-compose-{ENV}.yml` to run only the enabled groups.
+Using our configured enabled world groups, we dynamically generate a `gen/docker-compose/docker-compose-{ENV}.yml` to run only the enabled groups.
 
 - <sub>Sourcecode can be found under `src/generator/docker_compose_gen.py`</sub>
 
@@ -45,52 +46,16 @@ The Velocity config is likewise dynamically generated as per enabled world group
 
 - <sub>Sourcecode can be found under `src/generator/velocity_config_gen.py`</sub>
 
-We also utilize a custom `scripts/start.sh` script to do some filesystem setup for us prior to starting the server. As such, we also create a short `yukkuricraft/minecraft-server` image as defined in `images/minecraft-server/Dockerfile`.
+We also utilize a custom `scripts/start.sh` script to do some filesystem setup for us prior to starting the server. As such, we create a short `yukkuricraft/minecraft-server` image as defined in `images/minecraft-server/Dockerfile`, along with various other customized popular images.
 
 ## Environments and Containers
 
 We configure our individual environments using appropriately named configs found under `env/env-toml/<ENV>.toml`. The config currently consists of the following sections:
 
 1. The `cluster-variables` section which defines ENV VARS passed into `docker-compose` invocations. We use this TOML definition to dynamically generate a valid `.env` file for `docker-compose`.
-
-- Note: We inject some ENV VARS into this generated `.env` file, such as the `ENV` value which takes the ENV specified by the TOML filename.
+  - Note: We inject some ENV VARS into this generated `.env` file, such as the `ENV` value which takes the ENV specified by the TOML filename.
 
 2. The `world_groups` section which contains our "enabled world groups" config.
-
-# APIs
-
-- We use Flask for API
-- We use Flask-SocketIO for websockets/socketio
-
-### This should probably be its own dedicated file/doc
-
-## Server API
-
-- Containers, interacting with servers
-
-## Backups API
-
-- Listing, creating, deleting, and restoring backups using Restic.
-  - Currently only supports Minecraft containers
-
-## Environment API
-
-- Managing, creating, deleting, editing environments (which contain containers)
-
-## Files API
-
-- API for read/writing files on the server and within containers.
-  - Should eventually get deprecated, but used to modify cluster configs for now.
-
-## Socket IO API
-
-- API for two-way communication between frontend/backend.
-  - Is not currently used.
-
-## Outstanding Questions
-
-- Logs?
-- Plugins and configs?
 
 ## See Also
 
