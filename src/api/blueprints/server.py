@@ -1,7 +1,9 @@
 import json
-from flask import Blueprint, request  # type: ignore
+from flask import request  # type: ignore
+from flask_openapi3 import APIBlueprint  # type: ignore
 
 from src.api.lib.auth import (
+    return_cors_response,
     validate_access_token,
     intercept_cors_preflight,
     make_cors_response,
@@ -13,12 +15,18 @@ from src.api.lib.docker_management import (
 from src.api.lib.helpers import log_request
 from src.common.environment import Env
 
-server_bp: Blueprint = Blueprint("server", __name__)
+server_bp: APIBlueprint = APIBlueprint("server", __name__, url_prefix="/server")
 DockerMgmtApi = DockerManagement()
 
 
-@server_bp.route("/<env_str>/containers", methods=["GET", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def list_defined_containers_options_handler():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers")
 @validate_access_token
 @log_request
 def list_defined_containers_handler(env_str):
@@ -29,8 +37,15 @@ def list_defined_containers_handler(env_str):
 
     return resp
 
-@server_bp.route("/<env_str>/containers/prepare_ws_attach", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+
+@server_bp.route("/<env_str>/containers/prepare_ws_attach", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def prepare_ws_options_attach():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers/prepare_ws_attach")
 @validate_access_token
 @log_request
 def prepare_ws_attach(env_str):
@@ -46,7 +61,9 @@ def prepare_ws_attach(env_str):
 
     env = Env(env_str)
     resp_data = {}
-    resp_data["success"] = DockerMgmtApi.prepare_container_for_ws_attach(container_name=container_name)
+    resp_data["success"] = DockerMgmtApi.prepare_container_for_ws_attach(
+        container_name=container_name
+    )
     resp_data["env"] = env.to_json()
     resp_data["container_name"] = container_name
 
@@ -55,8 +72,14 @@ def prepare_ws_attach(env_str):
     return resp
 
 
-@server_bp.route("/<env_str>/containers/active", methods=["GET", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers/active", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def list_active_containers_options_handler():
+    return return_cors_response()
+
+
+@server_bp.get("/<env_str>/containers/active")
 @validate_access_token
 @log_request
 def list_active_containers_handler(env_str):
@@ -74,8 +97,14 @@ def list_active_containers_handler(env_str):
     return resp
 
 
-@server_bp.route("/<env_str>/containers/up", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers/up", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def up_containers_options_handler():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers/up")
 @validate_access_token
 @log_request
 def up_containers_handler(env_str):
@@ -89,8 +118,14 @@ def up_containers_handler(env_str):
     return resp
 
 
-@server_bp.route("/<env_str>/containers/up_one", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers/up_one", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def up_one_container_options_handler():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers/up_one")
 @validate_access_token
 @log_request
 def up_one_container_handler(env_str):
@@ -108,8 +143,14 @@ def up_one_container_handler(env_str):
     return resp
 
 
-@server_bp.route("/<env_str>/containers/down", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers/down", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def down_containers_options_handler():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers/down")
 @validate_access_token
 @log_request
 def down_containers_handler(env_str):
@@ -124,8 +165,14 @@ def down_containers_handler(env_str):
     return resp
 
 
-@server_bp.route("/<env_str>/containers/down_one", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers/down_one", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def down_one_container_options_handler():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers/down_one")
 @validate_access_token
 @log_request
 def down_one_container_handler(env_str):
@@ -146,8 +193,14 @@ def down_one_container_handler(env_str):
     return resp
 
 
-@server_bp.route("/<env_str>/containers/restart_one", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@server_bp.route("/<env_str>/containers/restart_one", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def restart_one_container_options_handler():
+    return return_cors_response()
+
+
+@server_bp.post("/<env_str>/containers/restart_one")
 @validate_access_token
 @log_request
 def restart_one_container_handler(env_str):

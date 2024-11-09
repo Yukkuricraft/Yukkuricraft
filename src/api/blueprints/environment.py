@@ -2,11 +2,11 @@
 
 import json
 
-from pprint import pformat
-from flask import Blueprint, abort, request  # type: ignore
+from flask import abort, request  # type: ignore
+from flask_openapi3 import APIBlueprint  # type: ignore
 
 from src.api.lib.auth import (
-    intercept_cors_preflight,
+    return_cors_response,
     validate_access_token,
     make_cors_response,
 )
@@ -24,11 +24,19 @@ from src.common.environment import Env
 from src.common.logger_setup import logger
 from src.common import server_paths
 
-envs_bp: Blueprint = Blueprint("environment", __name__)
+envs_bp: APIBlueprint = APIBlueprint(
+    "environment", __name__, url_prefix="/environments"
+)
 
 
-@envs_bp.route("/create-env", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@envs_bp.route("/create-env", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def create_env_preflight_handler():
+    return return_cors_response()
+
+
+@envs_bp.post("/create-env")
 @validate_access_token
 @log_request
 def create_env_handler():
@@ -72,8 +80,14 @@ def create_env_handler():
     return resp
 
 
-@envs_bp.route("/<env_str>", methods=["DELETE", "OPTIONS"])
-@intercept_cors_preflight
+@envs_bp.route("/<env_str>", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def delete_env_options_handler():
+    return return_cors_response()
+
+
+@envs_bp.delete("/<env_str>")
 @validate_access_token
 @log_request
 def delete_env_handler(env_str):
@@ -115,8 +129,14 @@ def delete_env_handler(env_str):
     return resp
 
 
-@envs_bp.route("/<env_str>/generate-configs", methods=["POST", "OPTIONS"])
-@intercept_cors_preflight
+@envs_bp.route("/<env_str>/generate-configs", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def generate_configs_options_handler():
+    return return_cors_response()
+
+
+@envs_bp.post("/<env_str>/generate-configs")
 @validate_access_token
 @log_request
 def generate_configs_handler(env_str):
@@ -132,18 +152,23 @@ def generate_configs_handler(env_str):
     return resp
 
 
-@envs_bp.route("/list-envs-with-configs", methods=["OPTIONS", "GET"])
-@intercept_cors_preflight
+@envs_bp.route("/list-envs-with-configs", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def list_envs_with_configs_options_handler():
+    return return_cors_response()
+
+
+@envs_bp.get("/list-envs-with-configs")
 @validate_access_token
 @log_request
 def list_envs_with_configs_handler():
-    if request.method == "GET":
-        resp = make_cors_response()
-        resp.status = 200
+    resp = make_cors_response()
+    resp.status = 200
 
-        valid_envs = list_valid_envs()
-        valid_envs_as_dicts = list(map(lambda env: env.to_json(), valid_envs))
+    valid_envs = list_valid_envs()
+    valid_envs_as_dicts = list(map(lambda env: env.to_json(), valid_envs))
 
-        resp.data = json.dumps(valid_envs_as_dicts)
+    resp.data = json.dumps(valid_envs_as_dicts)
 
-        return resp
+    return resp

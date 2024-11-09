@@ -318,18 +318,22 @@ def intercept_cors_preflight(func: Callable):
     def decorated_function(*args, **kwargs):
         # logger.info(request.method)
         if request.method == "OPTIONS":
-            resp = make_response()
-            resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
-            resp.headers.add("Access-Control-Allow-Headers", "*")
-            resp.headers.add("Access-Control-Allow-Methods", "*")
-
-            # logger.info(f"RETURNING INTERCEPTED CORS PREFLIGHT:")
-            # logger.info(pformat(resp))
-            return resp
+            return return_cors_response()
 
         return func(*args, **kwargs)
 
     return decorated_function
+
+
+def return_cors_response():
+    resp = make_response()
+    resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
+    resp.headers.add("Access-Control-Allow-Headers", "*")
+    resp.headers.add("Access-Control-Allow-Methods", "*")
+
+    # logger.info(f"RETURNING INTERCEPTED CORS PREFLIGHT:")
+    # logger.info(pformat(resp))
+    return resp
 
 
 def make_cors_response(status_code=200):

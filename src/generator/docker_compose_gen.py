@@ -24,6 +24,7 @@ from src.common.logger_setup import logger
 
 WORLD_GROUP_INTERP_STR = "<<WORLDGROUP>>"
 
+
 class DockerComposeGen(BaseGenerator):
     minecraft_uid = None
     minecraft_gid = None
@@ -117,9 +118,9 @@ class DockerComposeGen(BaseGenerator):
                 backup_service_template = self.replace_interpolations(
                     backup_service_template, WORLD_GROUP_INTERP_STR, world
                 )
-                backup_service_template["environment"]["RCON_HOST"] = (
-                    MC_DOCKER_CONTAINER_NAME_FMT.format(env=self.env.name, name=world)
-                )
+                backup_service_template["environment"][
+                    "RCON_HOST"
+                ] = MC_DOCKER_CONTAINER_NAME_FMT.format(env=self.env.name, name=world)
                 backup_service_template["depends_on"][mc_service_key] = {
                     "condition": "service_healthy"
                 }
@@ -166,9 +167,9 @@ class DockerComposeGen(BaseGenerator):
         self.generated_docker_compose["networks"] = networks
 
     def generate_docker_compose(self):
-        self.generated_docker_compose["services"] = (
-            self.docker_compose_template.services.as_dict()
-        )
+        self.generated_docker_compose[
+            "services"
+        ] = self.docker_compose_template.services.as_dict()
         self.generate_velocity_service_config()
         self.generate_minecraft_service_config()
 

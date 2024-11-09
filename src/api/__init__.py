@@ -1,4 +1,4 @@
-from flask import Flask
+from flask_openapi3 import OpenAPI
 from src.common import server_paths  # type: ignore
 
 
@@ -15,17 +15,17 @@ def create_app():
     from src.api.blueprints.sockets import sockets_bp
 
     db_config = load_env_config(server_paths.get_api_db_env_file_path())
-    app = Flask("YC API")
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"
-    )
+    app = OpenAPI("YC API")
+    app.config[
+        "SQLALCHEMY_DATABASE_URI"
+    ] = f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"
 
-    app.register_blueprint(server_bp, url_prefix="/server")
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(backups_bp, url_prefix="/backups")
-    app.register_blueprint(envs_bp, url_prefix="/environments")
-    app.register_blueprint(files_bp, url_prefix="/files")
-    app.register_blueprint(sockets_bp, url_prefix="/sockets")
+    app.register_api(auth_bp)
+    app.register_api(backups_bp)
+    app.register_api(envs_bp)
+    app.register_api(files_bp)
+    app.register_api(server_bp)
+    app.register_api(sockets_bp)
 
     db.init_app(app)
     socketio.init_app(app)

@@ -27,8 +27,8 @@ TODO: Configurable copying of certain folders/configs from a source env
 
 
 class NewDevEnvGen(BaseGenerator):
-    """Generates a new environment cluster (env2, env3, etc)
-    """
+    """Generates a new environment cluster (env2, env3, etc)"""
+
     server_root: Path
 
     def __init__(self, base_env: Env):

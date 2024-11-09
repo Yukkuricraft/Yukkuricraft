@@ -1,10 +1,11 @@
 import json
 
-from flask import Blueprint, request  # type: ignore
+from flask import request  # type: ignore
+from flask_openapi3 import APIBlueprint  # type: ignore
 
 from src.api.lib.auth import (
+    return_cors_response,
     validate_access_token,
-    intercept_cors_preflight,
     make_cors_response,
 )
 from src.api.lib.backup_management import BackupManagement
@@ -13,13 +14,19 @@ from src.api.lib.helpers import log_request
 from src.common.environment import Env
 from src.common.helpers import log_exception
 
-backups_bp: Blueprint = Blueprint("backups", __name__)
+backups_bp: APIBlueprint = APIBlueprint("backups", __name__, url_prefix="/backups")
 
 BackupsApi = BackupManagement()
 
 
-@backups_bp.route("/list-by-tags", methods=["OPTIONS", "POST"])
-@intercept_cors_preflight
+@backups_bp.route("/list-by-tags", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def list_backups_options_handler():
+    return return_cors_response()
+
+
+@backups_bp.post("/list-by-tags")
 @validate_access_token
 @log_request
 def list_backups_handler():
@@ -48,8 +55,14 @@ def list_backups_handler():
     return resp
 
 
-@backups_bp.route("/create-new-minecraft-backup", methods=["OPTIONS", "POST"])
-@intercept_cors_preflight
+@backups_bp.route("/create-new-minecraft-backup", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def create_new_minecraft_backup_options_handler():
+    return return_cors_response()
+
+
+@backups_bp.post("/create-new-minecraft-backup")
 @validate_access_token
 @log_request
 def create_new_minecraft_backup_handler():
@@ -81,8 +94,14 @@ def create_new_minecraft_backup_handler():
     return resp
 
 
-@backups_bp.route("/restore-minecraft-backup", methods=["OPTIONS", "POST"])
-@intercept_cors_preflight
+@backups_bp.route("/restore-minecraft-backup", methods=["OPTIONS"])
+@validate_access_token
+@log_request
+def restore_minecraft_backup_options_handler():
+    return return_cors_response()
+
+
+@backups_bp.post("/restore-minecraft-backup")
 @validate_access_token
 @log_request
 def restore_minecraft_backup_handler():

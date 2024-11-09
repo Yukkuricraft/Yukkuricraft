@@ -18,6 +18,7 @@ class User(db.Model, SerializerMixin):
 
 
 class JTI(db.Model, SerializerMixin):
+    __tablename__ = "JTI"
     # JWT Token ID
     jti = db.Column(db.String(128), primary_key=True)
 

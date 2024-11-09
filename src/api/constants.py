@@ -42,7 +42,9 @@ elif IS_PROD:
     API_HOST = "api.yukkuricraft.net"
     HOSTNAME = "yukkuricraft.net"
 else:
-    raise RuntimeError(f"Found running on an unknown environment! CONFIGURATION_TYPE was '${CONFIGURATION_TYPE}'")
+    raise RuntimeError(
+        f"Found running on an unknown environment! CONFIGURATION_TYPE was '${CONFIGURATION_TYPE}'"
+    )
 
 HOST_PASSWD = "/etc/host-passwd"
 WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"

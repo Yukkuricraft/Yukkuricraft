@@ -1,7 +1,5 @@
-from flask import Blueprint  # type: ignore
+from flask_openapi3 import APIBlueprint  # type: ignore
 from flask_socketio import emit  # type: ignore
-
-from pprint import pformat
 
 from src.api.lib.sockets import socketio
 from src.api.lib.docker_management import DockerManagement
@@ -10,7 +8,7 @@ from src.common.environment import Env
 from src.api.lib.helpers import log_request
 
 DockerMgmtApi = DockerManagement()
-sockets_bp = Blueprint("sockets", __name__)
+sockets_bp: APIBlueprint = APIBlueprint("sockets", __name__, url_prefix="/sockets")
 
 
 @socketio.on("connect")

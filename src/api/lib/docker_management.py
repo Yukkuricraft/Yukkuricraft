@@ -320,7 +320,6 @@ class DockerManagement:
 
         return None
 
-
     def up_one_container(self, container_name: str):
         """Start a single container by `container_name`
 
