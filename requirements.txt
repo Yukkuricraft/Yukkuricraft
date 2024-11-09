@@ -55,14 +55,14 @@ pyrsistent==0.18.1
 python-call-graph==2.1.2
 python-engineio==4.3.4
 python-socketio==5.7.1
-pytz==2022.1
+pytz==2024.1
 PyYAML==6.0
 requests==2.28.1
 rsa==4.8
 sh==1.14.3
 six==1.16.0
 soupsieve==2.3.2.post1
-SQLAlchemy==2.0.36
+SQLAlchemy==2.0.29
 SQLAlchemy-serializer==1.4.22
 toml==0.10.2
 tomli==2.0.1
