@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from pprint import pformat
 
+from src.api import security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
@@ -29,7 +30,7 @@ from src.common.logger_setup import logger
 from src.common import server_paths
 
 envs_bp: APIBlueprint = APIBlueprint(
-    "environment", __name__, url_prefix="/environments"
+    "environment", __name__, url_prefix="/environments", abp_security=security
 )
 
 class EnvPath(BaseModel):

@@ -1,6 +1,14 @@
-from flask_openapi3 import OpenAPI
+from flask_openapi3 import OpenAPI, Info
 from src.common import server_paths  # type: ignore
 
+bearer_auth = {
+    "type": "http",
+    "scheme": "bearer",
+}
+security_schemes = {"bearerAuth": bearer_auth}
+security = [{"bearerAuth": []}]
+
+info = Info(title="Yukkuricraft Backend API", version="1.0.1")
 
 def create_app():
     from src.common.config import load_env_config
@@ -15,7 +23,7 @@ def create_app():
     from src.api.blueprints.sockets import sockets_bp
 
     db_config = load_env_config(server_paths.get_api_db_env_file_path())
-    app = OpenAPI("YC API")
+    app = OpenAPI("YC API", info=info, security_schemes=security_schemes)
     app.config[
         "SQLALCHEMY_DATABASE_URI"
     ] = f"mysql://root:{db_config['MYSQL_ROOT_PASSWORD']}@yc-api-mysql/{db_config['MYSQL_DATABASE']}"

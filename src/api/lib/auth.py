@@ -136,7 +136,7 @@ def get_access_token_from_headers() -> Tuple[str, str]:
     Returns:
         Tuple[str, str]: Scheme and token
     """
-    # Authorization: YC-Token <access_token>
+    # Authorization: Bearer <access_token>
     auth_header = request.headers.get("Authorization", "")
 
     logger.info(f"auth_header: {auth_header}")
@@ -154,7 +154,7 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
 
     Expects to be used behind an nginx auth_request subrequest with the original uri passed as an X-Original-Uri header
 
-    Unlike with the `Authorization:` header, we do not expect a token scheme for querystring authorization. Instead we pass back a hardcoded scheme of `YC-Token` for compatibility.
+    Unlike with the `Authorization:` header, we do not expect a token scheme for querystring authorization. Instead we pass back a hardcoded scheme of `Bearer` for compatibility.
 
 
     Returns:
@@ -178,7 +178,7 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
             "Found valid proxy uri header but no authorization token!"
         )
 
-    return "YC-Token", auth_token
+    return "Bearer", auth_token
 
 
 def generate_access_token_if_valid(token: str) -> Optional[str]:

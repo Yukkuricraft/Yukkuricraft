@@ -3,6 +3,7 @@ import json
 from flask import request  # type: ignore
 from flask_openapi3 import APIBlueprint  # type: ignore
 
+from src.api import security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
@@ -14,7 +15,7 @@ from src.api.lib.helpers import log_request
 from src.common.environment import Env
 from src.common.helpers import log_exception
 
-backups_bp: APIBlueprint = APIBlueprint("backups", __name__, url_prefix="/backups")
+backups_bp: APIBlueprint = APIBlueprint("backups", __name__, url_prefix="/backups", abp_security=security)
 
 BackupsApi = BackupManagement()
 

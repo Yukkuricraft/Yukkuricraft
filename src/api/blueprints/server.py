@@ -4,6 +4,7 @@ from flask_openapi3 import APIBlueprint  # type: ignore
 
 from pydantic import BaseModel, Field
 
+from src.api import security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
@@ -17,7 +18,7 @@ from src.api.lib.docker_management import (
 from src.api.lib.helpers import log_request
 from src.common.environment import Env
 
-server_bp: APIBlueprint = APIBlueprint("server", __name__, url_prefix="/server")
+server_bp: APIBlueprint = APIBlueprint("server", __name__, url_prefix="/server", abp_security=security)
 DockerMgmtApi = DockerManagement()
 
 class EnvPath(BaseModel):

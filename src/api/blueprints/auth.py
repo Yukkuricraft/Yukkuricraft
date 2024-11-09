@@ -8,6 +8,7 @@ from flask_openapi3 import APIBlueprint  # type: ignore
 from datetime import datetime
 from pprint import pformat
 
+from src.api import security
 from src.api.lib.auth import (
     make_cors_response,
     intercept_cors_preflight,
@@ -86,7 +87,7 @@ def me_options_handler():
     return return_cors_response()
 
 
-@auth_bp.get("/me")
+@auth_bp.get("/me", security=security)
 @validate_access_token
 @log_request
 def me_handler():

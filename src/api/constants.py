@@ -49,5 +49,5 @@ else:
 HOST_PASSWD = "/etc/host-passwd"
 WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"
 ACCESS_TOKEN_DUR_MINS = 30
-YC_TOKEN_AUTH_SCHEME = "YC-Token"
+YC_TOKEN_AUTH_SCHEME = "Bearer"
 ENV_FOLDER: Path = Path("/app/env")

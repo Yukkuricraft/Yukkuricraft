@@ -7,6 +7,7 @@ from flask_openapi3 import APIBlueprint  # type: ignore
 
 from pathlib import Path
 
+from src.api import security
 from src.api.lib.auth import (
     intercept_cors_preflight,
     return_cors_response,
@@ -18,7 +19,7 @@ from src.api.lib.helpers import log_request
 
 from src.common.logger_setup import logger
 
-files_bp: APIBlueprint = APIBlueprint("files", __name__, url_prefix="/files")
+files_bp: APIBlueprint = APIBlueprint("files", __name__, url_prefix="/files", abp_security=security)
 
 
 @files_bp.route("/list", methods=["OPTIONS"])
