@@ -5,6 +5,10 @@ import json
 from flask import abort, request  # type: ignore
 from flask_openapi3 import APIBlueprint  # type: ignore
 
+from pydantic import BaseModel, Field
+
+from pprint import pformat
+
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
@@ -28,9 +32,10 @@ envs_bp: APIBlueprint = APIBlueprint(
     "environment", __name__, url_prefix="/environments"
 )
 
+class EnvPath(BaseModel):
+    env_str: str = Field(..., description="Environment id string")
 
 @envs_bp.route("/create-env", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def create_env_preflight_handler():
     return return_cors_response()
@@ -80,17 +85,17 @@ def create_env_handler():
     return resp
 
 
-@envs_bp.route("/<env_str>", methods=["OPTIONS"])
-@validate_access_token
+@envs_bp.route("/<string:env_str>", methods=["OPTIONS"])
 @log_request
-def delete_env_options_handler():
+def delete_env_options_handler(env_str):
     return return_cors_response()
 
 
-@envs_bp.delete("/<env_str>")
+@envs_bp.delete("/<string:env_str>")
 @validate_access_token
 @log_request
-def delete_env_handler(env_str):
+def delete_env_handler(path: EnvPath):
+    env_str = path.env_str
     env = Env(env_str)
     env_dict = env.to_json()
 
@@ -129,18 +134,17 @@ def delete_env_handler(env_str):
     return resp
 
 
-@envs_bp.route("/<env_str>/generate-configs", methods=["OPTIONS"])
-@validate_access_token
+@envs_bp.route("/<string:env_str>/generate-configs", methods=["OPTIONS"])
 @log_request
-def generate_configs_options_handler():
+def generate_configs_options_handler(env_str):
     return return_cors_response()
 
 
-@envs_bp.post("/<env_str>/generate-configs")
+@envs_bp.post("/<string:env_str>/generate-configs")
 @validate_access_token
 @log_request
-def generate_configs_handler(env_str):
-    env = Env(env_str)
+def generate_configs_handler(path: EnvPath):
+    env = Env(path.env_str)
     env_dict = env.to_json()
 
     resp = make_cors_response()
@@ -153,16 +157,19 @@ def generate_configs_handler(env_str):
 
 
 @envs_bp.route("/list-envs-with-configs", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def list_envs_with_configs_options_handler():
-    return return_cors_response()
+    logger.info("???")
+    resp = return_cors_response()
+    logger.info(pformat(resp))
+    return resp
 
 
 @envs_bp.get("/list-envs-with-configs")
 @validate_access_token
 @log_request
 def list_envs_with_configs_handler():
+    logger.info(pformat(request))
     resp = make_cors_response()
     resp.status = 200
 

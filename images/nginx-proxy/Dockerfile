@@ -1,4 +1,4 @@
-FROM nginxproxy/nginx-proxy:alpine
+FROM nginxproxy/nginx-proxy:1.6-alpine
 
 # UID/GID are assumed to be 101 based on https://hub.docker.com/_/nginx
 ENV UID=101

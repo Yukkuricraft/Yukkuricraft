@@ -1,8 +1,10 @@
 import shutil
 from typing import Callable, List, Optional
+from pprint import pformat
 
 from src.api.constants import MIN_VALID_PROXY_PORT, MAX_VALID_PROXY_PORT
 
+from src.common.types import KnownServerTypes
 from src.common.environment import Env, InvalidPortException
 from src.common.helpers import log_exception
 from src.common.logger_setup import logger
@@ -31,6 +33,7 @@ def get_next_valid_env_number():
     return next_valid_env_number
 
 
+
 def list_valid_envs(as_obj=True) -> List[Env | str]:
     """Returns a list of valid and defined `Env`s in the `env/` folder
 
@@ -40,6 +43,7 @@ def list_valid_envs(as_obj=True) -> List[Env | str]:
     Returns:
         List[Env|str]: List of valid envs where type depends on `as_obj`
     """
+
     envs = []
 
     for item in server_paths.get_env_toml_config_dir_path().iterdir():
@@ -57,6 +61,7 @@ def list_valid_envs(as_obj=True) -> List[Env | str]:
 
     # Sorting doesn't matter in backend world but does in frontend.
     rtn = sorted(envs, key=lambda d: d.name)
+    logger.info(pformat(rtn))
     return rtn
 
 
@@ -154,7 +159,8 @@ def generate_all(env: Env):
 
     generate_velocity_and_docker(env)
 
-    server_type_actions.write_fabric_proxy_files(env)
+    if env.server_type == KnownServerTypes.FABRIC:
+        server_type_actions.write_fabric_proxy_files(env)
 
 
 def generate_velocity_and_docker(env: Env):

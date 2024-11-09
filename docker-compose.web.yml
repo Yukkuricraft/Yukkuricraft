@@ -85,7 +85,7 @@ services:
     networks:
       - yc-web-dev
     environment:
-      DOCKER_HOST: /tmp/docker.sock
+      DOCKER_HOST: unix:///tmp/docker.sock
     restart: 'unless-stopped'
     logging:
       driver: "json-file"

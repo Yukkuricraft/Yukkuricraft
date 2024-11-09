@@ -20,7 +20,6 @@ BackupsApi = BackupManagement()
 
 
 @backups_bp.route("/list-by-tags", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def list_backups_options_handler():
     return return_cors_response()
@@ -56,7 +55,6 @@ def list_backups_handler():
 
 
 @backups_bp.route("/create-new-minecraft-backup", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def create_new_minecraft_backup_options_handler():
     return return_cors_response()
@@ -95,7 +93,6 @@ def create_new_minecraft_backup_handler():
 
 
 @backups_bp.route("/restore-minecraft-backup", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def restore_minecraft_backup_options_handler():
     return return_cors_response()

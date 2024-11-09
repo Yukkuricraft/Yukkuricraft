@@ -22,7 +22,6 @@ files_bp: APIBlueprint = APIBlueprint("files", __name__, url_prefix="/files")
 
 
 @files_bp.route("/list", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def list_files_options_handler():
     return return_cors_response()
@@ -47,7 +46,6 @@ def list_files_handler():
 
 
 @files_bp.route("/read", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def read_file_options_handler():
     return return_cors_response()
@@ -71,7 +69,6 @@ def read_file_handler():
 
 
 @files_bp.route("/write", methods=["OPTIONS"])
-@validate_access_token
 @log_request
 def write_file_options_handler():
     return return_cors_response()

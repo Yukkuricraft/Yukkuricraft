@@ -36,8 +36,8 @@ Endpoints related to management of environments
 |Method|Endpoint|Purpose|
 |------|--------|-------|
 |`POST`|`/environment/create_env`|Create new env|
-|`DELETE`|`/environment/<env_str>`|To delete env `env_str`|
-|`POST`|`/environment/<env_str>/generate-configs`|Regenerates all configs for the env specified|
+|`DELETE`|`/environment/<string:env_str>`|To delete env `env_str`|
+|`POST`|`/environment/<string:env_str>/generate-configs`|Regenerates all configs for the env specified|
 |`GET`|`environment/list-envs-with-configs`|List all defined envs with valid configs|
 
 
@@ -48,12 +48,12 @@ Should probably be called containers and not "server".
 
 |Method|Endpoint|Purpose|
 |------|--------|-------|
-|`GET`|`/server/<env_str>/containers`|List all defined containers for an `env_str`|
-|`GET`|`/server/<env_str>/containers/active`|List subset of defined containers that are currently up and running in Docker.|
-|`POST`|`/server/<env_str>/containers/up`|Starts up all containers for `env_str`|
-|`POST`|`/server/<env_str>/containers/up_one`|Start one container in `env_str`|
-|`POST`|`/server/<env_str>/containers/down`|Shuts down all containers for `env_str`|
-|`POST`|`/server/<env_str>/containers/down_one`|Kills one container in `env_str`|
+|`GET`|`/server/<string:env_str>/containers`|List all defined containers for an `env_str`|
+|`GET`|`/server/<string:env_str>/containers/active`|List subset of defined containers that are currently up and running in Docker.|
+|`POST`|`/server/<string:env_str>/containers/up`|Starts up all containers for `env_str`|
+|`POST`|`/server/<string:env_str>/containers/up_one`|Start one container in `env_str`|
+|`POST`|`/server/<string:env_str>/containers/down`|Shuts down all containers for `env_str`|
+|`POST`|`/server/<string:env_str>/containers/down_one`|Kills one container in `env_str`|
 |`POST`|`/server/containers/copy-configs-to-bindmount`|Copy configs from the container FS to host FS by copying files back to the bindmounts.|
 
 

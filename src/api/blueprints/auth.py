@@ -81,6 +81,7 @@ def logout_handler():
 
 
 @auth_bp.route("/me", methods=["OPTIONS"])
+@log_request
 def me_options_handler():
     return return_cors_response()
 

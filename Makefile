@@ -11,22 +11,22 @@ DOCKER_GID=$(shell python -c 'import os; print(os.stat(os.path.realpath("/var/ru
 ifeq ($(shell hostname), neo-yukkuricraft)
   export WEB_DOCKER_ENV_FILE=envs/prod.env
   export DOCKER_API_HOST=docker.yukkuricraft.net
-  export DOCKER_SOCKET_URI=unix://var/run/docker.sock
+  export DOCKER_SOCKET_URI=/tmp/docker.sock
   export WEB_COMPOSE_FILE="docker-compose.web.yml"
 else ifeq ($(shell hostname), cirno.localdomain)
   export WEB_DOCKER_ENV_FILE=envs/dev.env
   export DOCKER_API_HOST=dev.docker.yukkuricraft.net
-  export DOCKER_SOCKET_URI=unix://var/run/docker.sock
+  export DOCKER_SOCKET_URI=/tmp/docker.sock
   export WEB_COMPOSE_FILE="docker-compose.web.yml"
 else
   export WEB_DOCKER_ENV_FILE=envs/localhost.env
   export DOCKER_API_HOST=docker.localhost
   ifneq (,$(findstring Darwin,$(shell uname)))
     export WEB_COMPOSE_FILE="docker-compose.web.mac.yml"
-	export DOCKER_SOCKET_URI=socat:2375
+    export DOCKER_SOCKET_URI=socat:2375
   else
     export WEB_COMPOSE_FILE="docker-compose.web.yml"
-	export DOCKER_SOCKET_URI=unix://var/run/docker.sock
+    export DOCKER_SOCKET_URI=/tmp/docker.sock
   endif
 endif
 

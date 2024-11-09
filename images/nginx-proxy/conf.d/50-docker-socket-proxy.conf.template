@@ -5,7 +5,7 @@ map $http_upgrade $connection_upgrade {
 }
 
 upstream dockersock {
-  server unix:/tmp/docker.sock;
+  server unix:${DOCKER_SOCKET_URI};
 }
 
 upstream yc-api {
