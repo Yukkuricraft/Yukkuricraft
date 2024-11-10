@@ -5,9 +5,9 @@ import json
 from flask import abort, request  # type: ignore
 from flask_openapi3 import APIBlueprint  # type: ignore
 
-from pydantic import BaseModel, Field
-
 from pprint import pformat
+
+from src.api.blueprints import EnvRequestPath
 
 from src.api import security
 from src.api.lib.auth import (
@@ -33,8 +33,6 @@ envs_bp: APIBlueprint = APIBlueprint(
     "environment", __name__, url_prefix="/environments", abp_security=security
 )
 
-class EnvPath(BaseModel):
-    env_str: str = Field(..., description="Environment id string")
 
 @envs_bp.route("/create-env", methods=["OPTIONS"])
 @log_request
@@ -95,7 +93,7 @@ def delete_env_options_handler(env_str):
 @envs_bp.delete("/<string:env_str>")
 @validate_access_token
 @log_request
-def delete_env_handler(path: EnvPath):
+def delete_env_handler(path: EnvRequestPath):
     env_str = path.env_str
     env = Env(env_str)
     env_dict = env.to_json()
@@ -144,7 +142,7 @@ def generate_configs_options_handler(env_str):
 @envs_bp.post("/<string:env_str>/generate-configs")
 @validate_access_token
 @log_request
-def generate_configs_handler(path: EnvPath):
+def generate_configs_handler(path: EnvRequestPath):
     env = Env(path.env_str)
     env_dict = env.to_json()
 

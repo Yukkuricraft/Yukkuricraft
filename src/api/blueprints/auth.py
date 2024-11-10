@@ -2,16 +2,15 @@
 
 import json
 
-from flask import request  # type: ignore
 from flask_openapi3 import APIBlueprint  # type: ignore
 
+from http import HTTPStatus
 from datetime import datetime
 from pprint import pformat
 
 from src.api import security
 from src.api.lib.auth import (
     make_cors_response,
-    intercept_cors_preflight,
     generate_access_token_if_valid,
     return_cors_response,
     validate_access_token,
@@ -21,10 +20,11 @@ from src.api.lib.helpers import log_request
 from src.api.db import db
 from src.api.models import AccessToken, User
 
+from src.api.blueprints import LoginRequestBody, LoginResponseBody, MeResponse, UnauthorizedResponse
+
 from src.common.logger_setup import logger
 
 auth_bp: APIBlueprint = APIBlueprint("auth", __name__, url_prefix="/auth")
-
 
 @auth_bp.route("/login", methods=["OPTIONS"])
 @log_request
@@ -32,9 +32,15 @@ def login_options_handler():
     return return_cors_response()
 
 
-@auth_bp.post("/login")
+@auth_bp.post(
+    "/login",
+    responses={
+        HTTPStatus.OK: LoginResponseBody,
+        HTTPStatus.UNAUTHORIZED: UnauthorizedResponse,
+    },
+)
 @log_request
-def login_handler():
+def login_handler(body: LoginRequestBody):
     """Logs user in
 
     Takes the `id_token` field in the body and validates it as a Google OAuth2 token.
@@ -43,13 +49,11 @@ def login_handler():
     resp = make_cors_response()
     resp.status = 401
 
-    data = request.get_json()
-
     logger.warning(">>>>>>>>>>>>>>>>>>")
     logger.warning(resp)
-    logger.warning(data)
+    logger.warning(body)
 
-    access_token = generate_access_token_if_valid(data.get("id_token", None))
+    access_token = generate_access_token_if_valid(body.id_token)
     if access_token is not None:
         resp.status = 200
         resp.data = json.dumps({"access_token": access_token})
@@ -87,13 +91,20 @@ def me_options_handler():
     return return_cors_response()
 
 
-@auth_bp.get("/me", security=security)
+@auth_bp.get(
+    "/me",
+    security=security,
+    responses={
+        HTTPStatus.OK: MeResponse,
+        HTTPStatus.UNAUTHORIZED: UnauthorizedResponse,
+    },
+)
 @validate_access_token
 @log_request
 def me_handler():
     """Identity validation endpoint
 
-    Returns a 2xx/5xx depending on if a request was made with a valid JWT token in the header.
+    Returns a 2xx/4xx depending on if a request was made with a valid JWT token in the header.
     """
     resp = make_cors_response()
     _scheme, access_token = get_access_token_from_headers()

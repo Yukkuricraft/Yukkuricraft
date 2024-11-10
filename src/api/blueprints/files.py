@@ -9,7 +9,6 @@ from pathlib import Path
 
 from src.api import security
 from src.api.lib.auth import (
-    intercept_cors_preflight,
     return_cors_response,
     validate_access_token,
     make_cors_response,
