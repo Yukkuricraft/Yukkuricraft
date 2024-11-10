@@ -24,13 +24,15 @@ from src.api.lib.environment import (
 )
 from src.api.lib.helpers import log_request
 
+from src.api.blueprints import environment_tag
+
 from src.common.config import load_toml_config
 from src.common.environment import Env
 from src.common.logger_setup import logger
 from src.common import server_paths
 
 envs_bp: APIBlueprint = APIBlueprint(
-    "environment", __name__, url_prefix="/environments", abp_security=security
+    "environment", __name__, url_prefix="/environments", abp_security=security, abp_tags=[environment_tag]
 )
 
 

@@ -12,10 +12,12 @@ from src.api.lib.auth import (
 from src.api.lib.backup_management import BackupManagement
 from src.api.lib.helpers import log_request
 
+from src.api.blueprints import backups_tag
+
 from src.common.environment import Env
 from src.common.helpers import log_exception
 
-backups_bp: APIBlueprint = APIBlueprint("backups", __name__, url_prefix="/backups", abp_security=security)
+backups_bp: APIBlueprint = APIBlueprint("backups", __name__, url_prefix="/backups", abp_security=security, abp_tags=[backups_tag])
 
 BackupsApi = BackupManagement()
 

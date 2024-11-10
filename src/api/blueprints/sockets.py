@@ -4,12 +4,16 @@ from flask_socketio import emit  # type: ignore
 from src.api import security
 from src.api.lib.sockets import socketio
 from src.api.lib.docker_management import DockerManagement
+
+from src.api.blueprints import sockets_tag
+
 from src.common.logger_setup import logger
 from src.common.environment import Env
+
 from src.api.lib.helpers import log_request
 
 DockerMgmtApi = DockerManagement()
-sockets_bp: APIBlueprint = APIBlueprint("sockets", __name__, url_prefix="/sockets", abp_security=security)
+sockets_bp: APIBlueprint = APIBlueprint("sockets", __name__, url_prefix="/sockets", abp_security=security, abp_tags=[sockets_tag])
 
 
 @socketio.on("connect")

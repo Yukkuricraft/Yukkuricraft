@@ -14,11 +14,11 @@ from src.api.lib.docker_management import (
 )
 from src.api.lib.helpers import log_request
 
-from src.api.blueprints import EnvRequestPath
+from src.api.blueprints import server_tag, EnvRequestPath
 
 from src.common.environment import Env
 
-server_bp: APIBlueprint = APIBlueprint("server", __name__, url_prefix="/server", abp_security=security)
+server_bp: APIBlueprint = APIBlueprint("server", __name__, url_prefix="/server", abp_security=security, abp_tags=[server_tag])
 DockerMgmtApi = DockerManagement()
 
 @server_bp.route("/<string:env_str>/containers", methods=["OPTIONS"])

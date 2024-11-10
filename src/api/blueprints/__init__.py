@@ -1,5 +1,12 @@
+from flask_openapi3 import Tag # type: ignore
 from pydantic import BaseModel, Field # type: ignore
 
+auth_tag = Tag(name='Authorization', description="Authorization endpoints")
+backups_tag = Tag(name='Backups', description="Backup endpoints")
+environment_tag = Tag(name='Environments', description="Environment management endpoints")
+files_tag = Tag(name='Files', description="File management endpoints")
+server_tag = Tag(name='Server', description="Server management endpoints")
+sockets_tag = Tag(name='Sockets', description="Sockets endpoints")
 
 class UnauthorizedResponse(BaseModel):
     message: str = Field(description="A message")

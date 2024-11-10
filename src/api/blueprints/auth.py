@@ -20,11 +20,11 @@ from src.api.lib.helpers import log_request
 from src.api.db import db
 from src.api.models import AccessToken, User
 
-from src.api.blueprints import LoginRequestBody, LoginResponseBody, MeResponse, UnauthorizedResponse
+from src.api.blueprints import auth_tag, LoginRequestBody, LoginResponseBody, MeResponse, UnauthorizedResponse
 
 from src.common.logger_setup import logger
 
-auth_bp: APIBlueprint = APIBlueprint("auth", __name__, url_prefix="/auth")
+auth_bp: APIBlueprint = APIBlueprint("auth", __name__, url_prefix="/auth", abp_tags=[auth_tag])
 
 @auth_bp.route("/login", methods=["OPTIONS"])
 @log_request
@@ -41,9 +41,9 @@ def login_options_handler():
 )
 @log_request
 def login_handler(body: LoginRequestBody):
-    """Logs user in
+    """Logs user in and provides a temporary access token for the session.
 
-    Takes the `id_token` field in the body and validates it as a Google OAuth2 token.
+    `id_token` is expected to be a token string generated via Google's OAuth2 flow.
     If valid, will return a generated access token to be used with all of our authenticated endpoints.
     """
     resp = make_cors_response()
@@ -67,7 +67,7 @@ def logout_options_handler():
     return return_cors_response()
 
 
-@auth_bp.post("/logout")
+@auth_bp.post("/logout", security=security)
 @log_request
 def logout_handler():
     """Logs out of session for user
