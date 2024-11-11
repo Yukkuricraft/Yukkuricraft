@@ -3,6 +3,7 @@ from flask_openapi3 import Tag  # type: ignore
 from pydantic import BaseModel, Field  # type: ignore
 
 from src.api.lib import Backup, LegacyActiveContainer, LegacyDefinedContainer
+from src.common.environment import Env, EnvModel
 
 auth_tag = Tag(name="Authorization", description="Authorization endpoints")
 backups_tag = Tag(name="Backups", description="Backup endpoints")
@@ -87,6 +88,38 @@ class RestoreBackupResponse(BaseModel):
 # ------------------
 
 
+class CreateEnvironmentRequestBody(BaseModel):
+    PROXY_PORT: int = Field(description="Proxy port")
+    ENV_ALIAS: str = Field(description="Env alias")
+    DESCRIPTION: str = Field(description="Env description")
+    SERVER_TYPE: str = Field(description="Server type of environment")
+    ENABLE_ENV_PROTECTION: str = Field(
+        description="Whether env protection is enabled or not", default=False
+    )
+
+
+class CreateEnvironmentResponse(BaseModel):
+    created_env: EnvModel = Field(description="Environment that was created")
+
+
+class DeleteEnvironmentResponse(BaseModel):
+    success: bool = Field(description="Whether the deletion was successful or not")
+    env: EnvModel = Field(description="The env we attempted to delete")
+
+
+class GenerateConfigsResponse(BaseModel):
+    env: EnvModel = Field(description="The env we generated configs for")
+
+
+class ListEnvironmentsResponse(BaseModel):
+    envs: List[EnvModel] = Field(description="List of all defined envs")
+
+
+# -----------------------
+# Server/Container Models
+# -----------------------
+
+
 class ListDefinedContainersResponse(BaseModel):
     defined_containers: List[LegacyDefinedContainer] = Field(
         description="List of defined containers"
@@ -97,8 +130,3 @@ class ListActiveContainersResponse(BaseModel):
     active_containers: List[LegacyActiveContainer] = Field(
         description="List of currently running containers"
     )
-
-
-# -----------------------
-# Server/Container Models
-# -----------------------
