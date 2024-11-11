@@ -20,6 +20,7 @@ from src.api.blueprints import (
     ContainerNameRequestPath,
     ListActiveContainersResponse,
     ListDefinedContainersResponse,
+    UnauthorizedResponse,
     server_tag,
     EnvRequestPath,
 )
@@ -34,6 +35,7 @@ server_bp: APIBlueprint = APIBlueprint(
     url_prefix="/server",
     abp_security=security,
     abp_tags=[server_tag],
+    abp_responses={HTTPStatus.UNAUTHORIZED: UnauthorizedResponse},
 )
 DockerMgmtApi = DockerManagement()
 

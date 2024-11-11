@@ -58,6 +58,30 @@ class ListBackupsResponse(BaseModel):
     backups: List[Backup] = Field(description="List of backups found")
 
 
+class CreateBackupRequestBody(BaseModel):
+    target_env: str = Field(description="Environment to create backup for")
+    target_world_group: str = Field(
+        description="World group name to backup within the target_env"
+    )
+
+
+class CreateBackupResponse(BaseModel):
+    success: bool = Field(description="Whether the backup succeeded or not")
+    output: str = Field(description="Stdout from the backup container run")
+
+
+class RestoreBackupRequestBody(BaseModel):
+    target_hostname: str = Field(description="Hostname of container to restore")
+    target_snapshot_id: str = Field(
+        description="The restic snapshot ID for the backup to restore"
+    )
+
+
+class RestoreBackupResponse(BaseModel):
+    success: bool = Field(description="Whether the backup succeeded or not")
+    output: str = Field(description="Stdout from the backup container run")
+
+
 # ------------------
 # Environment Models
 # ------------------

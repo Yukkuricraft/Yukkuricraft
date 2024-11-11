@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from http import HTTPStatus
 import json
 
 from flask import abort, request  # type: ignore
@@ -7,7 +8,7 @@ from flask_openapi3 import APIBlueprint  # type: ignore
 
 from pprint import pformat
 
-from src.api.blueprints import EnvRequestPath
+from src.api.blueprints import EnvRequestPath, UnauthorizedResponse
 
 from src.api import security
 from src.api.lib.auth import (
@@ -37,6 +38,7 @@ envs_bp: APIBlueprint = APIBlueprint(
     url_prefix="/environments",
     abp_security=security,
     abp_tags=[environment_tag],
+    abp_responses={HTTPStatus.UNAUTHORIZED: UnauthorizedResponse},
 )
 
 

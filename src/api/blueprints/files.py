@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from http import HTTPStatus
 import json
 
 from flask import abort, request  # type: ignore
@@ -16,12 +17,17 @@ from src.api.lib.auth import (
 from src.api.lib.file_management import FileManager
 from src.api.lib.helpers import log_request
 
-from src.api.blueprints import files_tag
+from src.api.blueprints import UnauthorizedResponse, files_tag
 
 from src.common.logger_setup import logger
 
 files_bp: APIBlueprint = APIBlueprint(
-    "files", __name__, url_prefix="/files", abp_security=security, abp_tags=[files_tag]
+    "files",
+    __name__,
+    url_prefix="/files",
+    abp_security=security,
+    abp_tags=[files_tag],
+    abp_responses={HTTPStatus.UNAUTHORIZED: UnauthorizedResponse},
 )
 
 

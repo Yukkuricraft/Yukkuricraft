@@ -71,15 +71,6 @@ def convert_dockerpy_container_to_container_definition(
 
         started_at_truncated_ms = started_at.split(".")[0]
 
-        logger.info(
-            pformat(
-                {
-                    "started_at": started_at,
-                    "started_at_truncated_ms": started_at_truncated_ms,
-                }
-            )
-        )
-
         try:
             running_for_seconds = datetime.now() - datetime.fromisoformat(
                 started_at_truncated_ms

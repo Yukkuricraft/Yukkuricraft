@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from flask_openapi3 import APIBlueprint  # type: ignore
 from flask_socketio import emit  # type: ignore
 
@@ -5,10 +6,9 @@ from src.api import security
 from src.api.lib.sockets import socketio
 from src.api.lib.docker_management import DockerManagement
 
-from src.api.blueprints import sockets_tag
+from src.api.blueprints import UnauthorizedResponse, sockets_tag
 
 from src.common.logger_setup import logger
-from src.common.environment import Env
 
 from src.api.lib.helpers import log_request
 
@@ -19,6 +19,7 @@ sockets_bp: APIBlueprint = APIBlueprint(
     url_prefix="/sockets",
     abp_security=security,
     abp_tags=[sockets_tag],
+    abp_responses={HTTPStatus.UNAUTHORIZED: UnauthorizedResponse},
 )
 
 
