@@ -3,6 +3,7 @@ from flask_openapi3 import Tag  # type: ignore
 from pydantic import BaseModel, Field  # type: ignore
 
 from src.api.lib import Backup, LegacyActiveContainer, LegacyDefinedContainer
+from src.api.lib.file_management import File
 from src.common.environment import Env, EnvModel
 
 auth_tag = Tag(name="Authorization", description="Authorization endpoints")
@@ -113,6 +114,39 @@ class GenerateConfigsResponse(BaseModel):
 
 class ListEnvironmentsResponse(BaseModel):
     envs: List[EnvModel] = Field(description="List of all defined envs")
+
+
+# ------------
+# Files Models
+# ------------
+
+
+class ListFilesRequestBody(BaseModel):
+    PATH: str = Field(description="Path to list files at")
+
+
+class ListFilesResponse(BaseModel):
+    path: str = Field(description="Path we are returning a list of files for")
+    ls: List[File] = Field(description="A list of files located at the queried path")
+
+
+class ReadFileRequestBody(BaseModel):
+    FILE_PATH: str = Field(description="Path to list files at")
+
+
+class ReadFileResponse(BaseModel):
+    file: str = Field(description="File we are reading")
+    content: str = Field(description="Contents of the file we read.")
+
+
+class WriteFileRequestBody(BaseModel):
+    FILE_PATH: str = Field(description="Path to list files at")
+    CONTENT: str = Field(description="Contents to write to the file")
+
+
+class WriteFileResponse(BaseModel):
+    file: str = Field(description="File we wrote to")
+    content: str = Field(description="Updated contents of the file we wrote to")
 
 
 # -----------------------

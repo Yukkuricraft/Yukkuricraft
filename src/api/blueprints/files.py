@@ -17,7 +17,16 @@ from src.api.lib.auth import (
 from src.api.lib.file_management import FileManager
 from src.api.lib.helpers import log_request
 
-from src.api.blueprints import UnauthorizedResponse, files_tag
+from src.api.blueprints import (
+    ListFilesRequestBody,
+    ListFilesResponse,
+    ReadFileRequestBody,
+    ReadFileResponse,
+    UnauthorizedResponse,
+    WriteFileRequestBody,
+    WriteFileResponse,
+    files_tag,
+)
 
 from src.common.logger_setup import logger
 
@@ -37,14 +46,16 @@ def list_files_options_handler():
     return return_cors_response()
 
 
-@files_bp.post("/list")
+@files_bp.post(
+    "/list",
+    responses={HTTPStatus.OK: ListFilesResponse},
+)
 @validate_access_token
 @log_request
-def list_files_handler():
+def list_files_handler(body: ListFilesRequestBody):
     """List files"""
-    post_data = request.get_json()
+    path = body.PATH
 
-    path = post_data.get("PATH", "")
     if not path:
         abort(400)
     path = Path(path)
@@ -62,14 +73,16 @@ def read_file_options_handler():
     return return_cors_response()
 
 
-@files_bp.post("/read")
+@files_bp.post(
+    "/read",
+    responses={HTTPStatus.OK: ReadFileResponse},
+)
 @validate_access_token
 @log_request
-def read_file_handler():
+def read_file_handler(body: ReadFileRequestBody):
     """Read file"""
-    post_data = request.get_json()
 
-    file_path = post_data.get("FILE_PATH", "")
+    file_path = body.FILE_PATH
     if not file_path:
         abort(400)
     file_path = Path(file_path)
@@ -86,18 +99,21 @@ def write_file_options_handler():
     return return_cors_response()
 
 
-@files_bp.post("/write")
+@files_bp.post(
+    "/write",
+    responses={HTTPStatus.OK: WriteFileResponse},
+)
 @validate_access_token
 @log_request
-def write_file_handler():
+def write_file_handler(body: WriteFileRequestBody):
     """Write file"""
-    post_data = request.get_json()
 
-    file_path = post_data.get("FILE_PATH", "")
+    file_path = body.FILE_PATH
     if not file_path:
         abort(400)
     file_path = Path(file_path)
-    content = post_data.get("CONTENT", "")
+
+    content = body.CONTENT
     resp_data = FileManager.write(file_path, content)
 
     resp = prepare_response()

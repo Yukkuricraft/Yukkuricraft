@@ -3,7 +3,34 @@ import stat
 from pathlib import Path
 from typing import List
 
+from pydantic import BaseModel, Field  # type: ignore
+
 from src.common.helpers import log_exception
+
+
+class ModeBits(BaseModel):
+    read: bool = Field(description="Is readable")
+    write: bool = Field(description="Is writable")
+    execute: bool = Field(description="Is executable")
+
+
+class FileMode(BaseModel):
+    file_type: str = Field(description="File type char")
+    others: ModeBits = Field(description="Global mode")
+    group: ModeBits = Field(description="Group owner mode")
+    user: ModeBits = Field(description="User owner mode")
+
+
+class File(BaseModel):
+    basename: str = Field(description="The name of the file")
+    dirname: str = Field(description="The directory the file is in")
+    uid: int = Field(description="The UID owner of the file")
+    gid: int = Field(description="The GID owner of the file")
+    file_mode: FileMode = Field(description="File mode")
+    children: List[str] = Field(description="Children")
+    size_bytes: int = Field(description="Size of file in bytes")
+    modified: int = Field(description="Modified timestamp")
+    created: int = Field(description="Created timestamp")
 
 
 class FileManager:
@@ -79,7 +106,7 @@ class FileManager:
 
         return {
             "file_type": FileManager.stat_to_file_type(mode),
-            "global": FileManager.stat_to_mode_bits(mode_str[1:4]),
+            "others": FileManager.stat_to_mode_bits(mode_str[1:4]),
             "group": FileManager.stat_to_mode_bits(mode_str[4:7]),
             "user": FileManager.stat_to_mode_bits(mode_str[7:10]),
         }
