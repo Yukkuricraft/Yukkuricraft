@@ -99,6 +99,8 @@ custom_extensions:
   mc_backups_sidecar_template:
     image: yukkuricraft/mc-backup-restic
     environment:
+      HOST_UID: ${UID}
+      HOST_GID: ${GID}
       RESTIC_HOSTNAME: YC-${ENV}-<<WORLDGROUP>>
       # Restic will also tag with <<WORLDGROUP>> as it also tags whatever BACKUP_NAME is.
       RESTIC_ADDITIONAL_TAGS: ${ENV}
@@ -190,6 +192,8 @@ services:
       net.yukkuricraft.container_type: backup
       net.yukkuricraft.container_name: mysql_backup
     environment:
+      HOST_UID: ${UID}
+      HOST_GID: ${GID}
       BACKUP_NAME: mysql
       RESTIC_ADDITIONAL_TAGS: ${ENV}
       RESTIC_HOSTNAME: YC-${ENV}-mysql

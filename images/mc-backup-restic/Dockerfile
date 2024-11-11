@@ -21,7 +21,14 @@ RUN if [ "$(cat /etc/group | grep :${HOST_GID}:)" = "" ]; then \
         echo "Group with GID ${HOST_GID} already exists - skipping groupadd"; \
     fi
 
-RUN adduser -S hostuser -u $HOST_UID -s /bin/bash hostuser
+# If user by host UID doesn't exist, create it and add to group matching host GID
+# If user by host UID does exist, just add it to the group matching host GID.
+RUN if [ "$(cat /etc/passwd | grep :${HOST_UID}:)" = "" ]; then \
+        adduser -S -u $HOST_UID -s /bin/bash -G $(cat /etc/group | grep :${HOST_GID}: | cut -d\: -f1) hostuser; \
+    else \
+        echo "User with UID ${UID} already exists - adding user ${HOST_UID} to group ${HOST_GID}"; \
+        adduser $(cat /etc/passwd | grep :${HOST_UID}: | cut -d\: -f1) $(cat /etc/group | grep :${HOST_GID}: | cut -d\: -f1); \
+    fi
 
 RUN mkdir /mysqldump && chown ${HOST_UID}:${HOST_GID} /mysqldump
 
