@@ -22,6 +22,7 @@ if [[ $(uname) == *"Darwin"* ]]; then
 else
     BASE_PATH=/var/lib/yukkuricraft
 fi
+HOST_RESTIC_ROOT=${BASE_PATH}/restic
 
 # Make dirs
 sudo mkdir -p ${BASE_PATH}/db
@@ -47,3 +48,14 @@ echo "GID=${CURR_GID}" >> ${LOCAL_ENV_FILE}
 
 # Add MC_FS_ROOT which depends on Mac or not-Mac
 echo "MC_FS_ROOT=${BASE_PATH}" >> ${LOCAL_ENV_FILE}
+echo "HOST_RESTIC_ROOT=${HOST_RESTIC_ROOT}" >> ${LOCAL_ENV_FILE}
+
+echo $(pwd)
+
+docker run \
+    -e RESTIC_REPOSITORY=/backups \
+    -e RESTIC_PASSWORD_FILE=/restic.password \
+    -v ${HOST_RESTIC_ROOT}:/backups \
+    -v $(pwd)/secrets/restic.password:/restic.password \
+    restic/restic \
+    init
