@@ -30,6 +30,8 @@ services:
       socat:
         condition: service_started
     environment:
+      HOST_UID: ${UID}
+      HOST_GID: ${GID}
       DOCKER_HOST: tcp://socat:2375
       VIRTUAL_HOST: ${API_HOST}
       VIRTUAL_PORT: 5001

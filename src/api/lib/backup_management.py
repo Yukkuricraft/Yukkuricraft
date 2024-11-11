@@ -15,6 +15,8 @@ from src.common.environment import Env
 from src.common.constants import (
     MC_DOCKER_CONTAINER_NAME_FMT,
     RESTIC_REPO_PATH,
+    HOST_UID,
+    HOST_GID,
 )
 from src.common import server_paths
 from src.common.types import DataDirType
@@ -107,6 +109,8 @@ class BackupManagement:
             image="yukkuricraft/mc-backup-restic",
             remove=True,
             environment={
+                "HOST_UID": HOST_UID,
+                "HOST_GID": HOST_GID,
                 "BACKUP_NAME": world_group,
                 "BACKUP_METHOD": "restic",
                 "SRC_DIR": "/worlds-bindmount",
