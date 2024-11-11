@@ -13,7 +13,7 @@ from src.api import security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
-    make_cors_response,
+    prepare_response,
 )
 
 from src.api.lib.environment import (
@@ -32,7 +32,11 @@ from src.common.logger_setup import logger
 from src.common import server_paths
 
 envs_bp: APIBlueprint = APIBlueprint(
-    "environment", __name__, url_prefix="/environments", abp_security=security, abp_tags=[environment_tag]
+    "environment",
+    __name__,
+    url_prefix="/environments",
+    abp_security=security,
+    abp_tags=[environment_tag],
 )
 
 
@@ -46,7 +50,7 @@ def create_env_preflight_handler():
 @validate_access_token
 @log_request
 def create_env_handler():
-    """List all containers running"""
+    """Create a new environment"""
     post_data = request.get_json()
 
     proxy_port = post_data.get("PROXY_PORT", "")
@@ -59,8 +63,7 @@ def create_env_handler():
     server_type = post_data.get("SERVER_TYPE", "")
     enable_env_protection = post_data.get("ENABLE_ENV_PROTECTION", False)
 
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
+    resp = prepare_response()
 
     resp_data = {}
     new_env: Env = create_new_env(
@@ -96,14 +99,14 @@ def delete_env_options_handler(env_str):
 @validate_access_token
 @log_request
 def delete_env_handler(path: EnvRequestPath):
+    """Delete environment"""
     env_str = path.env_str
     env = Env(env_str)
     env_dict = env.to_json()
 
     env_config = load_toml_config(server_paths.get_env_toml_config_path(env.name))
     if env_config["general"].get("enable_env_protection", False):
-        resp = make_cors_response(status_code=403)
-        resp.headers.add("Content-Type", "application/json")
+        resp = prepare_response(status_code=403)
         resp.data = json.dumps(
             {
                 "error": True,
@@ -112,8 +115,7 @@ def delete_env_handler(path: EnvRequestPath):
         )
     elif env_str in ["env1"]:
         # Blegh. Hardcoding ugly.
-        resp = make_cors_response(status_code=403)
-        resp.headers.add("Content-Type", "application/json")
+        resp = prepare_response(status_code=403)
         resp.data = json.dumps(
             {
                 "error": True,
@@ -121,8 +123,7 @@ def delete_env_handler(path: EnvRequestPath):
             }
         )
     else:
-        resp = make_cors_response(status_code=200)
-        resp.headers.add("Content-Type", "application/json")
+        resp = prepare_response(status_code=200)
 
         resp_data = {}
         resp_data["success"] = delete_env(env_str)
@@ -145,11 +146,11 @@ def generate_configs_options_handler(env_str):
 @validate_access_token
 @log_request
 def generate_configs_handler(path: EnvRequestPath):
+    """Generate configs for an environment"""
     env = Env(path.env_str)
     env_dict = env.to_json()
 
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
+    resp = prepare_response()
     resp_data = generate_env_configs(env)
     resp_data["env"] = env_dict
 
@@ -160,18 +161,19 @@ def generate_configs_handler(path: EnvRequestPath):
 @envs_bp.route("/list-envs-with-configs", methods=["OPTIONS"])
 @log_request
 def list_envs_with_configs_options_handler():
-    logger.info("???")
-    resp = return_cors_response()
-    logger.info(pformat(resp))
-    return resp
+    return return_cors_response()
 
 
 @envs_bp.get("/list-envs-with-configs")
 @validate_access_token
 @log_request
 def list_envs_with_configs_handler():
+    """List environments
+
+    Returns any environment with a valid config
+    """
     logger.info(pformat(request))
-    resp = make_cors_response()
+    resp = prepare_response()
     resp.status = 200
 
     valid_envs = list_valid_envs()

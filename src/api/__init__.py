@@ -10,6 +10,7 @@ security = [{"bearerAuth": []}]
 
 info = Info(title="Yukkuricraft Backend API", version="1.0.1")
 
+
 def create_app():
     from src.common.config import load_env_config
     from src.api.db import db

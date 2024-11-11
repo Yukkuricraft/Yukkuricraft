@@ -9,6 +9,7 @@ from pprint import pformat
 from typing import Any, Callable, List, Optional, Dict
 from ptyprocess import PtyProcessUnicode
 
+from src.api.lib import LegacyActiveContainer, LegacyDefinedContainer
 from src.api.lib.runner import Runner
 from src.api.lib.helpers import InvalidContainerNameError, seconds_to_string
 from src.common.environment import Env
@@ -31,10 +32,12 @@ from src.common.types import DataDirType
 # Basically if we want to have proper typing of the Container object on frontend, we'd have to extend our def
 # to have _all_ of the dockerpy Container fields but that feels overkill.
 # Instead, we'll just use this transformer function to convert dockerpy's Container back to our old ContainerDefinition shapes for now.
-def convert_dockerpy_container_to_container_definition(container: Container):
+def convert_dockerpy_container_to_container_definition(
+    container: Container,
+) -> LegacyActiveContainer:
     config = container.attrs.get("Config", {})
     state = container.attrs.get("State", {})
-    labels = config.get("Labels", [])
+    labels = config.get("Labels", {})
 
     mounts = list(
         map(
@@ -87,22 +90,26 @@ def convert_dockerpy_container_to_container_definition(container: Container):
 
         health_status = state.get("Health", {}).get("Status", "unknown")
         status = f"Up {running_for} ({health_status})"
-    return {
-        "Command": entry_command,
-        "ContainerName": hostname,
-        "CreatedAt": container.attrs.get("Created", "unknown"),
-        "Hostname": hostname,
-        "ID": container.attrs.get("Id", "unknown"),
-        "Image": config.get("Image", "unknown"),
-        "Labels": labels,
-        "Mounts": mounts,
-        "Names": names,
-        "Networks": list(config.get("NetworkSettings", {}).get("Networks", {}).keys()),
-        "Ports": list(config.get("ExposedPorts", {}).keys()),
-        "RunningFor": running_for,
-        "State": state.get("Status", "unknown"),
-        "Status": status,
-    }
+    return LegacyActiveContainer(
+        **{
+            "Command": entry_command,
+            "ContainerName": hostname,
+            "CreatedAt": container.attrs.get("Created", "unknown"),
+            "Hostname": hostname,
+            "ID": container.attrs.get("Id", "unknown"),
+            "Image": config.get("Image", "unknown"),
+            "Labels": labels,
+            "Mounts": mounts,
+            "Names": names,
+            "Networks": list(
+                config.get("NetworkSettings", {}).get("Networks", {}).keys()
+            ),
+            "Ports": list(config.get("ExposedPorts", {}).keys()),
+            "RunningFor": running_for,
+            "State": state.get("Status", "unknown"),
+            "Status": status,
+        }
+    )
 
 
 class DockerManagement:
@@ -139,7 +146,6 @@ class DockerManagement:
                 log_exception()
             finally:
                 logger.info("Done")
-
 
     def exec_run(
         self,
@@ -223,7 +229,7 @@ class DockerManagement:
         except docker.errors.NotFound:
             return False
 
-    def list_defined_containers(self, env: Env) -> List[Dict]:
+    def list_defined_containers(self, env: Env) -> List[LegacyDefinedContainer]:
         """Since using `docker ps` only gives us active containers, we need to parse the list of "should be available" containers.
 
         We do this by parsing the generated `gen/docker-compose.{{ENV}}.yml` file.
@@ -233,8 +239,7 @@ class DockerManagement:
             env (str): Environment name string
 
         Returns:
-            List[Dict]: List of dicts representing container definitions.
-            TODO: Dataclass this.
+            List[LegacyDefinedContainer]: List containing container definitions.
         """
 
         filepath = server_paths.get_generated_docker_compose_path(env.name)
@@ -262,7 +267,7 @@ class DockerManagement:
                     labels[key] = val
             container["labels"] = labels
 
-            defined_containers.append(container)
+            defined_containers.append(LegacyDefinedContainer(**container))
 
         return defined_containers
 

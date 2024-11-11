@@ -8,7 +8,7 @@ from src.api import security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
-    make_cors_response,
+    prepare_response,
 )
 from src.api.lib.backup_management import BackupManagement
 from src.api.lib.helpers import log_request
@@ -18,7 +18,13 @@ from src.api.blueprints import ListBackupsRequestBody, ListBackupsResponse, back
 from src.common.environment import Env
 from src.common.helpers import log_exception
 
-backups_bp: APIBlueprint = APIBlueprint("backups", __name__, url_prefix="/backups", abp_security=security, abp_tags=[backups_tag])
+backups_bp: APIBlueprint = APIBlueprint(
+    "backups",
+    __name__,
+    url_prefix="/backups",
+    abp_security=security,
+    abp_tags=[backups_tag],
+)
 
 BackupsApi = BackupManagement()
 
@@ -31,16 +37,13 @@ def list_backups_options_handler():
 
 @backups_bp.post(
     "/list-by-tags",
-    responses={
-        HTTPStatus.OK: ListBackupsResponse
-    },
+    responses={HTTPStatus.OK: ListBackupsResponse},
 )
 @validate_access_token
 @log_request
 def list_backups_handler(body: ListBackupsRequestBody):
     """List all backups per tags"""
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
+    resp = prepare_response()
 
     env_str = body.env_str
     target_tags = body.target_tags
@@ -56,9 +59,11 @@ def list_backups_handler(body: ListBackupsRequestBody):
     target_tags.append(env_str)
 
     backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
-    resp.data = json.dumps({
-        "backups": list(map(lambda b: b.model_dump(), backups)),
-    })
+    resp.data = json.dumps(
+        {
+            "backups": list(map(lambda b: b.model_dump(), backups)),
+        }
+    )
     return resp
 
 
@@ -72,9 +77,8 @@ def create_new_minecraft_backup_options_handler():
 @validate_access_token
 @log_request
 def create_new_minecraft_backup_handler():
-    """Creates a new ad-hoc minecraft backup"""
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
+    """Creates a new minecraft backup"""
+    resp = prepare_response()
 
     post_data = request.get_json()
 
@@ -111,8 +115,7 @@ def restore_minecraft_backup_options_handler():
 @log_request
 def restore_minecraft_backup_handler():
     """Restores a minecraft backup"""
-    resp = make_cors_response()
-    resp.headers.add("Content-Type", "application/json")
+    resp = prepare_response()
 
     post_data = request.get_json()
 

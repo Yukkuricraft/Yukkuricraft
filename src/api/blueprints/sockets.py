@@ -13,7 +13,13 @@ from src.common.environment import Env
 from src.api.lib.helpers import log_request
 
 DockerMgmtApi = DockerManagement()
-sockets_bp: APIBlueprint = APIBlueprint("sockets", __name__, url_prefix="/sockets", abp_security=security, abp_tags=[sockets_tag])
+sockets_bp: APIBlueprint = APIBlueprint(
+    "sockets",
+    __name__,
+    url_prefix="/sockets",
+    abp_security=security,
+    abp_tags=[sockets_tag],
+)
 
 
 @socketio.on("connect")

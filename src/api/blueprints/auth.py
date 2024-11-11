@@ -10,7 +10,7 @@ from pprint import pformat
 
 from src.api import security
 from src.api.lib.auth import (
-    make_cors_response,
+    prepare_response,
     generate_access_token_if_valid,
     return_cors_response,
     validate_access_token,
@@ -20,11 +20,20 @@ from src.api.lib.helpers import log_request
 from src.api.db import db
 from src.api.models import AccessToken, User
 
-from src.api.blueprints import auth_tag, LoginRequestBody, LoginResponse, MeResponse, UnauthorizedResponse
+from src.api.blueprints import (
+    auth_tag,
+    LoginRequestBody,
+    LoginResponse,
+    MeResponse,
+    UnauthorizedResponse,
+)
 
 from src.common.logger_setup import logger
 
-auth_bp: APIBlueprint = APIBlueprint("auth", __name__, url_prefix="/auth", abp_tags=[auth_tag])
+auth_bp: APIBlueprint = APIBlueprint(
+    "auth", __name__, url_prefix="/auth", abp_tags=[auth_tag]
+)
+
 
 @auth_bp.route("/login", methods=["OPTIONS"])
 @log_request
@@ -41,12 +50,12 @@ def login_options_handler():
 )
 @log_request
 def login_handler(body: LoginRequestBody):
-    """Logs user in and provides a temporary access token for the session.
+    """Log user in
 
     `id_token` is expected to be a token string generated via Google's OAuth2 flow.
-    If valid, will return a generated access token to be used with all of our authenticated endpoints.
+    If valid, will generate a temporary access token to be used with all of our authenticated endpoints.
     """
-    resp = make_cors_response()
+    resp = prepare_response()
     resp.status = 401
 
     logger.warning(">>>>>>>>>>>>>>>>>>")
@@ -70,11 +79,11 @@ def logout_options_handler():
 @auth_bp.post("/logout", security=security)
 @log_request
 def logout_handler():
-    """Logs out of session for user
+    """Logs out for user
 
     Ends the access token session for the user based on the supplied Auth header
     """
-    resp = make_cors_response()
+    resp = prepare_response()
     resp.status = 200
 
     _, token = get_access_token_from_headers()
@@ -106,7 +115,7 @@ def me_handler():
 
     Returns a 2xx/4xx depending on if a request was made with a valid JWT token in the header.
     """
-    resp = make_cors_response()
+    resp = prepare_response()
     _scheme, access_token = get_access_token_from_headers()
     token = AccessToken.query.filter_by(id=access_token).first()
 

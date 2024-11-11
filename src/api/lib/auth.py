@@ -289,7 +289,7 @@ def validate_access_token(func: Callable):
 
     @wraps(func)
     def decorated_function(*args, **kwargs):
-        unauthed_resp = make_cors_response()
+        unauthed_resp = prepare_response()
         unauthed_resp.status = 401
         try:
             scheme, token = get_access_token_from_headers()
@@ -336,8 +336,8 @@ def return_cors_response():
     return resp
 
 
-def make_cors_response(status_code=200):
-    """Helper for creating an empty response object with the CORS origin headers added.
+def prepare_response(status_code=200):
+    """Helper for creating an empty response object with the CORS origin and other headers added.
 
     Args:
         status_code (int, optional): Status code of the response. Defaults to 200.
@@ -346,5 +346,8 @@ def make_cors_response(status_code=200):
         Flask response object
     """
     resp = make_response("", status_code)
+
     resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
+    resp.content_type = "application/json"
+
     return resp

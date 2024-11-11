@@ -11,7 +11,7 @@ from src.api import security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,
-    make_cors_response,
+    prepare_response,
 )
 from src.api.lib.file_management import FileManager
 from src.api.lib.helpers import log_request
@@ -20,7 +20,9 @@ from src.api.blueprints import files_tag
 
 from src.common.logger_setup import logger
 
-files_bp: APIBlueprint = APIBlueprint("files", __name__, url_prefix="/files", abp_security=security, abp_tags=[files_tag])
+files_bp: APIBlueprint = APIBlueprint(
+    "files", __name__, url_prefix="/files", abp_security=security, abp_tags=[files_tag]
+)
 
 
 @files_bp.route("/list", methods=["OPTIONS"])
@@ -33,6 +35,7 @@ def list_files_options_handler():
 @validate_access_token
 @log_request
 def list_files_handler():
+    """List files"""
     post_data = request.get_json()
 
     path = post_data.get("PATH", "")
@@ -41,7 +44,7 @@ def list_files_handler():
     path = Path(path)
     resp_data = FileManager.ls(path)
 
-    resp = make_cors_response()
+    resp = prepare_response()
     resp.data = json.dumps(resp_data)
     logger.info(resp.data)
     return resp
@@ -57,6 +60,7 @@ def read_file_options_handler():
 @validate_access_token
 @log_request
 def read_file_handler():
+    """Read file"""
     post_data = request.get_json()
 
     file_path = post_data.get("FILE_PATH", "")
@@ -65,7 +69,7 @@ def read_file_handler():
     file_path = Path(file_path)
     resp_data = FileManager.read(file_path)
 
-    resp = make_cors_response()
+    resp = prepare_response()
     resp.data = json.dumps(resp_data)
     return resp
 
@@ -80,6 +84,7 @@ def write_file_options_handler():
 @validate_access_token
 @log_request
 def write_file_handler():
+    """Write file"""
     post_data = request.get_json()
 
     file_path = post_data.get("FILE_PATH", "")
@@ -89,6 +94,6 @@ def write_file_handler():
     content = post_data.get("CONTENT", "")
     resp_data = FileManager.write(file_path, content)
 
-    resp = make_cors_response()
+    resp = prepare_response()
     resp.data = json.dumps(resp_data)
     return resp

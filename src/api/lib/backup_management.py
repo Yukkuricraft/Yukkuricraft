@@ -28,6 +28,7 @@ from src.api.lib import (
     RestoreAlreadyInProgressError,
 )
 
+
 class BackupManagement:
     def __init__(self):
         self.docker_management = DockerManagement()
@@ -66,11 +67,11 @@ class BackupManagement:
         backups = json.loads(response_as_json)
 
         logger.info("RESPONSE FROM RESTIC SNAPSHOTS")
-        logger.info(pformat({ "msg": "pre", "backups": backups }))
+        logger.info(pformat({"msg": "pre", "backups": backups}))
 
         backups = list(map(lambda b: Backup(**b), backups))
 
-        logger.info(pformat({ "msg": "post", "backups": backups }))
+        logger.info(pformat({"msg": "post", "backups": backups}))
 
         return backups
 
