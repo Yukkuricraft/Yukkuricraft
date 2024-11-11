@@ -1,0 +1,47 @@
+# Dumps all other tables that don't fall under `dump_bigfour.sh`
+
+echo mysqldump -u root -p minecraft \
+    --complete-insert \
+    -t co_chat \
+    -t co_command \
+    -t lwc_history \
+    -t co_sign \
+    -t co_session \
+    -t lwc_protections \
+    -t bm_player_history \
+    -t co_skull \
+    -t bm_players \
+    -t co_user \
+    -t co_username_log \
+    -t bm_player_ban_records \
+    -t bm_player_bans \
+    -t bm_player_warnings \
+    -t co_material_map \
+    -t bm_player_reports \
+    -t bm_ip_mutes \
+    -t bm_ip_range_bans \
+    -t bm_player_mutes \
+    -t bm_player_report_commands \
+    -t bm_player_report_comments \
+    -t bm_ip_bans \
+    -t bm_ip_mute_records \
+    -t bm_ip_range_ban_records \
+    -t bm_name_bans \
+    -t bm_player_notes \
+    -t bm_player_report_locations \
+    -t bm_player_mute_records \
+    -t bm_rollbacks \
+    -t bm_ip_ban_records \
+    -t bm_name_ban_records \
+    -t bm_player_kicks \
+    -t co_art_map \
+    -t co_blockdata_map \
+    -t co_entity_map \
+    -t co_world \
+    -t lwc_internal \
+    -t bm_player_report_states \
+    -t co_database_lock \
+    -t co_version \
+    -t lwc_blocks \
+    -t lwc_defaults \
+    > scripts/archive/data/dump.allothertables.sql
