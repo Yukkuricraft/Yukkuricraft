@@ -41,7 +41,7 @@ def list_defined_containers_handler(path: EnvRequestPath):
 
 @server_bp.route("/<string:env_str>/containers/prepare_ws_attach", methods=["OPTIONS"])
 @log_request
-def prepare_ws_options_attach(path: EnvRequestPath):
+def prepare_ws_options_attach(env_str):
     return return_cors_response()
 
 
@@ -59,7 +59,7 @@ def prepare_ws_attach(path: EnvRequestPath):
     resp = make_cors_response()
     container_name = request.json["container_name"]
 
-    env = Env(path.env_path)
+    env = Env(path.env_str)
     resp_data = {}
     resp_data["success"] = DockerMgmtApi.prepare_container_for_ws_attach(
         container_name=container_name

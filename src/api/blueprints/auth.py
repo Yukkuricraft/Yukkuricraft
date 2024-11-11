@@ -20,7 +20,7 @@ from src.api.lib.helpers import log_request
 from src.api.db import db
 from src.api.models import AccessToken, User
 
-from src.api.blueprints import auth_tag, LoginRequestBody, LoginResponseBody, MeResponse, UnauthorizedResponse
+from src.api.blueprints import auth_tag, LoginRequestBody, LoginResponse, MeResponse, UnauthorizedResponse
 
 from src.common.logger_setup import logger
 
@@ -35,7 +35,7 @@ def login_options_handler():
 @auth_bp.post(
     "/login",
     responses={
-        HTTPStatus.OK: LoginResponseBody,
+        HTTPStatus.OK: LoginResponse,
         HTTPStatus.UNAUTHORIZED: UnauthorizedResponse,
     },
 )

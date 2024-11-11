@@ -13,53 +13,18 @@ from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
 from src.common.environment import Env
 from src.common.constants import (
-    HOST_REPO_ROOT_PATH,
     MC_DOCKER_CONTAINER_NAME_FMT,
     RESTIC_REPO_PATH,
 )
 from src.common import server_paths
 from src.common.types import DataDirType
 
-
-class InvalidContainerException(Exception):
-    pass
-
-
-class ContainerMissingEnvLabelException(InvalidContainerException):
-    pass
-
-
-class ContainerMissingNameLabelException(InvalidContainerException):
-    pass
-
-
-class CannotRestoreWhileContainerUpError(Exception):
-    pass
-
-
-class RestoreAlreadyInProgressError(Exception):
-    pass
-
-
-class BackupAlreadyInProgressError(Exception):
-    pass
-
-
-@dataclass
-class Backup:
-    excludes: List[str]
-    gid: int
-    hostname: str
-    id: str
-    parent: str
-    paths: List[str]
-    program_version: str
-    short_id: str
-    tags: List[str]
-    time: str  # datetime?
-    tree: str
-    username: str
-
+from src.api.lib import (
+    BackupAlreadyInProgressError,
+    Backup,
+    CannotRestoreWhileContainerUpError,
+    RestoreAlreadyInProgressError,
+)
 
 class BackupManagement:
     def __init__(self):
@@ -69,7 +34,7 @@ class BackupManagement:
     def container_name_to_container(self, container_name):
         return self.docker_client.containers.get(container_name)
 
-    def list_backups_by_env_and_tags(self, env: Env, tags: List[str]):
+    def list_backups_by_env_and_tags(self, env: Env, tags: List[str]) -> List[Backup]:
         env = env.name
 
         tags_str = "" if not tags else f"--tag {','.join(tags)}"
@@ -99,7 +64,11 @@ class BackupManagement:
         backups = json.loads(response_as_json)
 
         logger.info("RESPONSE FROM RESTIC SNAPSHOTS")
-        logger.info(pformat(backups))
+        logger.info(pformat({ "msg": "pre", "backups": backups }))
+
+        backups = list(map(lambda b: Backup(**b), backups))
+
+        logger.info(pformat({ "msg": "post", "backups": backups }))
 
         return backups
 

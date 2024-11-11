@@ -1,3 +1,4 @@
+from http import HTTPStatus
 import json
 
 from flask import request  # type: ignore
@@ -12,7 +13,7 @@ from src.api.lib.auth import (
 from src.api.lib.backup_management import BackupManagement
 from src.api.lib.helpers import log_request
 
-from src.api.blueprints import backups_tag
+from src.api.blueprints import ListBackupsRequestBody, ListBackupsResponse, backups_tag
 
 from src.common.environment import Env
 from src.common.helpers import log_exception
@@ -28,18 +29,21 @@ def list_backups_options_handler():
     return return_cors_response()
 
 
-@backups_bp.post("/list-by-tags")
+@backups_bp.post(
+    "/list-by-tags",
+    responses={
+        HTTPStatus.OK: ListBackupsResponse
+    },
+)
 @validate_access_token
 @log_request
-def list_backups_handler():
+def list_backups_handler(body: ListBackupsRequestBody):
     """List all backups per tags"""
     resp = make_cors_response()
     resp.headers.add("Content-Type", "application/json")
 
-    post_data = request.get_json()
-
-    env_str = post_data.get("env_str", "")
-    target_tags = post_data.get("target_tags", [])
+    env_str = body.env_str
+    target_tags = body.target_tags
 
     if type(target_tags) == str:
         target_tags = [target_tags]
@@ -52,8 +56,9 @@ def list_backups_handler():
     target_tags.append(env_str)
 
     backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
-    resp.data = json.dumps(backups)
-
+    resp.data = json.dumps({
+        "backups": backups
+    })
     return resp
 
 

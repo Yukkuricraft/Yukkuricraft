@@ -127,12 +127,19 @@ class DockerManagement:
             and container.labels[YC_CONTAINER_TYPE_LABEL] == "minecraft"
         ):
             logger.info(pformat(container))
+            logger.info("Spawning process")
             p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
+            logger.info(f"Spawned. {pformat(p)}")
             try:
+                logger.info("Reading?")
                 logger.info(p.read(1))
             except EOFError:
                 logger.info("Got EOFError - Did not read from ptyprocess.")
-                pass
+            except:
+                log_exception()
+            finally:
+                logger.info("Done")
+
 
     def exec_run(
         self,
