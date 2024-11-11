@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
+from pydantic import BaseModel # type: ignore
 
 
 class InvalidContainerException(Exception):
@@ -25,18 +25,18 @@ class RestoreAlreadyInProgressError(Exception):
 class BackupAlreadyInProgressError(Exception):
     pass
 
-
-@dataclass
-class Backup:
+class Backup(BaseModel):
     excludes: List[str]
     gid: int
     hostname: str
     id: str
-    parent: str
     paths: List[str]
     program_version: str
     short_id: str
     tags: List[str]
     time: str  # datetime?
     tree: str
+    uid: int
     username: str
+
+    parent: Optional[str] = None

@@ -57,7 +57,7 @@ def list_backups_handler(body: ListBackupsRequestBody):
 
     backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
     resp.data = json.dumps({
-        "backups": backups
+        "backups": list(map(lambda b: b.model_dump(), backups)),
     })
     return resp
 
