@@ -8,7 +8,7 @@ from flask_openapi3 import APIBlueprint  # type: ignore
 
 from pathlib import Path
 
-from src.api import security
+from src.api import db, security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,

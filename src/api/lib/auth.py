@@ -1,11 +1,13 @@
-from flask import request, make_response, current_app  # type: ignore
+import sqlalchemy  # type: ignore
 
-from urllib.parse import urlparse, parse_qs
+from flask import request, make_response, Response, current_app  # type: ignore
+
+from urllib.parse import urlparse, parse_qsl
 
 from pprint import pformat
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple, Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from secrets import token_hex
 from google.oauth2 import id_token  # type: ignore
 from google.auth.transport import requests as g_requests  # type: ignore
@@ -23,7 +25,7 @@ from src.api.constants import (
 from src.api.db import db
 from src.api.models import AccessToken, User, JTI
 
-from src.common.helpers import log_exception
+from src.common.helpers import get_now_epoch, log_exception
 from src.common.logger_setup import logger
 
 # TODO: Make more sophisticated in the future but for now this suffices.
@@ -66,7 +68,7 @@ class TimeTravelerError(RuntimeError):
     msg = "Go back to the shadow from whence you came!"
 
     def __init__(self, iat_dt: datetime):
-        now_dt = datetime.now()
+        now_dt = get_now_epoch()
         super().__init__(
             f"{self.msg}\n"
             f"iat_ts: {int(iat_dt.timestamp())}\n"
@@ -102,31 +104,31 @@ def generate_access_token() -> Tuple[str, int]:
     Returns:
         Tuple[str, int]: _description_
     """
-    return token_hex(), (int(datetime.now().timestamp()) + 60 * ACCESS_TOKEN_DUR_MINS)
+    return token_hex(), (int(get_now_epoch().timestamp()) + 60 * ACCESS_TOKEN_DUR_MINS)
 
 
 def deserialize_id_token(token: str) -> Dict:
     """Deserializes the oauth token
 
     Args:
-        token (str): _description_
+        token (str): JWT token generated from OAuth2
 
     Returns:
-        Dict: _description_
+        Dict: JWT token deserialized as a dict
     """
     if IS_LOCAL:
         # Local dev bypasses google oauth so we have a non-sensical `token` value. Just make shit up.
         return {
             "jti": uuid4().hex,
             "exp": 1999999999,
-            "iat": int(datetime.now().strftime("%s")),
+            "iat": int(get_now_epoch().strftime("%s")),
             "sub": "123456789012345678901",
             "email": "local@development.yc",
         }
     return id_token.verify_oauth2_token(token, g_requests.Request(), G_CLIENT_ID)
 
 
-def get_access_token_from_headers() -> Tuple[str, str]:
+def get_access_token_from_headers(headers: Dict[str, str]) -> Tuple[str, str]:
     """Helper to get the scheme and token of the `Authorization` header from a flask request.
 
     Header will usually look like: `Authorization: {scheme} {token}`
@@ -137,17 +139,17 @@ def get_access_token_from_headers() -> Tuple[str, str]:
         Tuple[str, str]: Scheme and token
     """
     # Authorization: Bearer <access_token>
-    auth_header = request.headers.get("Authorization", "")
+    auth_header = headers.get("Authorization", "")
 
     logger.info(f"auth_header: {auth_header}")
     if auth_header:
         scheme, token = auth_header.split()
         return scheme, token
 
-    return get_auth_string_from_websocket_request()
+    return get_auth_string_from_websocket_request(headers)
 
 
-def get_auth_string_from_websocket_request() -> Tuple[str, str]:
+def get_auth_string_from_websocket_request(headers: Dict[str, str]) -> Tuple[str, str]:
     """Helper to get token of the `Authorization` query string from a flask request.
 
     Used for websocket auth as websockets do not allow arbitrary headers such as `Authorization:` to be added
@@ -161,7 +163,7 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
         Tuple[str, str]: Scheme and token
     """
 
-    x_original_uri_header = request.headers.get(
+    x_original_uri_header = headers.get(
         "X-Original-Uri", ""
     )  # Expected to be passed from nginx reverse proxy
     if not x_original_uri_header:
@@ -169,7 +171,8 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
     logger.info(f"x_original_uri_header: {x_original_uri_header}")
 
     parsed_url = urlparse(x_original_uri_header)
-    querystring_dict = parse_qs(parsed_url.query)
+    logger.info(pformat(parsed_url))
+    querystring_dict = dict(parse_qsl(parsed_url.query))
     logger.info(pformat(querystring_dict))
 
     auth_token = querystring_dict.get("Authorization", "")
@@ -181,79 +184,65 @@ def get_auth_string_from_websocket_request() -> Tuple[str, str]:
     return "Bearer", auth_token
 
 
-def generate_access_token_if_valid(token: str) -> Optional[str]:
-    """Validates the oauth token string, which encodes info like the subject, email, jti, etc, and generated a temporary access token if valid.
-    a
-        Args:
-            token (str): Token string
+def generate_access_token_if_valid(
+    token: str, session: sqlalchemy.orm.Session
+) -> Optional[str]:
+    """Validates the oauth token string, which encodes info like the subject, email, jti, etc, and generates a temporary access token if valid.
 
-        Raises:
-            DuplicateJTIError: If the we've seen this unique JTI already before. Duplicate requests?
-            ExpiredJTIError: If the decoded JTI has expired
-            TimeTravelerError: If the decoded iat (issued at time) is somehow in the future
-            UnknownUserError: If the decoded subject is not whitelisted
+    Args:
+        token (str): Token string
 
-        Returns:
-            Optional[str]: None if provided `token` was invalid. Otherwise the generated access token as a string.
+    Raises:
+        DuplicateJTIError: If the we've seen this unique JTI already before. Duplicate requests?
+        ExpiredJTIError: If the decoded JTI has expired
+        TimeTravelerError: If the decoded iat (issued at time) is somehow in the future
+        UnknownUserError: If the decoded subject is not whitelisted
+
+    Returns:
+        Optional[str]: None if provided `token` was invalid. Otherwise the generated access token as a string.
     """
-    try:
-        idinfo = deserialize_id_token(token)
 
-        logger.debug(pformat(idinfo))
+    idinfo = deserialize_id_token(token)
 
-        jti, exp, iat, sub, email = (
-            idinfo["jti"],
-            idinfo["exp"],
-            idinfo["iat"],
-            idinfo["sub"],
-            idinfo["email"],
-        )
+    logger.debug(pformat(idinfo))
 
-        logger.info(idinfo)
+    jti, exp, iat, sub, email = (
+        idinfo["jti"],
+        idinfo["exp"],
+        idinfo["iat"],
+        idinfo["sub"],
+        idinfo["email"],
+    )
 
-        user = User(sub=sub, email=email)
-        exp_dt = datetime.utcfromtimestamp(exp)
-        iat_dt = datetime.utcfromtimestamp(iat)
+    user = User(sub=sub, email=email)
+    exp_dt = datetime.fromtimestamp(exp, timezone.utc)
+    iat_dt = datetime.fromtimestamp(iat, timezone.utc)
 
-        now = datetime.now()
+    now = get_now_epoch()
 
-        if JTI.query.filter_by(jti=jti).first():
-            raise DuplicateJTIError(idinfo)
-        elif now >= exp_dt:
-            raise ExpiredJTIError(exp_dt, now)
-        elif now <= iat_dt:
-            raise TimeTravelerError(iat_dt)
-        elif sub not in WHITELISTED_USERS:
-            raise UnknownUserError(user)
+    logger.info(pformat([user, exp_dt, exp, iat_dt, iat, now]))
+    if session.query(JTI).filter(JTI.jti == jti).first():
+        raise DuplicateJTIError(idinfo)
+    elif now >= exp_dt:
+        raise ExpiredJTIError(exp_dt, now)
+    elif now <= iat_dt:
+        raise TimeTravelerError(iat_dt)
+    elif sub not in WHITELISTED_USERS:
+        raise UnknownUserError(user)
 
-        access_token, access_token_exp = generate_access_token()
-        if not User.query.filter_by(sub=sub).first():
-            db.session.add(user)
-        db.session.add(JTI(jti=jti, exp=exp, iat=iat, user=user.sub))
-        db.session.add(
-            AccessToken(id=access_token, user=user.sub, exp=access_token_exp)
-        )
-        db.session.commit()
+    access_token, access_token_exp = generate_access_token()
+    if not session.query(User).filter(User.sub == sub).first():
+        session.add(user)
+    session.add(JTI(jti=jti, exp=exp, iat=iat, user=user.sub))
+    session.add(AccessToken(id=access_token, user=user.sub, exp=access_token_exp))
+    session.commit()
 
-        return access_token
-    except ValueError:
-        log_exception(
-            message="Got an invalid token!",
-            data={
-                "token": token,
-            },
-        )
-    except DuplicateJTIError:
-        log_exception()
-    except TimeTravelerError:
-        log_exception(message="Huh?!")
-    except ExpiredJTIError:
-        log_exception()
-
-    return None
+    return access_token
 
 
-def verify_access_token_allowed(scheme: str, access_token: str):
+def verify_access_token_allowed(
+    scheme: str, access_token: str, session: sqlalchemy.orm.session
+):
     """Verifies we issued the access token by checking the DB
 
     Args:
@@ -266,18 +255,18 @@ def verify_access_token_allowed(scheme: str, access_token: str):
         InvalidTokenSchemeError: If scheme doesn't match `YC_TOKEN_AUTH_SCHEME`
 
     """
-    token = AccessToken.query.filter_by(id=access_token).first()
-    now = datetime.now()
+    token = session.query(AccessToken).filter(AccessToken.id == access_token).first()
+    now = get_now_epoch()
 
     if not token:
         raise InvalidTokenError(token)
-    elif now >= datetime.utcfromtimestamp(token.exp):
+    elif now >= datetime.fromtimestamp(token.exp, timezone.utc):
         raise ExpiredJTIError(token.exp, now)
     elif scheme != YC_TOKEN_AUTH_SCHEME:
         raise InvalidTokenSchemeError(scheme)
 
 
-def validate_access_token(func: Callable):
+def validate_access_token(func_to_decorate: Callable):
     """Decorator for validating Flask request has a valid access token in its headers
 
     Args:
@@ -287,52 +276,69 @@ def validate_access_token(func: Callable):
         Callable: Decorated function
     """
 
-    @wraps(func)
+    @wraps(func_to_decorate)
     def decorated_function(*args, **kwargs):
         unauthed_resp = prepare_response()
         unauthed_resp.status = 401
         try:
-            scheme, token = get_access_token_from_headers()
+            scheme, token = get_access_token_from_headers(request.headers)
             logger.warning(f"INSPECTING AUTH HEADER: '{scheme}' '{token}'")
-            verify_access_token_allowed(scheme, token)
+            verify_access_token_allowed(scheme, token, db.session)
         except Exception as e:
             log_exception()
             return unauthed_resp
 
-        return func(*args, **kwargs)
+        return func_to_decorate(*args, **kwargs)
 
     return decorated_function
 
 
-def intercept_cors_preflight(func: Callable):
-    """Decorator for flask endpoints that injects CORS origin headers into any OPTIONS requests
+def authenticate_access_token(
+    headers: Dict, session: sqlalchemy.orm.session
+) -> Optional[User]:
+    """If a valid access token is found, returns the user that it was issued for.
+
+    Validity of the access token must be checked separately using the `@validate_access_token` decorator.
 
     Args:
-        func (Callable): Function to be decorated.
+        headers (Dict): Request headers
+        session (sqlalchemy.orm.session): Database session used to read persisted token and user data.
 
     Returns:
-        Callable: Decorated function
+        Optional[User]: If the access token was found, returns the user it was issued for.
     """
-
-    @wraps(func)
-    def decorated_function(*args, **kwargs):
-        # logger.info(request.method)
-        if request.method == "OPTIONS":
-            return return_cors_response()
-
-        return func(*args, **kwargs)
-
-    return decorated_function
+    _scheme, access_token = get_access_token_from_headers(headers)
+    token = session.query(AccessToken).filter(AccessToken.id == access_token).first()
+    if not token:
+        return None
+    user = session.query(User).filter(User.sub == token.user).first()
+    return user
 
 
-def return_cors_response():
+def invalidate_access_token(headers: Dict, session: sqlalchemy.orm.session):
+    """Expires the access token found in the headers.
+
+    Args:
+        headers (Dict): Request headers
+        session (sqlalchemy.orm.session): Database session for persisting token expiration.
+    """
+    _, token = get_access_token_from_headers(headers)
+    access_token = session.query(AccessToken).filter(AccessToken.id == token).first()
+    access_token.exp = int(get_now_epoch().timestamp())
+    session.commit()
+
+
+def return_cors_response() -> Response:
+    """Makes a skeleton Flask Response with CORS headers.
+
+    Returns:
+        flask.Response: Response object with only the CORS headers set.
+    """
     resp = make_response()
     resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
     resp.headers.add("Access-Control-Allow-Headers", "*")
     resp.headers.add("Access-Control-Allow-Methods", "*")
 
-    # logger.info(f"RETURNING INTERCEPTED CORS PREFLIGHT:")
-    # logger.info(pformat(resp))
     return resp
 
 
@@ -345,9 +351,10 @@ def prepare_response(status_code=200):
     Returns:
         Flask response object
     """
-    resp = make_response("", status_code)
+    resp = make_response("")
 
     resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
     resp.content_type = "application/json"
+    resp.status = status_code
 
     return resp

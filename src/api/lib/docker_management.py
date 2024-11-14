@@ -1,7 +1,7 @@
 import os
 import json
 import docker
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from docker.models.containers import Container
 
 
@@ -13,7 +13,7 @@ from src.api.lib import LegacyActiveContainer, LegacyDefinedContainer
 from src.api.lib.runner import Runner
 from src.api.lib.helpers import InvalidContainerNameError, seconds_to_string
 from src.common.environment import Env
-from src.common.helpers import log_exception
+from src.common.helpers import get_now_epoch, log_exception
 from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
@@ -69,10 +69,10 @@ def convert_dockerpy_container_to_container_definition(
         # datetime.datetime.fromisoformat() doesn't take `2024-02-11T22:16:57.510507768Z` as a format
         # which is what dockerpy gives us. 2024-02-11T22:16:57 is valid though so just drop the milliseconds.
 
-        started_at_truncated_ms = started_at.split(".")[0]
+        started_at_truncated_ms = started_at.split(".")[0] + "Z"  # Add timezone back on
 
         try:
-            running_for_seconds = datetime.now() - datetime.fromisoformat(
+            running_for_seconds = get_now_epoch() - datetime.fromisoformat(
                 started_at_truncated_ms
             )
         except ValueError:

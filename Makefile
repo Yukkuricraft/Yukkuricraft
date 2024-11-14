@@ -104,6 +104,12 @@ create_new_env:
 	ENV=$(word 1,$(ARGS)) ./generate-docker-compose
 	ENV=$(word 1,$(ARGS)) ./generate-velocity-config
 
+# Test
+
+.PHONY: test
+test:
+	pytest
+
 # BUILD
 
 .PHONY: build
@@ -183,7 +189,7 @@ build_mysql_backup:
 		--tag='yukkuricraft/mysql-backup-restic' \
 		.
 
-# YC2.0 api/frontend
+# YC2.0 api
 .PHONY: up_web
 up_web: ENV=env1
 up_web:

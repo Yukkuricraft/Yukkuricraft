@@ -4,21 +4,26 @@ import json
 
 from flask_openapi3 import APIBlueprint  # type: ignore
 
+from flask import request  # type: ignore
+
 from http import HTTPStatus
 from datetime import datetime
 from pprint import pformat
 
 from src.api import security
 from src.api.lib.auth import (
+    DuplicateJTIError,
+    ExpiredJTIError,
+    TimeTravelerError,
+    invalidate_access_token,
     prepare_response,
     generate_access_token_if_valid,
     return_cors_response,
     validate_access_token,
-    get_access_token_from_headers,
+    authenticate_access_token,
 )
 from src.api.lib.helpers import log_request
 from src.api.db import db
-from src.api.models import AccessToken, User
 
 from src.api.blueprints import (
     auth_tag,
@@ -28,6 +33,7 @@ from src.api.blueprints import (
     UnauthorizedResponse,
 )
 
+from src.common.helpers import get_now_epoch, log_exception
 from src.common.logger_setup import logger
 
 auth_bp: APIBlueprint = APIBlueprint(
@@ -62,7 +68,23 @@ def login_handler(body: LoginRequestBody):
     logger.warning(resp)
     logger.warning(body)
 
-    access_token = generate_access_token_if_valid(body.id_token)
+    access_token = None
+    try:
+        access_token = generate_access_token_if_valid(body.id_token, db.session)
+    except ValueError:
+        log_exception(
+            message="Got an invalid token!",
+            data={
+                "token": body.id_token,
+            },
+        )
+    except DuplicateJTIError:
+        log_exception()
+    except TimeTravelerError:
+        log_exception(message="Huh?!")
+    except ExpiredJTIError:
+        log_exception()
+
     if access_token is not None:
         resp.status = 200
         resp.data = json.dumps({"access_token": access_token})
@@ -86,10 +108,7 @@ def logout_handler():
     resp = prepare_response()
     resp.status = 200
 
-    _, token = get_access_token_from_headers()
-    access_token = AccessToken.query.filter_by(id=token).first()
-    access_token.exp = int(datetime.now().timestamp())
-    db.session.commit()
+    invalidate_access_token(request.headers, db.session)
 
     return resp
 
@@ -116,13 +135,9 @@ def me_handler():
     Returns a 2xx/4xx depending on if a request was made with a valid JWT token in the header.
     """
     resp = prepare_response()
-    _scheme, access_token = get_access_token_from_headers()
-    token = AccessToken.query.filter_by(id=access_token).first()
-
-    logger.warning(f"??? {pformat(token.to_dict())}")
-
-    user = User.query.filter_by(sub=token.user).first()
+    user = authenticate_access_token(request.headers, db.session)
     logger.warning(f"YOU ARE: \n{pformat(user)}")
-    resp.data = json.dumps(user.to_dict())
+    if user:
+        resp.data = json.dumps(user.to_dict())
 
     return resp

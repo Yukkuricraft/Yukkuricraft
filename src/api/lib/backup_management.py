@@ -1,12 +1,9 @@
 import json
 import time
 import shutil
-import docker
-from docker.models.containers import Container
 
 from pathlib import Path
-from dataclasses import dataclass
-from typing import List, Dict
+from typing import List
 from pprint import pformat
 
 from src.api.lib.docker_management import DockerManagement
@@ -33,9 +30,6 @@ class BackupManagement:
     def __init__(self):
         self.docker_management = DockerManagement()
         self.docker_client = self.docker_management.client
-
-    def container_name_to_container(self, container_name):
-        return self.docker_client.containers.get(container_name)
 
     def list_backups_by_env_and_tags(self, env: Env, tags: List[str]) -> List[Backup]:
         env = env.name

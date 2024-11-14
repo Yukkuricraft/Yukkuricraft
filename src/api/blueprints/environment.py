@@ -18,7 +18,7 @@ from src.api.blueprints import (
     UnauthorizedResponse,
 )
 
-from src.api import security
+from src.api import db, security
 from src.api.lib.auth import (
     return_cors_response,
     validate_access_token,

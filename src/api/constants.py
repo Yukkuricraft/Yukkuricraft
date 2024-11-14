@@ -1,10 +1,7 @@
 from pathlib import Path
 import os
-import socket
 
-from src.common.logger_setup import logger
-
-CONFIGURATION_TYPE = os.getenv("CONFIGURATION_TYPE", None)
+CONFIGURATION_TYPE = os.getenv("CONFIGURATION_TYPE", "local")
 if CONFIGURATION_TYPE is None:
     raise RuntimeError(
         "CONFIGURATION_TYPE was not set! Must be local, dev, prod. Aborting."
@@ -15,9 +12,7 @@ IS_DEV = CONFIGURATION_TYPE == "dev"
 IS_LOCAL = CONFIGURATION_TYPE == "local"
 
 if IS_LOCAL:
-    G_CLIENT_ID = (
-        "1084736521175-4p43u0ddhru6qs6aqd6n4r2smmnffqcu.apps.googleusercontent.com"
-    )
+    G_CLIENT_ID = "some-arbitrary-client-id"
     CORS_ORIGIN = "*"
     MIN_VALID_PROXY_PORT = 26600
     MAX_VALID_PROXY_PORT = 26700
