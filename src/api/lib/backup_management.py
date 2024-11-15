@@ -3,8 +3,9 @@ import time
 import shutil
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from pprint import pformat
+from unittest.mock import Mock
 
 from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
@@ -27,8 +28,10 @@ from src.api.lib import (
 
 
 class BackupManagement:
-    def __init__(self):
-        self.docker_management = DockerManagement()
+    def __init__(self, docker_management: Optional[DockerManagement] = None):
+        self.docker_management = (
+            docker_management if docker_management is not None else DockerManagement()
+        )
         self.docker_client = self.docker_management.client
 
     def list_backups_by_env_and_tags(self, env: Env, tags: List[str]) -> List[Backup]:
@@ -58,11 +61,10 @@ class BackupManagement:
         if isinstance(response_as_json, bytes):
             response_as_json = response_as_json.decode("utf-8")
 
-        backups = json.loads(response_as_json)
-
         logger.info("RESPONSE FROM RESTIC SNAPSHOTS")
-        logger.info(pformat({"msg": "pre", "backups": backups}))
+        logger.info(pformat({"msg": "pre", "backups": response_as_json}))
 
+        backups = json.loads(response_as_json)
         backups = list(map(lambda b: Backup(**b), backups))
 
         logger.info(pformat({"msg": "post", "backups": backups}))
