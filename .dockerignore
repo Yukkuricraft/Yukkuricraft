@@ -1,0 +1,6 @@
+testdata
+examples
+k8s-examples
+.idea
+.git
+scripts/archive/

@@ -23,12 +23,17 @@ ENV GID=$HOST_GID
 # a possibility those GID ints are already taken. Check for such cases.
 # (Eg, on Macs, /var/run/docker.sock is owned by 'staff' which is GID 20, which exists by default in debian.)
 RUN if [ "$(cat /etc/group | grep :${HOST_GID}:)" = "" ]; then \
-        groupadd --force --gid $HOST_GID hostuser; \
+        addgroup --g $HOST_GID hostuser; \
     else \
         echo "Group with GID ${HOST_GID} already exists - skipping groupadd"; \
     fi
 
-RUN useradd hostuser -u $HOST_UID -g $HOST_GID -m -s /bin/bash
+RUN if [ "$(cat /etc/passwd | grep :${HOST_UID}:)" = "" ]; then \
+       adduser hostuser -S -u $HOST_UID -G $(cat /etc/group | grep :${HOST_GID}: | cut -d\: -f1) -s /bin/bash; \
+    else \
+        echo "User with UID ${HOST_UID} already exists - adding user to group"; \
+       adduser $(cat /etc/passwd | grep :${HOST_UID}: | cut -d\: -f1) $(cat /etc/group | grep :${HOST_GID}: | cut -d\: -f1); \
+    fi
 
 RUN mkdir /mysqldump && chown ${HOST_UID}:${HOST_GID} /mysqldump
 

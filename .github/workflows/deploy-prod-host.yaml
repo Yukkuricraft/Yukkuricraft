@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          ssh-key: ${{ secrets.SECRETS_SUBMODULE_CONTENT_PULL_KEY }}
+          ssh-key: ${{ secrets.SECRETS_SUBMODULE_DEPLOY_KEY }}
           submodules: recursive
 
       - name: Set up Python

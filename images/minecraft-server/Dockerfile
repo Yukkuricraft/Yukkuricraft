@@ -21,7 +21,8 @@ RUN mkdir /worlds-bindmount
 RUN chown $HOST_UID:$HOST_GID /plugins-bindmount
 RUN chown $HOST_UID:$HOST_GID /worlds-bindmount
 
-ARG JMXREMOTE_CONFIG_PATH=/opt/java/openjdk/conf/management/
+# ARG JMXREMOTE_CONFIG_PATH=/opt/java/openjdk/conf/management/
+ARG JMXREMOTE_CONFIG_PATH=/usr/lib64/graalvm/graalvm-java21/conf/management
 
 COPY secrets/jmxremote.password $JMXREMOTE_CONFIG_PATH/jmxremote.password
 RUN chown $HOST_UID:$HOST_GID $JMXREMOTE_CONFIG_PATH/jmxremote.password && \
