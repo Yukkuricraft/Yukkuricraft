@@ -33,7 +33,7 @@ from src.api.blueprints import (
     UnauthorizedResponse,
 )
 
-from src.common.helpers import get_now_epoch, log_exception
+from src.common.helpers import get_now_dt, log_exception
 from src.common.logger_setup import logger
 
 auth_bp: APIBlueprint = APIBlueprint(

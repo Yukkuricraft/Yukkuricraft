@@ -20,7 +20,7 @@ class BaseGenerator:
     def __init__(self, env: Env):
         self.env = env
 
-    def replace_interpolations(self, inp: T, target: str, replace_value: str) -> T:
+    def replace_interpolations[T](self, inp: T, target: str, replace_value: str) -> T:
         """Given some primitive datastructure `inp`, will replace any instance of `target` in both keys and vals with `replace_value`
 
         Args:

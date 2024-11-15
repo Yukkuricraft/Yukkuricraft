@@ -35,9 +35,8 @@ class BackupManagement:
         self.docker_client = self.docker_management.client
 
     def list_backups_by_env_and_tags(self, env: Env, tags: List[str]) -> List[Backup]:
-        env = env.name
-
-        tags_str = "" if not tags else f"--tag {','.join(tags)}"
+        tags.append(env.name)
+        tags_str = f"--tag {','.join(tags)}"
 
         response_as_json = self.docker_client.containers.run(
             image="restic/restic",

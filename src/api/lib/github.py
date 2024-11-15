@@ -33,11 +33,11 @@ class Github:
 
     def check_status_code(
         self,
-        r: requests.request,
+        r: requests.Response,
     ):
         if r.status_code != 200:
             logger.warning("Failed to get repository public key")
-            logger.warning(r.body)
+            logger.warning(r.text)
             raise InvalidRepositoryException()
 
     def get_repository_public_key(self, repository: str):

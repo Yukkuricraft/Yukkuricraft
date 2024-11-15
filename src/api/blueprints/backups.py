@@ -61,15 +61,7 @@ def list_backups_handler(body: ListBackupsRequestBody):
     env_str = body.env_str
     target_tags = body.target_tags
 
-    if type(target_tags) == str:
-        target_tags = [target_tags]
-
-    if type(target_tags) != list:
-        raise ValueError(
-            f"Got a value for 'target_tags' that we don't know how to parse! Got: '{resp(target_tags)}'"
-        )
-
-    target_tags.append(env_str)
+    
 
     backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
     resp.data = json.dumps(
@@ -77,6 +69,7 @@ def list_backups_handler(body: ListBackupsRequestBody):
             "backups": list(map(lambda b: b.model_dump(), backups)),
         }
     )
+
     return resp
 
 
@@ -97,8 +90,6 @@ def create_new_minecraft_backup_handler(body: CreateBackupRequestBody):
 
     Only backs up Minecraft containers at the moment.
     """
-    resp = prepare_response()
-
     target_env = body.target_env
     target_world_group = body.target_world_group
 
@@ -117,6 +108,7 @@ def create_new_minecraft_backup_handler(body: CreateBackupRequestBody):
         )
         out = type(e).__name__
 
+    resp = prepare_response()
     resp.data = json.dumps({"success": success, "output": out})
     return resp
 
@@ -140,16 +132,11 @@ def restore_minecraft_backup_handler(body: RestoreBackupRequestBody):
 
     Only supports Minecraft backups for now.
     """
-    resp = prepare_response()
-
     target_hostname = body.target_hostname
     target_snapshot_id = body.target_snapshot_id
 
-    target_env = None
-    target_world_group = None
-    if target_hostname:
-        split = target_hostname.split("-")
-        target_env, target_world_group = split[1], split[2]
+    split = target_hostname.split("-")
+    target_env, target_world_group = split[1], split[2]
 
     out = None
     success = False
@@ -169,5 +156,6 @@ def restore_minecraft_backup_handler(body: RestoreBackupRequestBody):
         )
         out = type(e).__name__
 
+    resp = prepare_response()
     resp.data = json.dumps({"success": success, "output": out})
     return resp

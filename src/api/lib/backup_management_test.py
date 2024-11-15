@@ -109,7 +109,13 @@ class TestBackupManagement:
         
         assert "bash /restic.sh" in env_vars["ENTRYPOINT_TARGET"], "Expected ENTRYPOINT_TARGET to call 'bash /restic.sh' if mc container is up!"
 
-    def test_archive_directory(self, mocker):
+    def test_archive_directory(self, backup_mgmt):
+        to_archive = "asd"
+        suffix = "asdf"
+        # backup_mgmt.archive_directory(
+        #     to_archive,
+        #     suffix,
+        # )
         pass
 
     def test_restore_minecraft(self, mocker):

@@ -191,7 +191,7 @@ class TestAuth:
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(exp + 1, timezone.utc),
         )
 
@@ -203,7 +203,7 @@ class TestAuth:
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(iat - 1, timezone.utc),
         )
 
@@ -215,7 +215,7 @@ class TestAuth:
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(iat + 1, timezone.utc),
         )
 
@@ -227,7 +227,7 @@ class TestAuth:
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(iat + 1, timezone.utc),
         )
         mocker.patch("src.api.lib.auth.WHITELISTED_USERS", [sub])
@@ -264,7 +264,7 @@ class TestAuth:
     ):
 
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(exp + 1, timezone.utc),
         )
 
@@ -286,7 +286,7 @@ class TestAuth:
         self, mocker, unexpected_scheme, expected_access_token, exp
     ):
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(exp - 1, timezone.utc),
         )
 
@@ -310,7 +310,7 @@ class TestAuth:
         self, mocker, expected_scheme, expected_access_token, exp
     ):
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(exp - 1, timezone.utc),
         )
 
@@ -332,7 +332,7 @@ class TestAuth:
         self, mocker, expected_access_token, now
     ):
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(now, timezone.utc),
         )
         mocker.patch(
@@ -348,7 +348,7 @@ class TestAuth:
 
     def test_validate_access_token_authorized(self, mocker, expected_access_token, now):
         mocker.patch(
-            "src.api.lib.auth.get_now_epoch",
+            "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(now, timezone.utc),
         )
         mocker.patch(

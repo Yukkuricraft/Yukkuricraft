@@ -1,4 +1,5 @@
-import sqlalchemy  # type: ignore
+from flask_sqlalchemy.session import Session
+from sqlalchemy.orm import scoped_session# type: ignore
 
 from flask import request, make_response, Response, current_app  # type: ignore
 
@@ -25,7 +26,7 @@ from src.api.constants import (
 from src.api.db import db
 from src.api.models import AccessToken, User, JTI
 
-from src.common.helpers import get_now_epoch, log_exception
+from src.common.helpers import get_now_dt, log_exception
 from src.common.logger_setup import logger
 
 # TODO: Make more sophisticated in the future but for now this suffices.
@@ -68,7 +69,7 @@ class TimeTravelerError(RuntimeError):
     msg = "Go back to the shadow from whence you came!"
 
     def __init__(self, iat_dt: datetime):
-        now_dt = get_now_epoch()
+        now_dt = get_now_dt()
         super().__init__(
             f"{self.msg}\n"
             f"iat_ts: {int(iat_dt.timestamp())}\n"
@@ -104,7 +105,7 @@ def generate_access_token() -> Tuple[str, int]:
     Returns:
         Tuple[str, int]: _description_
     """
-    return token_hex(), (int(get_now_epoch().timestamp()) + 60 * ACCESS_TOKEN_DUR_MINS)
+    return token_hex(), (int(get_now_dt().timestamp()) + 60 * ACCESS_TOKEN_DUR_MINS)
 
 
 def deserialize_id_token(token: str) -> Dict:
@@ -121,7 +122,7 @@ def deserialize_id_token(token: str) -> Dict:
         return {
             "jti": uuid4().hex,
             "exp": 1999999999,
-            "iat": int(get_now_epoch().strftime("%s")),
+            "iat": int(get_now_dt().strftime("%s")),
             "sub": "123456789012345678901",
             "email": "local@development.yc",
         }
@@ -185,7 +186,7 @@ def get_auth_string_from_websocket_request(headers: Dict[str, str]) -> Tuple[str
 
 
 def generate_access_token_if_valid(
-    token: str, session: sqlalchemy.orm.Session
+    token: str, session: scoped_session[Session]
 ) -> Optional[str]:
     """Validates the oauth token string, which encodes info like the subject, email, jti, etc, and generates a temporary access token if valid.
 
@@ -218,7 +219,7 @@ def generate_access_token_if_valid(
     exp_dt = datetime.fromtimestamp(exp, timezone.utc)
     iat_dt = datetime.fromtimestamp(iat, timezone.utc)
 
-    now = get_now_epoch()
+    now = get_now_dt()
 
     logger.info(pformat([user, exp_dt, exp, iat_dt, iat, now]))
     if session.query(JTI).filter(JTI.jti == jti).first():
@@ -241,7 +242,7 @@ def generate_access_token_if_valid(
 
 
 def verify_access_token_allowed(
-    scheme: str, access_token: str, session: sqlalchemy.orm.session
+    scheme: str, access_token: str, session: scoped_session[Session]
 ):
     """Verifies we issued the access token by checking the DB
 
@@ -256,7 +257,7 @@ def verify_access_token_allowed(
 
     """
     token = session.query(AccessToken).filter(AccessToken.id == access_token).first()
-    now = get_now_epoch()
+    now = get_now_dt()
 
     if not token:
         raise InvalidTokenError(token)
@@ -294,7 +295,7 @@ def validate_access_token(func_to_decorate: Callable):
 
 
 def authenticate_access_token(
-    headers: Dict, session: sqlalchemy.orm.session
+    headers: Dict, session: scoped_session[Session]
 ) -> Optional[User]:
     """If a valid access token is found, returns the user that it was issued for.
 
@@ -315,7 +316,7 @@ def authenticate_access_token(
     return user
 
 
-def invalidate_access_token(headers: Dict, session: sqlalchemy.orm.session):
+def invalidate_access_token(headers: Dict, session: scoped_session[Session]):
     """Expires the access token found in the headers.
 
     Args:
@@ -324,7 +325,8 @@ def invalidate_access_token(headers: Dict, session: sqlalchemy.orm.session):
     """
     _, token = get_access_token_from_headers(headers)
     access_token = session.query(AccessToken).filter(AccessToken.id == token).first()
-    access_token.exp = int(get_now_epoch().timestamp())
+    if access_token is not None:
+        access_token.exp = int(get_now_dt().timestamp())
     session.commit()
 
 

@@ -1,3 +1,4 @@
+from typing import Dict, List
 from flask_openapi3 import OpenAPI, Info
 from src.common import server_paths  # type: ignore
 
@@ -6,7 +7,7 @@ bearer_auth = {
     "scheme": "bearer",
 }
 security_schemes = {"bearerAuth": bearer_auth}
-security = [{"bearerAuth": []}]
+security: List[Dict] = [{"bearerAuth": []}]
 
 info = Info(title="Yukkuricraft Backend API", version="1.0.1")
 

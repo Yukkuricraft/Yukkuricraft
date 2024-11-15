@@ -73,7 +73,10 @@ class CreateBackupResponse(BaseModel):
 
 
 class RestoreBackupRequestBody(BaseModel):
-    target_hostname: str = Field(description="Hostname of container to restore")
+    target_hostname: str = Field(
+        description="Hostname of container to restore",
+        pattern=r"YC-\w+-\w+"
+    )
     target_snapshot_id: str = Field(
         description="The restic snapshot ID for the backup to restore"
     )
@@ -94,7 +97,7 @@ class CreateEnvironmentRequestBody(BaseModel):
     ENV_ALIAS: str = Field(description="Env alias")
     DESCRIPTION: str = Field(description="Env description")
     SERVER_TYPE: str = Field(description="Server type of environment")
-    ENABLE_ENV_PROTECTION: str = Field(
+    ENABLE_ENV_PROTECTION: bool = Field(
         description="Whether env protection is enabled or not", default=False
     )
 

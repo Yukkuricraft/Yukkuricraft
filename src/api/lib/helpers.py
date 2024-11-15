@@ -93,7 +93,7 @@ def seconds_to_string(seconds: int) -> str:
 
 
 def container_name_to_container(
-    client: docker.client, container_name: str
+    client: docker.DockerClient, container_name: str
 ) -> Container:
     """Uses docker-py to convert a container name string to a Container object
 
@@ -132,7 +132,7 @@ def get_running_username() -> str:
         regex = PASSWD_RE.format(uid=uid)
         resp = re.search(regex, contents)
 
-        if resp == None:
+        if resp is None:
             logger.info(regex)
             logger.info(contents)
             logger.info(resp)

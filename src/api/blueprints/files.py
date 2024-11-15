@@ -58,8 +58,7 @@ def list_files_handler(body: ListFilesRequestBody):
 
     if not path:
         abort(400)
-    path = Path(path)
-    resp_data = FileManager.ls(path)
+    resp_data = FileManager.ls(Path(path))
 
     resp = prepare_response()
     resp.data = json.dumps(resp_data)
@@ -85,8 +84,7 @@ def read_file_handler(body: ReadFileRequestBody):
     file_path = body.FILE_PATH
     if not file_path:
         abort(400)
-    file_path = Path(file_path)
-    resp_data = FileManager.read(file_path)
+    resp_data = FileManager.read(Path(file_path))
 
     resp = prepare_response()
     resp.data = json.dumps(resp_data)
@@ -111,10 +109,9 @@ def write_file_handler(body: WriteFileRequestBody):
     file_path = body.FILE_PATH
     if not file_path:
         abort(400)
-    file_path = Path(file_path)
 
     content = body.CONTENT
-    resp_data = FileManager.write(file_path, content)
+    resp_data = FileManager.write(Path(file_path), content)
 
     resp = prepare_response()
     resp.data = json.dumps(resp_data)

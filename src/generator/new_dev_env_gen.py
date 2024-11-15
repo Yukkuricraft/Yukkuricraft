@@ -1,5 +1,6 @@
 #!/bin/env python3
 
+from typing import Dict
 from src.common.config import load_env_config
 from src.common.constants import (
     BASE_DATA_PATH,
@@ -90,7 +91,7 @@ class NewDevEnvGen(BaseGenerator):
         We copy and make necessary adjustments to the {self.env} config to create a new {self.new_env} config.
         """
 
-        config = {}
+        config: Dict = {}
 
         config["general"] = {}
         config["general"]["description"] = description

@@ -33,14 +33,11 @@ def get_next_valid_env_number():
     return next_valid_env_number
 
 
-def list_valid_envs(as_obj=True) -> List[Env | str]:
+def list_valid_envs() -> List[Env]:
     """Returns a list of valid and defined `Env`s in the `env/` folder
 
-    Args:
-        as_obj(bool): Return as `Env`s if True (default), else as strings
-
     Returns:
-        List[Env|str]: List of valid envs where type depends on `as_obj`
+        List[Env]: List of valid envs
     """
 
     envs = []
@@ -54,7 +51,7 @@ def list_valid_envs(as_obj=True) -> List[Env | str]:
             continue
 
         try:
-            envs.append(Env(item.stem) if as_obj else item)
+            envs.append(Env(item.stem))
         except Exception:
             log_exception()
 

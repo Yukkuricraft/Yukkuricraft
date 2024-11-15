@@ -7,13 +7,13 @@ from docker.models.containers import Container
 
 from pprint import pformat
 from typing import Any, Callable, List, Optional, Dict
-from ptyprocess import PtyProcessUnicode
+from ptyprocess import PtyProcessUnicode # type: ignore
 
 from src.api.lib import LegacyActiveContainer, LegacyDefinedContainer
 from src.api.lib.runner import Runner
 from src.api.lib.helpers import InvalidContainerNameError, seconds_to_string
 from src.common.environment import Env
-from src.common.helpers import get_now_epoch, log_exception
+from src.common.helpers import get_now_dt, log_exception
 from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
@@ -22,7 +22,6 @@ from src.common.constants import (
     YC_ENV_LABEL,
     YC_CONTAINER_NAME_LABEL,
 )
-from src.common.types import DataDirType
 
 
 # TODO: Figure out a better solution to this.
@@ -60,10 +59,10 @@ def convert_dockerpy_container_to_container_definition(
     )
 
     started_at = state.get("StartedAt", None)
-    running_for = None
+    running_for_str = None
     status = None
     if started_at is None:
-        running_for = "Container is down"
+        running_for_str = "Container is down"
         status = "Container is down (unhealthy)"
     else:
         # datetime.datetime.fromisoformat() doesn't take `2024-02-11T22:16:57.510507768Z` as a format
@@ -72,15 +71,15 @@ def convert_dockerpy_container_to_container_definition(
         started_at_truncated_ms = started_at.split(".")[0] + "Z"  # Add timezone back on
 
         try:
-            running_for_seconds = get_now_epoch() - datetime.fromisoformat(
+            running_for = get_now_dt() - datetime.fromisoformat(
                 started_at_truncated_ms
             )
         except ValueError:
-            running_for_seconds = timedelta(seconds=0)
-        running_for = seconds_to_string(running_for_seconds.total_seconds())
+            running_for = timedelta(seconds=0)
+        running_for_str = seconds_to_string(int(running_for.total_seconds()))
 
         health_status = state.get("Health", {}).get("Status", "unknown")
-        status = f"Up {running_for} ({health_status})"
+        status = f"Up {running_for_str} ({health_status})"
     return LegacyActiveContainer(
         **{
             "Command": entry_command,
@@ -96,7 +95,7 @@ def convert_dockerpy_container_to_container_definition(
                 config.get("NetworkSettings", {}).get("Networks", {}).keys()
             ),
             "Ports": list(config.get("ExposedPorts", {}).keys()),
-            "RunningFor": running_for,
+            "RunningFor": running_for_str,
             "State": state.get("Status", "unknown"),
             "Status": status,
         }
@@ -153,7 +152,7 @@ class DockerManagement:
         if extra_args and type(extra_args) == dict:
             params.update(extra_args)
 
-        exit_code, output = container.exec_run(**params)
+        exit_code, output = container.exec_run(**params) # type: ignore
         stdout, stderr = output
 
         rtn_msg = stdout

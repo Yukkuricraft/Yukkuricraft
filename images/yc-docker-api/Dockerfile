@@ -1,4 +1,4 @@
-FROM python:3.10.5-buster
+FROM python:3.13
 ENV PYTHONBUFFERED 1
 ENV PYTHONPATH="/app:${PYTHONPATH}"
 
