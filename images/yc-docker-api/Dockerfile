@@ -72,4 +72,4 @@ RUN chown -R $UID:$GID /app
 
 WORKDIR /app
 USER yc-api
-ENTRYPOINT ["gunicorn", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "--log-file=-", "-w", "1", "-b", "0.0.0.0:5001", "src.api:create_app()", "--reload"]
+ENTRYPOINT ["gunicorn", "--worker-class", "gevent", "--log-file=-", "-w", "3", "-b", "0.0.0.0:5001", "src.api:create_app()", "--reload"]
