@@ -74,8 +74,7 @@ class CreateBackupResponse(BaseModel):
 
 class RestoreBackupRequestBody(BaseModel):
     target_hostname: str = Field(
-        description="Hostname of container to restore",
-        pattern=r"YC-\w+-\w+"
+        description="Hostname of container to restore", pattern=r"YC-\w+-\w+"
     )
     target_snapshot_id: str = Field(
         description="The restic snapshot ID for the backup to restore"

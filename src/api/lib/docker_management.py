@@ -7,7 +7,7 @@ from docker.models.containers import Container
 
 from pprint import pformat
 from typing import Any, Callable, List, Optional, Dict
-from ptyprocess import PtyProcessUnicode # type: ignore
+from ptyprocess import PtyProcessUnicode  # type: ignore
 
 from src.api.lib import LegacyActiveContainer, LegacyDefinedContainer
 from src.api.lib.runner import Runner
@@ -71,9 +71,7 @@ def convert_dockerpy_container_to_container_definition(
         started_at_truncated_ms = started_at.split(".")[0] + "Z"  # Add timezone back on
 
         try:
-            running_for = get_now_dt() - datetime.fromisoformat(
-                started_at_truncated_ms
-            )
+            running_for = get_now_dt() - datetime.fromisoformat(started_at_truncated_ms)
         except ValueError:
             running_for = timedelta(seconds=0)
         running_for_str = seconds_to_string(int(running_for.total_seconds()))
@@ -152,7 +150,7 @@ class DockerManagement:
         if extra_args and type(extra_args) == dict:
             params.update(extra_args)
 
-        exit_code, output = container.exec_run(**params) # type: ignore
+        exit_code, output = container.exec_run(**params)  # type: ignore
         stdout, stderr = output
 
         rtn_msg = stdout

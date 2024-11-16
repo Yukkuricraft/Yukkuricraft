@@ -7,6 +7,8 @@ from typing import List, Optional
 from pprint import pformat
 from unittest.mock import Mock
 
+from docker import DockerClient
+
 from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
 from src.common.environment import Env
@@ -28,6 +30,9 @@ from src.api.lib import (
 
 
 class BackupManagement:
+    docker_management: DockerManagement
+    docker_client = DockerClient
+
     def __init__(self, docker_management: Optional[DockerManagement] = None):
         self.docker_management = (
             docker_management if docker_management is not None else DockerManagement()
@@ -100,7 +105,7 @@ class BackupManagement:
             f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'"
         )
         logger.info(underscored_env_alias)
-        out_b = self.docker_client.containers.run(
+        out: str = self.docker_client.containers.run(
             name=backup_container_name,
             image="yukkuricraft/mc-backup-restic",
             remove=True,
@@ -129,7 +134,7 @@ class BackupManagement:
             ],
             network=(f"{env.name}_ycnet" if mc_container_up else ""),
         )
-        return out_b.decode("utf-8")
+        return out
 
     def archive_directory(
         self,
@@ -210,7 +215,7 @@ class BackupManagement:
             world_files_dir,
         )
 
-        out_b = self.docker_client.containers.run(
+        out: str = self.docker_client.containers.run(
             name=restore_container_name,
             image="restic/restic",
             command=f"restore {target_id} --target /",
@@ -226,6 +231,6 @@ class BackupManagement:
             ],
         )
 
-        logger.info(out_b)
+        logger.info(out)
 
-        return out_b.decode("utf-8")
+        return out

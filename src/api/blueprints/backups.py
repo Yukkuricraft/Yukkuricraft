@@ -61,8 +61,6 @@ def list_backups_handler(body: ListBackupsRequestBody):
     env_str = body.env_str
     target_tags = body.target_tags
 
-    
-
     backups = BackupsApi.list_backups_by_env_and_tags(Env(env_str), target_tags)
     resp.data = json.dumps(
         {

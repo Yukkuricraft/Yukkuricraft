@@ -1,5 +1,5 @@
 from flask_sqlalchemy.session import Session
-from sqlalchemy.orm import scoped_session# type: ignore
+from sqlalchemy.orm import scoped_session  # type: ignore
 
 from flask import request, make_response, Response, current_app  # type: ignore
 
