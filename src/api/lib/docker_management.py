@@ -1,8 +1,8 @@
 import os
 import json
-import docker
 from datetime import datetime, timedelta, timezone
 from docker.models.containers import Container
+from docker import DockerClient, from_env
 
 
 from pprint import pformat
@@ -37,6 +37,12 @@ def convert_dockerpy_container_to_container_definition(
     config = container.attrs.get("Config", {})
     state = container.attrs.get("State", {})
     labels = config.get("Labels", {})
+
+    logger.info(pformat(container))
+    logger.info(pformat(container.attrs))
+    logger.info(pformat(config))
+    logger.info(pformat(state))
+    logger.info(pformat(labels))
 
     mounts = list(
         map(
@@ -101,8 +107,8 @@ def convert_dockerpy_container_to_container_definition(
 
 
 class DockerManagement:
-    def __init__(self):
-        self.client = docker.from_env()
+    def __init__(self, client=Optional[DockerClient]):
+        self.client = client if client else from_env()
 
     def pty_attach_container(self, container: Container):
         # This is super weird.
@@ -117,10 +123,12 @@ class DockerManagement:
         # Reading from the pty was also a necessity for the workaround.
         #
         # Wtf lol.
+        logger.info("A")
         if (
             YC_CONTAINER_TYPE_LABEL in container.labels
             and container.labels[YC_CONTAINER_TYPE_LABEL] == "minecraft"
         ):
+            logger.info("B")
             logger.info(pformat(container))
             logger.info("Spawning process")
             p = PtyProcessUnicode.spawn(["docker", "attach", container.name])

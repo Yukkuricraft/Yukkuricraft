@@ -64,9 +64,9 @@ def login_handler(body: LoginRequestBody):
     resp = prepare_response()
     resp.status = 401
 
-    logger.warning(">>>>>>>>>>>>>>>>>>")
-    logger.warning(resp)
-    logger.warning(body)
+    logger.debug(">>>>>>>>>>>>>>>>>>")
+    logger.debug(resp)
+    logger.debug(body)
 
     access_token = None
     try:

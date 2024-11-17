@@ -97,13 +97,13 @@ def mocked_email():
 class TestAuth:
     """Auth lib unit tests"""
 
-    def test_generate_access_token(self):
+    def test__generate_access_token__success(self):
         """Validate we're able to generate a valid access token."""
         token_hex, expiration = generate_access_token()
         assert isinstance(token_hex, str), "Expected token hex to be a str!"
         assert isinstance(expiration, int), "Expected expiration to be an int!"
 
-    def test_deserialize_id_token_local(self, mocker, bogus_token):
+    def test__deserialize_id_token__local(self, mocker, bogus_token):
         """If IS_LOCAL is True, make sure we're returning our hardcoded bypass token dict."""
         mocker.patch("src.api.lib.auth.IS_LOCAL", True)
 
@@ -112,7 +112,7 @@ class TestAuth:
             d["email"] == "local@development.yc"
         ), "Expected local mode to always return 'local@development.yc' for email!"
 
-    def test_deserialize_id_token_notlocal(self, mocker, mocked_email, bogus_token):
+    def test__deserialize_id_token__not_local(self, mocker, mocked_email, bogus_token):
         """If IS_LOCAL is False, make sure we're calling google's oauth token verify function"""
 
         mocker.patch("src.api.lib.auth.IS_LOCAL", False)
@@ -126,7 +126,7 @@ class TestAuth:
             d["email"] == mocked_email
         ), "Expected non-local mode to return mocked email from verify_oauth2_token!"
 
-    def test_get_access_token_from_headers_auth_header(
+    def test__get_access_token_from_headers__auth_header(
         self, expected_scheme, expected_token
     ):
         """Validate access_token is returned from the auth header"""
@@ -138,7 +138,7 @@ class TestAuth:
         assert scheme == expected_scheme, f"Expected scheme to be '{expected_scheme}'!"
         assert token == expected_token, f"Expected token to be '{expected_token}'!"
 
-    def test_get_access_token_from_headers_x_uri_header(self, mocker):
+    def test__get_access_token_from_headers__x_uri_header(self, mocker):
         """Validate that if the auth token is not in the `Authorization` header, we properly fall back to checkign the X-Original-Uri header."""
 
         import src.api.lib.auth
@@ -153,7 +153,7 @@ class TestAuth:
             spy.call_count == 1
         ), f"Expected src.api.lib.auth.get_auth_string_from_websocket_request() to get called once!"
 
-    def test_get_auth_string_from_websocket_request(
+    def test__get_auth_string_from_websocket_request__success(
         self, expected_scheme, expected_token
     ):
         scheme, token = get_auth_string_from_websocket_request(
@@ -163,7 +163,7 @@ class TestAuth:
         assert scheme == expected_scheme, f"Expected scheme to be '{expected_scheme}'!"
         assert token == expected_token, f"Expected token to be '{expected_token}'!"
 
-    def test_generate_access_token_if_valid_duplicate_jti_error(
+    def test__generate_access_token_if_valid__duplicate_jti_error(
         self, mocker, jti, bogus_token, jwt_object
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
@@ -180,7 +180,7 @@ class TestAuth:
         with pytest.raises(DuplicateJTIError):
             generate_access_token_if_valid(bogus_token, session)
 
-    def test_generate_access_token_if_valid_expired_jti_error(
+    def test__generate_access_token_if_valid__expired_jti_error(
         self, mocker, exp, bogus_token, jwt_object
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
@@ -192,7 +192,7 @@ class TestAuth:
         with pytest.raises(ExpiredJTIError):
             generate_access_token_if_valid(bogus_token, UnifiedAlchemyMagicMock())
 
-    def test_generate_access_token_if_valid_time_traveler_error(
+    def test__generate_access_token_if_valid__time_traveler_error(
         self, mocker, iat, bogus_token, jwt_object
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
@@ -204,7 +204,7 @@ class TestAuth:
         with pytest.raises(TimeTravelerError):
             generate_access_token_if_valid(bogus_token, UnifiedAlchemyMagicMock())
 
-    def test_generate_access_token_if_valid_unknown_user_error(
+    def test__generate_access_token_if_valid__unknown_user_error(
         self, mocker, iat, bogus_token, jwt_object
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
@@ -216,7 +216,7 @@ class TestAuth:
         with pytest.raises(UnknownUserError):
             generate_access_token_if_valid(bogus_token, UnifiedAlchemyMagicMock())
 
-    def test_generate_access_token_if_valid(
+    def test__generate_access_token_if_valid__success(
         self, mocker, iat, sub, bogus_token, jwt_object, expected_token
     ):
         mocker.patch("src.api.lib.auth.deserialize_id_token", return_value=jwt_object)
@@ -236,7 +236,7 @@ class TestAuth:
             token == expected_token
         ), f"Did not get the expected access token value '{expected_token}'!"
 
-    def test_verify_access_token_allowed_invalid_token_error(
+    def test__verify_access_token_allowed__invalid_token_error(
         self, expected_scheme, expected_token
     ):
         session = UnifiedAlchemyMagicMock(
@@ -253,7 +253,7 @@ class TestAuth:
         with pytest.raises(InvalidTokenError):
             verify_access_token_allowed(expected_scheme, expected_token, session)
 
-    def test_verify_access_token_allowed_expired_jti_error(
+    def test__verify_access_token_allowed__expired_jti_error(
         self, mocker, expected_scheme, expected_token, exp
     ):
 
@@ -276,7 +276,7 @@ class TestAuth:
         with pytest.raises(ExpiredJTIError):
             verify_access_token_allowed(expected_scheme, expected_token, session)
 
-    def test_verify_access_token_allowed_invalid_token_scheme_error(
+    def test__verify_access_token_allowed__invalid_token_scheme_error(
         self, mocker, unexpected_scheme, expected_token, exp
     ):
         mocker.patch(
@@ -298,7 +298,7 @@ class TestAuth:
         with pytest.raises(InvalidTokenSchemeError):
             verify_access_token_allowed(unexpected_scheme, expected_token, session)
 
-    def test_verify_access_token_allowed(
+    def test__verify_access_token_allowed__success(
         self, mocker, expected_scheme, expected_token, exp
     ):
         mocker.patch(
@@ -320,7 +320,7 @@ class TestAuth:
 
         verify_access_token_allowed(expected_scheme, expected_token, session)
 
-    def test_validate_access_token_unauthorized(self, mocker, expected_token, now):
+    def test__validate_access_token__unauthorized(self, mocker, expected_token, now):
         mocker.patch(
             "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(now, timezone.utc),
@@ -336,7 +336,7 @@ class TestAuth:
         val = validate_access_token(lambda: prepare_response(200))()
         assert val.status_code == 401, "Expected to get a 401 unauthoritzed!"
 
-    def test_validate_access_token_authorized(self, mocker, expected_token, now):
+    def test__validate_access_token__authorized(self, mocker, expected_token, now):
         mocker.patch(
             "src.api.lib.auth.get_now_dt",
             return_value=datetime.fromtimestamp(now, timezone.utc),
@@ -349,7 +349,7 @@ class TestAuth:
         mocker.patch("src.api.lib.auth.verify_access_token_allowed", return_value=None)
 
         mock_request = mocker.MagicMock()
-        mock_request.headers = {"Authorization": "Bearer test_token"}
+        mock_request.headers = {"Authorization": "Bearer test__token"}
         mocker.patch("src.api.lib.auth.request", mock_request)
 
         val = validate_access_token(lambda: prepare_response(200))()

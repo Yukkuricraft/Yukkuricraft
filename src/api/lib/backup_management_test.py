@@ -65,7 +65,7 @@ def restic_target_id() -> str:
 class TestBackupManagement:
     """Backup Management lib unit tests"""
 
-    def test_list_backups_by_env_and_tags_pydantic_validation_error(
+    def test__list_backups_by_env_and_tags__pydantic_validation_error(
         self,
         backup_mgmt: BackupManagement,
         env1_object: Env,
@@ -87,7 +87,7 @@ class TestBackupManagement:
                     env=env1_object, tags=restic_tags_list
                 )
 
-    def test_list_backups_by_env_and_tags_success(
+    def test__list_backups_by_env_and_tags__success(
         self,
         backup_mgmt: BackupManagement,
         env1_object: Env,
@@ -101,7 +101,7 @@ class TestBackupManagement:
         )
         backup_mgmt.list_backups_by_env_and_tags(env=env1_object, tags=restic_tags_list)
 
-    def test_backup_minecraft_backup_already_in_progress_error(
+    def test__backup_minecraft__backup_already_in_progress_error(
         self, backup_mgmt: BackupManagement, env1_object: Env, world_group: str
     ):
         """Test that we get an error if a backup is already in progress for this environment and world group."""
@@ -111,7 +111,7 @@ class TestBackupManagement:
         with pytest.raises(BackupAlreadyInProgressError):
             backup_mgmt.backup_minecraft(env1_object, world_group)
 
-    def test_backup_minecraft_backup_entrypoint_command_if_container_up(
+    def test__backup_minecraft__backup_entrypoint_command_if_container_up(
         self, backup_mgmt: BackupManagement, env1_object: Env, world_group: str
     ):
         """Test the entrypoint_command we use for the backup container is the minecraft container is up."""
@@ -132,7 +132,7 @@ class TestBackupManagement:
             "/usr/bin/backup" in env_vars["ENTRYPOINT_TARGET"]
         ), "Expected ENTRYPOINT_TARGET to call '/usr/bin/backup' if mc container is up!"
 
-    def test_backup_minecraft_backup_entrypoint_command_if_container_down(
+    def test__backup_minecraft__backup_entrypoint_command_if_container_down(
         self, backup_mgmt: BackupManagement, env1_object: Env, world_group: str
     ):
         """Test the entrypoint_command we use for the backup container is the minecraft container is down."""
@@ -152,7 +152,7 @@ class TestBackupManagement:
             "bash /restic.sh" in env_vars["ENTRYPOINT_TARGET"]
         ), "Expected ENTRYPOINT_TARGET to call 'bash /restic.sh' if mc container is up!"
 
-    def test_archive_directory_creates_archive_directory(
+    def test__archive_directory__creates_archive_directory(
         self, tmp_path: Path, backup_mgmt: BackupManagement
     ):
         """Test that the archive_directory() method creates a new archive directory if it doesn't already exist."""
@@ -170,7 +170,7 @@ class TestBackupManagement:
             f"Expected archive directory '{expected_archive_path} to get created!'"
         )
 
-    def test_archive_directory_extra_directories_removed(
+    def test__archive_directory__extra_directories_removed(
         self, tmp_path: Path, backup_mgmt: BackupManagement
     ):
         """Test that the final number of directories matches the max_archives count
@@ -198,7 +198,7 @@ class TestBackupManagement:
             num_archives == max_archives
         ), f"Expected there to be a max of '{max_archives}' archive directories but found '{num_archives}'!"
 
-    def test_archive_directory_existing_directories_under_max_count_remain(
+    def test__archive_directory__existing_directories_under_max_count_remain(
         self, tmp_path: Path, backup_mgmt: BackupManagement
     ):
         """Test that the final number of directories matches the max_archives count
@@ -234,7 +234,7 @@ class TestBackupManagement:
                 archive.exists()
             ), f"Expected a premade archive directory '{expected_archive_path}' to exist but it didn't!"
 
-    def test_archive_directory_archive_path_is_archived(
+    def test__archive_directory__success(
         self, mocker, tmp_path: Path, backup_mgmt: BackupManagement
     ):
         """Tests that the target dir to archive gets archived as expected"""
@@ -264,7 +264,7 @@ class TestBackupManagement:
             archived_file.exists()
         ), f"Expected a premade archive directory '{expected_archive_path}' to exist but it didn't!"
 
-    def test_restore_minecraft_cannot_restore_while_container_up_error(
+    def test__restore_minecraft__cannot_restore_while_container_up_error(
         self,
         backup_mgmt: BackupManagement,
         env1_object: Env,
@@ -278,7 +278,7 @@ class TestBackupManagement:
         with pytest.raises(CannotRestoreWhileContainerUpError):
             backup_mgmt.restore_minecraft(env1_object, world_group, restic_target_id)
 
-    def test_restore_minecraft_restore_already_in_progress_error(
+    def test__restore_minecraft__restore_already_in_progress_error(
         self,
         backup_mgmt: BackupManagement,
         env1_object: Env,
@@ -292,7 +292,7 @@ class TestBackupManagement:
         with pytest.raises(RestoreAlreadyInProgressError):
             backup_mgmt.restore_minecraft(env1_object, world_group, restic_target_id)
 
-    def test_restore_minecraft(
+    def test__restore_minecraft__success(
         self,
         mocker,
         backup_mgmt: BackupManagement,
