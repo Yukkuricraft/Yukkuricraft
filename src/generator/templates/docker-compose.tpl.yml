@@ -161,7 +161,7 @@ custom_extensions:
 services:
   mysql:
     container_name: YC-${ENV}-mysql
-    image: mysql:9
+    image: mysql:9.1
     env_file:
       - ./secrets/minecraft_db.env
     user: "${UID}:${GID}"

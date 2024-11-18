@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta, timezone
+import docker
 from docker.models.containers import Container
 from docker import DockerClient, from_env
 
@@ -12,6 +13,7 @@ from ptyprocess import PtyProcessUnicode  # type: ignore
 from src.api.lib import LegacyActiveContainer, LegacyDefinedContainer
 from src.api.lib.runner import Runner
 from src.api.lib.helpers import InvalidContainerNameError, seconds_to_string
+from src.common.config.config_node import ConfigNode
 from src.common.environment import Env
 from src.common.helpers import get_now_dt, log_exception
 from src.common import server_paths
@@ -31,7 +33,7 @@ from src.common.constants import (
 # Basically if we want to have proper typing of the Container object on frontend, we'd have to extend our def
 # to have _all_ of the dockerpy Container fields but that feels overkill.
 # Instead, we'll just use this transformer function to convert dockerpy's Container back to our old ContainerDefinition shapes for now.
-def convert_dockerpy_container_to_container_definition(
+def convert_dockerpy_container_to_legacy_active_container(
     container: Container,
 ) -> LegacyActiveContainer:
     config = container.attrs.get("Config", {})
@@ -106,8 +108,34 @@ def convert_dockerpy_container_to_container_definition(
     )
 
 
+def convert_docker_compose_container_to_legacy_defined_container(
+    svc_name: str, svc_data: ConfigNode, env: Env
+) -> LegacyDefinedContainer:
+    container = {}
+    container["image"] = svc_data.get("image", "NO IMAGE")
+    container["names"] = (
+        [svc_name] if "name" not in svc_data else [svc_name, svc_data["name"]]
+    )
+    container["container_name"] = svc_data.get("container_name", "")
+    container["hostname"] = svc_data.get("hostname", "")
+    container["mounts"] = svc_data.get("mounts", [])
+    container["networks"] = svc_data.get("networks", [])
+    container["ports"] = svc_data.get("ports", [])
+
+    labels = {}
+    if "labels" in svc_data:
+        for key, val in svc_data.labels.items():
+            # TODO: Make this more robust. What else can be substituted?
+            if val == "${ENV}":
+                val = env.name
+            labels[key] = val
+    container["labels"] = labels
+
+    return LegacyDefinedContainer(**container)
+
+
 class DockerManagement:
-    def __init__(self, client=Optional[DockerClient]):
+    def __init__(self, client: Optional[DockerClient] = None):
         self.client = client if client else from_env()
 
     def pty_attach_container(self, container: Container):
@@ -243,27 +271,11 @@ class DockerManagement:
 
         defined_containers: List = []
         for svc_name, svc_data in docker_compose.services.items():
-            container = {}
-            container["image"] = svc_data.get("image", "NO IMAGE")
-            container["names"] = (
-                [svc_name] if "name" not in svc_data else [svc_name, svc_data["name"]]
+            defined_containers.append(
+                convert_docker_compose_container_to_legacy_defined_container(
+                    svc_name, svc_data, env
+                )
             )
-            container["container_name"] = svc_data.get("container_name", "")
-            container["hostname"] = svc_data.get("hostname", "")
-            container["mounts"] = svc_data.get("mounts", [])
-            container["networks"] = svc_data.get("networks", [])
-            container["ports"] = svc_data.get("ports", [])
-
-            labels = {}
-            if "labels" in svc_data:
-                for key, val in svc_data.labels.items():
-                    # TODO: Make this more robust. What else can be substituted?
-                    if val == "${ENV}":
-                        val = env.name
-                    labels[key] = val
-            container["labels"] = labels
-
-            defined_containers.append(LegacyDefinedContainer(**container))
 
         return defined_containers
 

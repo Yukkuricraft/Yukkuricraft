@@ -8,7 +8,5 @@
     - [`src/lib/backup_management.py`](lib/backup_management.py)
     - [`src/lib/docker_management.py`](lib/docker_management.py)
 
-### Sockets
-Endpoints related socketio.
-
-SocketIO lol.
+## API Docs
+- [Check OpenAPI Docs](https://api.yukkuricraft.net/openapi/)

@@ -12,7 +12,7 @@ from src.api.lib.auth import (
 )
 from src.api.lib.docker_management import (
     DockerManagement,
-    convert_dockerpy_container_to_container_definition,
+    convert_dockerpy_container_to_legacy_active_container,
 )
 from src.api.lib.helpers import log_request
 
@@ -104,7 +104,7 @@ def list_active_containers_handler(path: EnvRequestPath):
 
     data = list(
         map(
-            lambda c: convert_dockerpy_container_to_container_definition(
+            lambda c: convert_dockerpy_container_to_legacy_active_container(
                 c
             ).model_dump(),
             containers,
