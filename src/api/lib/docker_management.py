@@ -151,18 +151,16 @@ class DockerManagement:
         # Reading from the pty was also a necessity for the workaround.
         #
         # Wtf lol.
-        logger.info("A")
         if (
             YC_CONTAINER_TYPE_LABEL in container.labels
             and container.labels[YC_CONTAINER_TYPE_LABEL] == "minecraft"
         ):
-            logger.info("B")
-            logger.info(pformat(container))
             logger.info("Spawning process")
             p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
             logger.info(f"Spawned. {pformat(p)}")
             try:
                 logger.info("Reading?")
+                logger.info(p.isalive())
                 logger.info(p.read(1))
             except EOFError:
                 logger.info("Got EOFError - Did not read from ptyprocess.")
@@ -269,6 +267,7 @@ class DockerManagement:
         filepath = server_paths.get_generated_docker_compose_path(env.name)
         docker_compose = load_yaml_config(filepath, no_cache=True)
 
+        logger.info(pformat(docker_compose))
         defined_containers: List = []
         for svc_name, svc_data in docker_compose.services.items():
             defined_containers.append(
@@ -316,7 +315,7 @@ class DockerManagement:
             "container_name": container_name,
         }
         if additional_data_to_log is not None:
-            data.add(additional_data_to_log)
+            data.update(additional_data_to_log)
 
         container = None
         try:

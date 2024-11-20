@@ -1,25 +1,26 @@
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
-from unittest.mock import PropertyMock, call
-import pytest  # type: ignore
+from typing import Dict, Tuple
+from unittest.mock import call
+import docker
+import pytest
+from pytest_mock import MockerFixture  # type: ignore
 
-from pydantic import ValidationError  # type: ignore
 from src.api.lib.docker_management import (
     DockerManagement,
     convert_docker_compose_container_to_legacy_defined_container,
     convert_dockerpy_container_to_legacy_active_container,
 )
+from src.api.lib.helpers import InvalidContainerNameError
 from src.common.config.config_node import ConfigNode
 from src.common.constants import (
     YC_CONTAINER_NAME_LABEL,
     YC_CONTAINER_TYPE_LABEL,
     YC_ENV_LABEL,
 )
-from src.common.environment import Env  # type: ignore
+from src.common.environment import Env
 
 
 @pytest.fixture
-def docker_mgmt(mocker) -> DockerManagement:
+def docker_mgmt(mocker: MockerFixture) -> DockerManagement:
     mock_docker_client = mocker.MagicMock()
     return DockerManagement(client=mock_docker_client)
 
@@ -136,6 +137,7 @@ def docker_container_fields(
     state_health,
     mounts,
 ):
+    """Shape from dockerpy's Container object."""
     return {
         "Name": name,
         "Created": created,
@@ -159,7 +161,27 @@ def docker_container_fields(
 
 
 @pytest.fixture
-def docker_container(mocker, docker_container_fields):
+def docker_container_legacy_defined_container(
+    config_image,
+    name,
+    docker_network_name,
+    docker_ports,
+    config_labels,
+):
+    return {
+        "image": config_image,
+        "names": [name],
+        "container_name": name,
+        "hostname": name,
+        "mounts": [],
+        "networks": [docker_network_name],
+        "ports": docker_ports,
+        "labels": config_labels,
+    }
+
+
+@pytest.fixture
+def docker_container(mocker: MockerFixture, docker_container_fields):
     container = mocker.MagicMock()
     container.attrs = docker_container_fields
     container.labels = container.attrs["Config"]["Labels"]
@@ -182,7 +204,6 @@ def container_config_node(
     name,
     config_image,
     config_hostname,
-    mounts,
     docker_network_name,
     docker_ports,
     config_labels,
@@ -194,12 +215,23 @@ def container_config_node(
             "image": config_image,
             "container_name": name,
             "hostname": config_hostname,
-            "mounts": [], # TODO: It's not actually the 'mounts' attr... we don't return anything on these atm.
+            "mounts": [],  # TODO: It's not actually the 'mounts' attr... we don't return anything on these atm.
             "networks": [docker_network_name],
             "ports": docker_ports,
             "labels": config_labels,
         }
     )
+
+
+@pytest.fixture
+def docker_compose_services_config(
+    mocker: MockerFixture, env_name, container_config_node
+):
+    config = mocker.MagicMock()
+    config.services = {
+        env_name: container_config_node,
+    }
+    return config
 
 
 @pytest.fixture
@@ -225,6 +257,29 @@ def env_name():
     return "An Env Name"
 
 
+@pytest.fixture
+def env1_object(mocker: MockerFixture, env_name):
+    env_mock = mocker.MagicMock()
+    env_mock.name = env_name
+    return env_mock
+
+
+@pytest.fixture
+def filepath():
+    return "/a/file/path"
+
+@pytest.fixture
+def string_to_search_in_log():
+    return "abcsaidfiasjg"
+
+@pytest.fixture
+def extra_data_to_log(string_to_search_in_log):
+    return {
+        "extra": "data",
+        "to": string_to_search_in_log,
+    }
+
+
 class TestDockerManagement:
     """Docker Management lib unit tests"""
 
@@ -243,10 +298,12 @@ class TestDockerManagement:
         state_status,
     ):
         """Ensures given a mock docker container object, we convert it to the LegacyContainerDefinition shape with the correct values parsed out."""
+        # EXECUTE
         container_def = convert_dockerpy_container_to_legacy_active_container(
             docker_container
         )
 
+        # ASSERT
         names = [
             config_labels[YC_CONTAINER_NAME_LABEL],  # Name we defined
             config_labels[
@@ -259,7 +316,6 @@ class TestDockerManagement:
         mounts_formatted = list(
             map(lambda d: f"{d['Source']}:{d['Destination']}", mounts)
         )
-
         assert (
             container_def.Command == config_cmd
         ), f"Expected 'Command' field to have value '{config_cmd}'!"
@@ -307,22 +363,27 @@ class TestDockerManagement:
         ), f"Expected 'State' field to have value '{state_status}'"
 
     def test__convert_docker_compose_container_to_container_definition__success(
-        self, mocker, container_config_node, env_name
+        self, mocker: MockerFixture, container_config_node, env_name
     ):
+        # SETUP
         env_mock = mocker.MagicMock()
         env_mock.name = env_name
 
+        # EXECUTE
         container = convert_docker_compose_container_to_legacy_defined_container(
             container_config_node.name,
             container_config_node,
             env_mock,
         )
+
+        # ASSERT
         assert (
             container.image == container_config_node.image
         ), f"Expected 'image' field to contain '{container_config_node.image}'!"
-        assert (
-            container.names == [ container_config_node.name, container_config_node.name ]
-        ), f"Did not get the expected 'names' field value!"
+        assert container.names == [
+            container_config_node.name,
+            container_config_node.name,
+        ], f"Did not get the expected 'names' field value!"
         assert (
             container.container_name == container_config_node.container_name
         ), f"Expected 'container_name' field to contain '{container_config_node.container_name}'!"
@@ -340,14 +401,18 @@ class TestDockerManagement:
         ), f"Expected 'ports' field to contain '{container_config_node.ports}'!"
 
     def test__pty_attach_container__success(
-        self, mocker, docker_container, docker_mgmt: DockerManagement
+        self, mocker: MockerFixture, docker_container, docker_mgmt: DockerManagement
     ):
         """Ensures the function calls the PtyProcessUnicode.spawn() method with the docker attach command."""
+        # SETUP
         spawn_mock = mocker.patch(
             "src.api.lib.docker_management.PtyProcessUnicode.spawn"
         )
+
+        # EXECUTE
         docker_mgmt.pty_attach_container(docker_container)
 
+        # ASSERT
         expected_call_args = call(
             ["docker", "attach", docker_container.name],
         )
@@ -364,13 +429,16 @@ class TestDockerManagement:
         success_exec_run_output: Tuple[str, str],
     ):
         """Ensures exec_run() calls the docker container's exec_run() with expected args."""
+        # SETUP
         docker_container.exec_run.return_value = (
             success_exit_code,
             success_exec_run_output,
         )
 
+        # EXECUTE
         status_code, output = docker_mgmt.exec_run(docker_container, config_cmd)
 
+        # ASSERT
         expected_call_args = call(
             cmd=config_cmd,
             demux=True,
@@ -396,15 +464,18 @@ class TestDockerManagement:
     ):
         """Ensures exec_run() calls the docker container's exec_run() with expected args."""
 
+        # SETUP
         docker_container.exec_run.return_value = (
             success_exit_code,
             success_exec_run_output,
         )
 
+        # EXECUTE
         status_code, output = docker_mgmt.exec_run(
             docker_container, config_cmd, False, **extra_exec_run_args
         )
 
+        # ASSERT
         args = {"cmd": config_cmd, "demux": True, **extra_exec_run_args}
         assert docker_container.exec_run.call_args_list[0] == call(
             **args
@@ -418,13 +489,14 @@ class TestDockerManagement:
 
     def test__send_command_to_container__success(
         self,
-        mocker,
+        mocker: MockerFixture,
         docker_container,
         docker_mgmt: DockerManagement,
         config_cmd: str,
         success_exit_code,
     ):
         """Tests that the `perform_cb_on_container()` method is called with expected args for container name and the rcon-cli commands."""
+        # SETUP
         exec_run_return_value = "An exec_run() Return Value"
         exec_run_mock = mocker.patch(
             "src.api.lib.docker_management.DockerManagement.exec_run",
@@ -432,8 +504,10 @@ class TestDockerManagement:
         )
         perform_cb_on_container_spy = mocker.spy(docker_mgmt, "perform_cb_on_container")
 
+        # EXECUTE
         out = docker_mgmt.send_command_to_container(docker_container.name, config_cmd)
 
+        # ASSERT
         assert (
             exec_run_return_value == out
         ), f"Expected output from send_command_to_container to be '{exec_run_return_value}'!"
@@ -444,9 +518,10 @@ class TestDockerManagement:
         assert exec_run_mock.call_args_list[0][0][1] == ["rcon-cli", config_cmd]
 
     def test__prepare_container_for_ws_attach__success(
-        self, mocker, docker_container, docker_mgmt: DockerManagement
+        self, mocker: MockerFixture, docker_container, docker_mgmt: DockerManagement
     ):
         """Ensures we call the pty_attach_container() helper with a container we get from container_name_to_container()"""
+        # SETUP
         container_name_to_container_return_value = mocker.MagicMock()
         container_name_to_container_mock = mocker.patch(
             "src.api.lib.docker_management.DockerManagement.container_name_to_container",
@@ -454,8 +529,10 @@ class TestDockerManagement:
         )
         pty_attach_container_spy = mocker.spy(docker_mgmt, "pty_attach_container")
 
+        # EXECUTE
         docker_mgmt.prepare_container_for_ws_attach(docker_container.name)
 
+        # ASSERT
         assert container_name_to_container_mock.call_args_list[0][0] == (
             docker_container.name,
         ), f"Expected call to container_name_to_container() to include the container name '{docker_container.name}'!"
@@ -467,17 +544,22 @@ class TestDockerManagement:
         self, docker_container, docker_mgmt: DockerManagement
     ):
         """Ensure we correctly dockerpy's containers.get() method with the container name."""
+        # SETUP
         docker_mgmt.client.containers.get.return_value = docker_container
+
+        # EXECUTE
         container = docker_mgmt.container_name_to_container(docker_container.name)
 
+        # ASSERT
         assert (
             container == docker_container
         ), f"Did not get the expected container from container_name_to_container()!"
 
     def test__is_container_up__each_status_returns_expected_bool(
-        self, mocker, docker_container, docker_mgmt: DockerManagement
+        self, mocker: MockerFixture, docker_container, docker_mgmt: DockerManagement
     ):
         """Ensures is_container_up() returns the correct bool for each possible docker container status."""
+        # SETUP
         status_mappings = {
             "created": True,
             "restarting": True,
@@ -494,35 +576,296 @@ class TestDockerManagement:
                 "src.api.lib.docker_management.DockerManagement.container_name_to_container",
                 return_value=docker_container,
             )
+
+            # EXECUTE
             is_up = docker_mgmt.is_container_up(docker_container.name)
 
+            # ASSERT
             assert (
                 is_up == expected_is_up
             ), f"Expected is_container_up() to return {expected_is_up}!"
 
-    def test__list_defined_containers(self):
-        pass
+    def test__list_defined_containers__success(
+        self,
+        mocker: MockerFixture,
+        docker_mgmt: DockerManagement,
+        docker_container_legacy_defined_container,
+        env1_object: Env,
+        filepath: str,
+        docker_compose_services_config: ConfigNode,
+        env_name: str,
+        container_config_node,
+    ):
+        """Ensure list_defined_containers is correctly passing expected params to helper funcs"""
+        # SETUP
+        get_generated_docker_compose_path_patch = mocker.patch(
+            "src.api.lib.docker_management.server_paths.get_generated_docker_compose_path",
+            return_value=filepath,
+        )
 
-    def test__list_active_containers(self):
-        pass
+        load_yaml_config_patch = mocker.patch(
+            "src.api.lib.docker_management.load_yaml_config",
+            return_value=docker_compose_services_config,
+        )
 
-    def test__perform_cb_on_container(self):
-        pass
+        convert_container_patch = mocker.patch(
+            "src.api.lib.docker_management.convert_docker_compose_container_to_legacy_defined_container",
+            return_value=docker_container_legacy_defined_container,
+        )
 
-    def test__up_one_container(self):
-        pass
+        # EXECUTE
+        containers = docker_mgmt.list_defined_containers(env1_object)
 
-    def test__down_one_container(self):
-        pass
+        # ASSERT
+        assert get_generated_docker_compose_path_patch.call_args_list[0] == call(
+            env1_object.name
+        ), f"Was expecting get_generated_docker_compose_path() to get called with '{env1_object.name}'"
+        assert load_yaml_config_patch.call_args_list[0] == call(
+            filepath, no_cache=True
+        ), f"Was expecting load_yaml_config to be called with '{filepath}' and 'no_cache=True'"
 
-    def test__restart_one_container(self):
-        pass
+        assert convert_container_patch.call_args_list[0] == call(
+            env_name, container_config_node, env1_object
+        ), f"Did not get expected call args to convert_docker_compose_container_to_legacy_defined_container"
 
-    def test__up_containers(self):
-        pass
+        assert containers == [
+            docker_container_legacy_defined_container
+        ], f"Did not get the expected LegacyDefinedContainer from list_defined_containers()!"
 
-    def test__down_containers(self):
-        pass
+    def test__list_active_containers__success(
+        self, docker_mgmt: DockerManagement, env1_object: Env, docker_container_fields
+    ):
+        # SETUP
+        docker_mgmt.client.containers.list.return_value = [docker_container_fields]
 
-    def test__restart_containers(self):
-        pass
+        # EXECUTE
+        containers = docker_mgmt.list_active_containers(env1_object)
+
+        # ASSERT
+        assert containers == [
+            docker_container_fields
+        ], f"Did not get the expected containers from list_active_containers()!"
+        assert docker_mgmt.client.containers.list.call_args_list[0] == call(
+            all=True, filters={"label": f"{YC_ENV_LABEL}={env1_object.name}"}
+        ), f"Did not get the expected call args to containers.list()"
+
+    def test__perform_cb_on_container__docker_errors_not_found(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        mocker: MockerFixture,
+        docker_mgmt: DockerManagement,
+        docker_container_fields,
+        extra_data_to_log,
+        string_to_search_in_log: str,
+    ):
+        # SETUP
+        cb_mock = mocker.MagicMock()
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            side_effect=[docker.errors.NotFound("Countainer Not Found")],
+        )
+
+        # EXECUTE
+        rtn = docker_mgmt.perform_cb_on_container(
+            docker_container_fields["Name"], cb_mock, extra_data_to_log
+        )
+
+        # ASSERT
+        assert "Container could not be found!" in caplog.text, f"Expected to catch a docker.errors.NotFound error!"
+        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert rtn is None, f"Expected a return value of None but got '{rtn}'"
+        
+
+    def test__perform_cb_on_container__docker_errors_api_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        mocker: MockerFixture,
+        docker_mgmt: DockerManagement,
+        docker_container_fields,
+        extra_data_to_log,
+        string_to_search_in_log: str,
+    ):
+        # SETUP
+        cb_mock = mocker.MagicMock()
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            side_effect=[docker.errors.APIError("Some API Error!")],
+        )
+
+        # EXECUTE
+        rtn = docker_mgmt.perform_cb_on_container(
+            docker_container_fields["Name"], cb_mock, extra_data_to_log
+        )
+
+        # ASSERT
+        assert "Caught Docker API Error" in caplog.text, "Expected to catch a docker.errors.APIError!"
+        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert rtn is None, f"Expected a return value of None but got '{rtn}'"
+
+    def test__perform_cb_on_container__invalid_container_name_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        mocker: MockerFixture,
+        docker_mgmt: DockerManagement,
+        docker_container_fields,
+        extra_data_to_log,
+        string_to_search_in_log: str,
+    ):
+        # SETUP
+        cb_mock = mocker.MagicMock()
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            side_effect=[InvalidContainerNameError("Invalid Container Name!")],
+        )
+
+        # EXECUTE
+        rtn = docker_mgmt.perform_cb_on_container(
+            docker_container_fields["Name"], cb_mock, extra_data_to_log
+        )
+
+        # ASSERT
+        assert "Could not find a container by the name" in caplog.text, "Expected to catch an InvalidContainerNameError!"
+        assert docker_container_fields["Name"] in caplog.text, "Expected container name to be in error log!"
+        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert rtn is None, f"Expected a return value of None but got '{rtn}'"
+
+    def test__perform_cb_on_container__invalid_container_name_error(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        mocker: MockerFixture,
+        docker_mgmt: DockerManagement,
+        docker_container_fields,
+        extra_data_to_log,
+        string_to_search_in_log: str,
+    ):
+        # SETUP
+        cb_mock = mocker.MagicMock()
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            side_effect=[InvalidContainerNameError("Invalid Container Name!")],
+        )
+
+        # EXECUTE
+        rtn = docker_mgmt.perform_cb_on_container(
+            docker_container_fields["Name"], cb_mock, extra_data_to_log
+        )
+
+        # ASSERT
+        assert "Could not find a container by the name" in caplog.text, "Expected to catch an InvalidContainerNameError!"
+        assert docker_container_fields["Name"] in caplog.text, "Expected container name to be in error log!"
+        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert rtn is None, f"Expected a return value of None but got '{rtn}'"
+
+    def test__perform_cb_on_container__success(
+        self,
+        caplog: pytest.LogCaptureFixture,
+        mocker: MockerFixture,
+        docker_mgmt: DockerManagement,
+        docker_container,
+        extra_data_to_log,
+        string_to_search_in_log: str,
+    ):
+        # SETUP
+        cb_mock = mocker.MagicMock()
+        cb_mock.return_value = string_to_search_in_log
+
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            return_value=docker_container,
+        )
+
+        # EXECUTE
+        rtn = docker_mgmt.perform_cb_on_container(
+            docker_container.name, cb_mock, extra_data_to_log
+        )
+
+        # ASSERT
+        assert docker_container.name in caplog.text, "Expected container name to be in log!"
+        assert rtn == string_to_search_in_log, f"Expected a return value of '{string_to_search_in_log}' but got '{rtn}'"
+
+    def test__up_one_container__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container):
+        """Ensure the .start() method is called from the container returned by container_name_to_container()"""
+        # SETUP
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            return_value=docker_container,
+        )
+
+        # EXECUTE
+        docker_mgmt.up_one_container(
+            docker_container.name
+        )
+
+        # ASSERT
+        docker_container.start.assert_called_once()
+
+    def test__down_one_container__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container):
+        """Ensure the .stop() method is called from the container returned by container_name_to_container()"""
+        # SETUP
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            return_value=docker_container,
+        )
+
+        # EXECUTE
+        docker_mgmt.down_one_container(
+            docker_container.name
+        )
+
+        # ASSERT
+        docker_container.stop.assert_called_once()
+
+    def test__restart_one_container__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container):
+        """Ensure the .stop() method is called from the container returned by container_name_to_container()"""
+        # SETUP
+        mocker.patch.object(
+            DockerManagement,
+            "container_name_to_container",
+            return_value=docker_container,
+        )
+
+        # EXECUTE
+        docker_mgmt.restart_one_container(
+            docker_container.name
+        )
+
+        # ASSERT
+        docker_container.restart.assert_called_once()
+
+
+    def test__up_containers__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env):
+        # SETUP
+        run_make_cmd_mock = mocker.patch("src.api.lib.docker_management.Runner.run_make_cmd")
+
+        # EXECUTE
+        docker_mgmt.up_containers(env1_object)
+
+        # ASSERT
+        run_make_cmd_mock.assert_called_once_with(["make", "up"], env1_object)
+
+    def test__down_containers__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env):
+        # SETUP
+        run_make_cmd_mock = mocker.patch("src.api.lib.docker_management.Runner.run_make_cmd")
+
+        # EXECUTE
+        docker_mgmt.down_containers(env1_object)
+
+        # ASSERT
+        run_make_cmd_mock.assert_called_once_with(["make", "down"], env1_object)
+
+    def test__restart_containers__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env):
+        # SETUP
+        run_make_cmd_mock = mocker.patch("src.api.lib.docker_management.Runner.run_make_cmd")
+
+        # EXECUTE
+        docker_mgmt.restart_containers(env1_object)
+
+        # ASSERT
+        run_make_cmd_mock.assert_called_once_with(["make", "restart"], env1_object)
