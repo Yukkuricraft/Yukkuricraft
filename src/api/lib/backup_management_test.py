@@ -27,14 +27,12 @@ def backup_mgmt(mocker) -> BackupManagement:
 def restic_backup_obj() -> Dict[str, Any]:
     """Only contains required (non Optional) fields"""
     return {
-        "excludes": ["string"],
         "gid": 9999,
         "hostname": "a-hostname",
         "id": "a-regular-id",
         "paths": ["path1", "path2"],
         "program_version": "ver0.1",
         "short_id": "a-short-id",
-        "tags": ["tag1", "tag2"],
         "time": "1970-01-01T00:00:00",
         "tree": "a-tree-string",
         "uid": 9998,

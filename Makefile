@@ -108,7 +108,7 @@ create_new_env:
 
 .PHONY: test
 test:
-	pytest
+	pytest -vvv
 
 # BUILD
 

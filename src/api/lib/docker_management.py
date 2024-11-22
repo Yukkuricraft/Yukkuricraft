@@ -148,7 +148,6 @@ class DockerManagement:
         #   also worked. However, it only worked when executed from an interactive terminal ie was running inside a PTY. Thus, using `subprocess.Popen` from a
         #   server context with no PTY caused it to not work.
         # The final workaround that worked was to create a PTY process from the server using ptyprocess and run the `docker attach` inside of that.
-        # Reading from the pty was also a necessity for the workaround.
         #
         # Wtf lol.
         if (
@@ -159,9 +158,8 @@ class DockerManagement:
             p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
             logger.info(f"Spawned. {pformat(p)}")
             try:
-                logger.info("Reading?")
+                logger.info("Is Alive?")
                 logger.info(p.isalive())
-                logger.info(p.read(1))
             except EOFError:
                 logger.info("Got EOFError - Did not read from ptyprocess.")
             except:

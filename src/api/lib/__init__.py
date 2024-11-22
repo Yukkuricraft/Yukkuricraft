@@ -27,20 +27,20 @@ class BackupAlreadyInProgressError(Exception):
 
 
 class Backup(BaseModel):
-    excludes: List[str]
     gid: int
     hostname: str
     id: str
     paths: List[str]
     program_version: str
     short_id: str
-    tags: List[str]
     time: str  # datetime?
     tree: str
     uid: int
     username: str
 
-    parent: Optional[str] = None
+    tags: Optional[List[str]] = None # If no --tag arg supplied at backup time
+    excludes: Optional[List[str]] = None # If no --exclude arg supplied at backup time
+    parent: Optional[str] = None # If first backup
 
 
 # See docker_management.convert_dockerpy_container_to_container_definition
