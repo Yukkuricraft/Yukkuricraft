@@ -165,8 +165,9 @@ services:
     env_file:
       - ./secrets/minecraft_db.env
     user: "${UID}:${GID}"
-    volumes:
+    volumes: # TODO: Make custom image and copy the my.cnf in at build time rather than mounting.
       - ${MC_FS_ROOT}/env/${ENV}/mysql:/var/lib/mysql
+      - ${YC_REPO_ROOT}/images/mysql/conf.d:/etc/mysql
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: mysql
