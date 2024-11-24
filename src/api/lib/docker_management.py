@@ -160,8 +160,13 @@ class DockerManagement:
             try:
                 logger.info("Is Alive?")
                 logger.info(p.isalive())
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(lambda: p.read(1))
+                    logger.info(future.result(timeout=1))
             except EOFError:
                 logger.info("Got EOFError - Did not read from ptyprocess.")
+            except TimeoutError:
+                logger.info("Got TimeoutError - read() on PTY process failed!")
             except:
                 log_exception()
             finally:
