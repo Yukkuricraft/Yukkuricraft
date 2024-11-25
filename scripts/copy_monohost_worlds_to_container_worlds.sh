@@ -57,11 +57,12 @@ mkdir -p "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS"
 rsync -arP "$MONOYC_BASE/Survival-12.29.13" "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/"
 rsync -arP "$MONOYC_BASE/NeoSurvival-7.24.2016" "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/"
 rsync -arP "$MONOYC_BASE/NovaSurvival-7.7.2019" "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/"
+# NOTE: RENAMING FOLDER NAMES
 rsync -arP "$MONOYC_BASE/Survival4/" "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/Survival4-11.24.2024"
 rsync -arP "$MONOYC_BASE/Survival4_nether/" "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/Survival4-11.24.2024_nether"
 rsync -arP "$MONOYC_BASE/Survival4_the_end/" "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/Survival4-11.24.2024_the_end"
 
-chown -R yukkuricraft:yukkuricraft "$CONTAINER_YC_BASE/$SURVIVAL_WORLDGROUP/worlds/"
+chown -R yukkuricraft:yukkuricraft "$CONTAINER_YC_BASE/$RETRO_SURVIVAL_WORLDS/worlds/"
 
 
 # Lobby

@@ -167,7 +167,7 @@ services:
     user: "${UID}:${GID}"
     volumes: # TODO: Make custom image and copy the my.cnf in at build time rather than mounting.
       - ${MC_FS_ROOT}/env/${ENV}/mysql:/var/lib/mysql
-      - ${YC_REPO_ROOT}/images/mysql/conf.d:/etc/mysql
+      - ${YC_REPO_ROOT}/images/mysql/conf.d/my.cnf:/etc/mysql/my.cnf
     labels:
       net.yukkuricraft.env: ${ENV}
       net.yukkuricraft.container_type: mysql
