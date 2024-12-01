@@ -161,7 +161,10 @@ class DockerManagement:
                 logger.info("Is Alive?")
                 logger.info(p.isalive())
                 with ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(lambda: p.read(1))
+                    future = executor.submit(lambda: p.write("list\n"))
+                    logger.info(future.result(timeout=1))
+
+                    future = executor.submit(lambda: p.read(1024))
                     logger.info(future.result(timeout=1))
             except EOFError:
                 logger.info("Got EOFError - Did not read from ptyprocess.")

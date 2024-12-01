@@ -81,8 +81,8 @@ class WorldGroupFilesGen(BaseGenerator):
                 self.write_config(
                     server_properties_path,
                     template,
-                    "# This file was generated from a template",
                     lambda f, config: EnvConfig.write_cb(f, config, quote=False),
+                    "# This file was generated from a template",
                 )
 
                 os.chmod(server_properties_path, DEFAULT_CHMOD_MODE)

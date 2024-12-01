@@ -51,8 +51,8 @@ class BaseGenerator:
         self,
         config_path: Path,
         config: Dict,
+        write_cb: Callable,
         header: str = "",
-        write_cb: Optional[Callable] = lambda f, config: TomlConfig.write_cb(f, config),
     ):
         """Writes config to path with optional header and custom write cb
 
@@ -64,4 +64,4 @@ class BaseGenerator:
             header (str, optional): Optional header. Defaults to "".
             write_cb (Optional[Callable], optional): Defaults to a `toml_w.dump()`.
         """
-        write_config(config_path, config, header, write_cb)
+        write_config(config_path, config, write_cb, header)

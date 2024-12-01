@@ -108,6 +108,7 @@ class EnvFileGen(BaseGenerator):
         self.write_config(
             self.generated_env_file_path,
             self.generated_env_config,
+            EnvFileGen.dump_write_cb,
             (
                 "#\n"
                 "# THIS FILE WAS AUTOMATICALLY GENERATED\n"
@@ -117,7 +118,6 @@ class EnvFileGen(BaseGenerator):
                 f"# MODIFY `gen/env-toml/{self.env.name}.toml` FOR PERMANENT CHANGES"
                 "#\n\n"
             ),
-            EnvFileGen.dump_write_cb,
         )
 
         logger.info("Done.")

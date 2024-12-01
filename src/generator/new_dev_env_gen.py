@@ -1,26 +1,24 @@
 #!/bin/env python3
 
 from typing import Dict
-from src.common.config import load_env_config
+from pathlib import Path
+
+from src.common import server_type_actions
+from src.common import server_paths
+from src.common.config import TomlConfig, load_env_config
 from src.common.constants import (
     BASE_DATA_PATH,
     REPO_ROOT_PATH,
     HOST_REPO_ROOT_PATH,
 )
-from src.generator.constants import (
-    SERVER_PROPERTIES_TEMPLATE_PATH,
-)
-from src.common import server_type_actions
-from src.common import server_paths
 from src.common.logger_setup import logger
-
-from pathlib import Path
-
 from src.common.environment import Env
 
 from src.api.constants import HOSTNAME
-
 from src.generator.base_generator import BaseGenerator
+from src.generator.constants import (
+    SERVER_PROPERTIES_TEMPLATE_PATH,
+)
 
 """
 TODO: Configurable copying of certain folders/configs from a source env
@@ -116,6 +114,7 @@ class NewDevEnvGen(BaseGenerator):
         self.write_config(
             new_config_path,
             config,
+            TomlConfig.write_cb,
             (
                 "#\n"
                 f"# THIS FILE WAS AUTOMAGICALLY GENERATED\n"
