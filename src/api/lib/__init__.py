@@ -38,9 +38,9 @@ class Backup(BaseModel):
     uid: int
     username: str
 
-    tags: Optional[List[str]] = None # If no --tag arg supplied at backup time
-    excludes: Optional[List[str]] = None # If no --exclude arg supplied at backup time
-    parent: Optional[str] = None # If first backup
+    tags: Optional[List[str]] = None  # If no --tag arg supplied at backup time
+    excludes: Optional[List[str]] = None  # If no --exclude arg supplied at backup time
+    parent: Optional[str] = None  # If first backup
 
 
 # See docker_management.convert_dockerpy_container_to_container_definition

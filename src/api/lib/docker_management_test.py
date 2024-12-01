@@ -268,9 +268,11 @@ def env1_object(mocker: MockerFixture, env_name):
 def filepath():
     return "/a/file/path"
 
+
 @pytest.fixture
 def string_to_search_in_log():
     return "abcsaidfiasjg"
+
 
 @pytest.fixture
 def extra_data_to_log(string_to_search_in_log):
@@ -672,10 +674,13 @@ class TestDockerManagement:
         )
 
         # ASSERT
-        assert "Container could not be found!" in caplog.text, f"Expected to catch a docker.errors.NotFound error!"
-        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert (
+            "Container could not be found!" in caplog.text
+        ), f"Expected to catch a docker.errors.NotFound error!"
+        assert (
+            string_to_search_in_log in caplog.text
+        ), f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
         assert rtn is None, f"Expected a return value of None but got '{rtn}'"
-        
 
     def test__perform_cb_on_container__docker_errors_api_error(
         self,
@@ -700,8 +705,12 @@ class TestDockerManagement:
         )
 
         # ASSERT
-        assert "Caught Docker API Error" in caplog.text, "Expected to catch a docker.errors.APIError!"
-        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert (
+            "Caught Docker API Error" in caplog.text
+        ), "Expected to catch a docker.errors.APIError!"
+        assert (
+            string_to_search_in_log in caplog.text
+        ), f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
         assert rtn is None, f"Expected a return value of None but got '{rtn}'"
 
     def test__perform_cb_on_container__invalid_container_name_error(
@@ -727,9 +736,15 @@ class TestDockerManagement:
         )
 
         # ASSERT
-        assert "Could not find a container by the name" in caplog.text, "Expected to catch an InvalidContainerNameError!"
-        assert docker_container_fields["Name"] in caplog.text, "Expected container name to be in error log!"
-        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert (
+            "Could not find a container by the name" in caplog.text
+        ), "Expected to catch an InvalidContainerNameError!"
+        assert (
+            docker_container_fields["Name"] in caplog.text
+        ), "Expected container name to be in error log!"
+        assert (
+            string_to_search_in_log in caplog.text
+        ), f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
         assert rtn is None, f"Expected a return value of None but got '{rtn}'"
 
     def test__perform_cb_on_container__invalid_container_name_error(
@@ -755,9 +770,15 @@ class TestDockerManagement:
         )
 
         # ASSERT
-        assert "Could not find a container by the name" in caplog.text, "Expected to catch an InvalidContainerNameError!"
-        assert docker_container_fields["Name"] in caplog.text, "Expected container name to be in error log!"
-        assert string_to_search_in_log in caplog.text, f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
+        assert (
+            "Could not find a container by the name" in caplog.text
+        ), "Expected to catch an InvalidContainerNameError!"
+        assert (
+            docker_container_fields["Name"] in caplog.text
+        ), "Expected container name to be in error log!"
+        assert (
+            string_to_search_in_log in caplog.text
+        ), f"Expected to catch '{string_to_search_in_log}' in the logs as part of extra data!"
         assert rtn is None, f"Expected a return value of None but got '{rtn}'"
 
     def test__perform_cb_on_container__success(
@@ -785,10 +806,16 @@ class TestDockerManagement:
         )
 
         # ASSERT
-        assert docker_container.name in caplog.text, "Expected container name to be in log!"
-        assert rtn == string_to_search_in_log, f"Expected a return value of '{string_to_search_in_log}' but got '{rtn}'"
+        assert (
+            docker_container.name in caplog.text
+        ), "Expected container name to be in log!"
+        assert (
+            rtn == string_to_search_in_log
+        ), f"Expected a return value of '{string_to_search_in_log}' but got '{rtn}'"
 
-    def test__up_one_container__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container):
+    def test__up_one_container__success(
+        self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container
+    ):
         """Ensure the .start() method is called from the container returned by container_name_to_container()"""
         # SETUP
         mocker.patch.object(
@@ -798,14 +825,14 @@ class TestDockerManagement:
         )
 
         # EXECUTE
-        docker_mgmt.up_one_container(
-            docker_container.name
-        )
+        docker_mgmt.up_one_container(docker_container.name)
 
         # ASSERT
         docker_container.start.assert_called_once()
 
-    def test__down_one_container__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container):
+    def test__down_one_container__success(
+        self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container
+    ):
         """Ensure the .stop() method is called from the container returned by container_name_to_container()"""
         # SETUP
         mocker.patch.object(
@@ -815,14 +842,14 @@ class TestDockerManagement:
         )
 
         # EXECUTE
-        docker_mgmt.down_one_container(
-            docker_container.name
-        )
+        docker_mgmt.down_one_container(docker_container.name)
 
         # ASSERT
         docker_container.stop.assert_called_once()
 
-    def test__restart_one_container__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container):
+    def test__restart_one_container__success(
+        self, mocker: MockerFixture, docker_mgmt: DockerManagement, docker_container
+    ):
         """Ensure the .stop() method is called from the container returned by container_name_to_container()"""
         # SETUP
         mocker.patch.object(
@@ -832,17 +859,18 @@ class TestDockerManagement:
         )
 
         # EXECUTE
-        docker_mgmt.restart_one_container(
-            docker_container.name
-        )
+        docker_mgmt.restart_one_container(docker_container.name)
 
         # ASSERT
         docker_container.restart.assert_called_once()
 
-
-    def test__up_containers__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env):
+    def test__up_containers__success(
+        self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env
+    ):
         # SETUP
-        run_make_cmd_mock = mocker.patch("src.api.lib.docker_management.Runner.run_make_cmd")
+        run_make_cmd_mock = mocker.patch(
+            "src.api.lib.docker_management.Runner.run_make_cmd"
+        )
 
         # EXECUTE
         docker_mgmt.up_containers(env1_object)
@@ -850,9 +878,13 @@ class TestDockerManagement:
         # ASSERT
         run_make_cmd_mock.assert_called_once_with(["make", "up"], env1_object)
 
-    def test__down_containers__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env):
+    def test__down_containers__success(
+        self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env
+    ):
         # SETUP
-        run_make_cmd_mock = mocker.patch("src.api.lib.docker_management.Runner.run_make_cmd")
+        run_make_cmd_mock = mocker.patch(
+            "src.api.lib.docker_management.Runner.run_make_cmd"
+        )
 
         # EXECUTE
         docker_mgmt.down_containers(env1_object)
@@ -860,9 +892,13 @@ class TestDockerManagement:
         # ASSERT
         run_make_cmd_mock.assert_called_once_with(["make", "down"], env1_object)
 
-    def test__restart_containers__success(self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env):
+    def test__restart_containers__success(
+        self, mocker: MockerFixture, docker_mgmt: DockerManagement, env1_object: Env
+    ):
         # SETUP
-        run_make_cmd_mock = mocker.patch("src.api.lib.docker_management.Runner.run_make_cmd")
+        run_make_cmd_mock = mocker.patch(
+            "src.api.lib.docker_management.Runner.run_make_cmd"
+        )
 
         # EXECUTE
         docker_mgmt.restart_containers(env1_object)

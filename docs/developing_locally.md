@@ -32,6 +32,10 @@ su - $USER
 ```
 docker ps
 ```
+### `MySQL`
+Note: This is only necessary if you're `pip install -r requirements.txt`'ing in your workspace. This is not necessary if you are only building the container images.
+1. If on linux including WSL, `sudo apt-get install libmysqlclient-dev`
+  - This is only necessary if you're seeing an error similar to `mysql_config not found` when installing requirements with pip
 
 ### Prerequisite Git Setup
 You'll need to set up credentials with git to clone the secrets submodule.

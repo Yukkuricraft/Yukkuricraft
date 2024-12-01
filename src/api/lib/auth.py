@@ -169,12 +169,9 @@ def get_auth_string_from_websocket_request(headers: Dict[str, str]) -> Tuple[str
     )  # Expected to be passed from nginx reverse proxy
     if not x_original_uri_header:
         raise InvalidTokenError("No auth header or proxy uri header set!")
-    logger.info(f"x_original_uri_header: {x_original_uri_header}")
 
     parsed_url = urlparse(x_original_uri_header)
-    logger.info(pformat(parsed_url))
     querystring_dict = dict(parse_qsl(parsed_url.query))
-    logger.info(pformat(querystring_dict))
 
     auth_token = querystring_dict.get("Authorization", "")
     if not auth_token:

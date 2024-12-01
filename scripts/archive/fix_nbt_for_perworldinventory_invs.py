@@ -20,8 +20,9 @@ from pathlib import Path
 from typing import Dict, List
 
 
-#file = "creative_creative.working_shulker.json"
+# file = "creative_creative.working_shulker.json"
 file = "creative_creative.json.bak"
+
 
 def convert_nbt_file_to_b64_str(nbt_file: nbtlib.File, use_gzip=False) -> str:
     out_bytes_io = io.BytesIO()
@@ -29,7 +30,7 @@ def convert_nbt_file_to_b64_str(nbt_file: nbtlib.File, use_gzip=False) -> str:
     out_bytes_io.seek(0)
 
     if use_gzip:
-        #out_bytes_io = gzip.GzipFile(fileobj=out_bytes_io, mode="rw")
+        # out_bytes_io = gzip.GzipFile(fileobj=out_bytes_io, mode="rw")
         out_bytes = gzip.compress(out_bytes_io.read())
     else:
         out_bytes = out_bytes_io.read()
@@ -40,6 +41,7 @@ def convert_nbt_file_to_b64_str(nbt_file: nbtlib.File, use_gzip=False) -> str:
     print(fixed_b64)
 
     return fixed_b64
+
 
 def load_nbt_b64_str(b64_str: str) -> nbtlib.File:
     nbt_metadata_binary = base64.decodebytes(b64_str.encode("ascii"))
@@ -61,27 +63,30 @@ def load_nbt_b64_str(b64_str: str) -> nbtlib.File:
 
     return nbt_file
 
+
 def load_item_frame_b64_metadata_and_add_id(b64_str: str) -> str:
     nbt_file = load_nbt_b64_str(b64_str)
 
     entity_tag = nbt_file["EntityTag"].unpack(json=True)
-    nbt_file["EntityTag"] = nbtlib.parse_nbt(json.dumps({**entity_tag, "id": "item_frame"}))
+    nbt_file["EntityTag"] = nbtlib.parse_nbt(
+        json.dumps({**entity_tag, "id": "item_frame"})
+    )
 
     return convert_nbt_file_to_b64_str(nbt_file)
 
+
 def return_updated_player_skull_texture_b64_value(skull_owner_property_b64_str) -> str:
-    skull_owner_property_dict = json.loads(base64.b64decode(skull_owner_property_b64_str).decode("utf8"))
+    skull_owner_property_dict = json.loads(
+        base64.b64decode(skull_owner_property_b64_str).decode("utf8")
+    )
     texture_url = skull_owner_property_dict["textures"]["SKIN"]["url"]
 
-    new_skull_owner_property_dict = {
-        "textures": {
-            "SKIN": {
-                "url": texture_url
-            }
-        }
-    }
+    new_skull_owner_property_dict = {"textures": {"SKIN": {"url": texture_url}}}
 
-    return base64.b64encode(json.dumps(new_skull_owner_property_dict).encode("utf8")).decode("utf8")
+    return base64.b64encode(
+        json.dumps(new_skull_owner_property_dict).encode("utf8")
+    ).decode("utf8")
+
 
 def fix_player_skull_item_object(obj: Dict) -> None:
     if "meta" not in obj:
@@ -106,16 +111,20 @@ def fix_player_skull_item_object(obj: Dict) -> None:
                 "underlined": False,
                 "strikethrough": False,
                 "color": "blue",
-                "bold": False
+                "bold": False,
             }
-        ]
+        ],
     }
 
-    skull_owner_property_b64_str = obj["item"]["meta"]["skull-owner"]["properties"][0]["value"]
+    skull_owner_property_b64_str = obj["item"]["meta"]["skull-owner"]["properties"][0][
+        "value"
+    ]
     skull_owner_properties = [
         {
             "name": "textures",
-            "value": return_updated_player_skull_texture_b64_value(skull_owner_property_b64_str)
+            "value": return_updated_player_skull_texture_b64_value(
+                skull_owner_property_b64_str
+            ),
         }
     ]
     pprint.pprint(skull_owner_properties)
@@ -124,11 +133,14 @@ def fix_player_skull_item_object(obj: Dict) -> None:
     obj["item"]["meta"]["skull-owner"]["name"] = "HeadDatabase"
     obj["item"]["meta"]["skull-owner"]["properties"] = skull_owner_properties
 
+
 def fix_shulker_box_player_skull_nbt(obj: nbtlib.Compound) -> None:
     pprint.pprint({"msg": "fix_shulker_box_player_skull_nbt()", "data": obj})
     try:
         texture_str = obj["tag"]["SkullOwner"]["Properties"]["textures"][0]["Value"]
-        updated_texture_b64_str = return_updated_player_skull_texture_b64_value(texture_str)
+        updated_texture_b64_str = return_updated_player_skull_texture_b64_value(
+            texture_str
+        )
     except:
         updated_texture_b64_str = ""
 
@@ -149,40 +161,55 @@ def fix_shulker_box_player_skull_nbt(obj: nbtlib.Compound) -> None:
             skull_name = "UNKNOWN"
     pprint.pprint(f"Using skull owner: '{skull_name}'")
 
-
-    return nbtlib.Compound({
-        "slot": nbtlib.Int(slot),
-        "item": nbtlib.Compound({
-            "components": nbtlib.Compound({
-                "minecraft:custom_name": nbtlib.String(json.dumps({
-                    "extra": [
+    return nbtlib.Compound(
+        {
+            "slot": nbtlib.Int(slot),
+            "item": nbtlib.Compound(
+                {
+                    "components": nbtlib.Compound(
                         {
-                            "bold": False,
-                            "color": "blue",
-                            "italic": False,
-                            "obfuscated": False,
-                            "strikethrough": False,
-                            "text": skull_name,
-                            "underlined": False,
+                            "minecraft:custom_name": nbtlib.String(
+                                json.dumps(
+                                    {
+                                        "extra": [
+                                            {
+                                                "bold": False,
+                                                "color": "blue",
+                                                "italic": False,
+                                                "obfuscated": False,
+                                                "strikethrough": False,
+                                                "text": skull_name,
+                                                "underlined": False,
+                                            }
+                                        ],
+                                        "text": "",
+                                    }
+                                )
+                            ),
+                            "minecraft:profile": nbtlib.Compound(
+                                {
+                                    "id": owner_uuid,
+                                    "name": nbtlib.String("Remi_Scarlet"),
+                                    "properties": nbtlib.List[nbtlib.Compound](
+                                        [
+                                            {
+                                                "name": nbtlib.String("textures"),
+                                                "value": nbtlib.String(
+                                                    updated_texture_b64_str
+                                                ),
+                                            }
+                                        ]
+                                    ),
+                                }
+                            ),
                         }
-                    ],
-                    "text": ""
-                })),
-                "minecraft:profile": nbtlib.Compound({
-                    "id": owner_uuid,
-                    "name": nbtlib.String("Remi_Scarlet"),
-                    "properties": nbtlib.List[nbtlib.Compound]([
-                        {
-                            "name": nbtlib.String("textures"),
-                            "value": nbtlib.String(updated_texture_b64_str)
-                        }
-                    ])
-                })
-            }),
-            "count": nbtlib.Int(count),
-            "id": nbtlib.String(block_id),
-        }),
-    })
+                    ),
+                    "count": nbtlib.Int(count),
+                    "id": nbtlib.String(block_id),
+                }
+            ),
+        }
+    )
 
 
 def fix_shulker_box_written_book_nbt(obj: nbtlib.Compound):
@@ -197,27 +224,32 @@ def fix_shulker_box_written_book_nbt(obj: nbtlib.Compound):
 
     pages = []
     for page in obj.get("tag", {}).get("pages", []):
-        pages.append({
-            "raw": page
-        })
+        pages.append({"raw": page})
 
-
-    return nbtlib.Compound({
-        "slot": nbtlib.Int(slot),
-        "item": nbtlib.Compound({
-            "components": nbtlib.Compound({
-                "minecraft:written_book_content": nbtlib.Compound({
-                    "author": nbtlib.String(author),
-                    "pages": nbtlib.List[nbtlib.Compound](pages),
-                    "title": nbtlib.Compound({
-                        "raw": nbtlib.String(title)
-                    })
-                })
-            }),
-            "count": nbtlib.Int(count),
-            "id": nbtlib.String(block_id)
-        })
-    })
+    return nbtlib.Compound(
+        {
+            "slot": nbtlib.Int(slot),
+            "item": nbtlib.Compound(
+                {
+                    "components": nbtlib.Compound(
+                        {
+                            "minecraft:written_book_content": nbtlib.Compound(
+                                {
+                                    "author": nbtlib.String(author),
+                                    "pages": nbtlib.List[nbtlib.Compound](pages),
+                                    "title": nbtlib.Compound(
+                                        {"raw": nbtlib.String(title)}
+                                    ),
+                                }
+                            )
+                        }
+                    ),
+                    "count": nbtlib.Int(count),
+                    "id": nbtlib.String(block_id),
+                }
+            ),
+        }
+    )
 
 
 def fix_shulker_box_metaless_item_nbt(obj: nbtlib.Compound):
@@ -225,13 +257,17 @@ def fix_shulker_box_metaless_item_nbt(obj: nbtlib.Compound):
     slot = obj["Slot"]
     block_id = obj["id"]
 
-    return nbtlib.Compound({
-        "slot": nbtlib.Int(slot),
-        "item": nbtlib.Compound({
-            "count": nbtlib.Int(count),
-            "id": nbtlib.String(block_id),
-        })
-    })
+    return nbtlib.Compound(
+        {
+            "slot": nbtlib.Int(slot),
+            "item": nbtlib.Compound(
+                {
+                    "count": nbtlib.Int(count),
+                    "id": nbtlib.String(block_id),
+                }
+            ),
+        }
+    )
 
 
 def fix_shulker_box_metadata_nbt(b64_str: str) -> bytes:
@@ -249,28 +285,22 @@ def fix_shulker_box_metadata_nbt(b64_str: str) -> bytes:
     for item in shulker_items:
         # FIX PLAYER HEAD NBT FORMAT CHANGE
         if item["id"] == "minecraft:player_head":
-            shulker_items_121.append(
-                fix_shulker_box_player_skull_nbt(item)
-            )
+            shulker_items_121.append(fix_shulker_box_player_skull_nbt(item))
         elif item["id"] == "minecraft:written_book":
-            shulker_items_121.append(
-                fix_shulker_box_written_book_nbt(item)
-            )
+            shulker_items_121.append(fix_shulker_box_written_book_nbt(item))
         else:
             # No tag, no nbt metadata, can append wholesale without modification
             try:
-                shulker_items_121.append(
-                    fix_shulker_box_metaless_item_nbt(item)
-                )
+                shulker_items_121.append(fix_shulker_box_metaless_item_nbt(item))
             except:
-                pass # Failed to parse somehow - ignore
+                pass  # Failed to parse somehow - ignore
 
         pass
 
     print("!!!")
-    nbt_file["block-entity-components"] = nbtlib.Compound({
-        "minecraft:container": nbtlib.List[nbtlib.Compound](shulker_items_121)
-    })
+    nbt_file["block-entity-components"] = nbtlib.Compound(
+        {"minecraft:container": nbtlib.List[nbtlib.Compound](shulker_items_121)}
+    )
     del nbt_file["BlockEntityTag"]
     pprint.pprint(nbt_file)
     return convert_nbt_file_to_b64_str(nbt_file, use_gzip=True)
@@ -295,7 +325,7 @@ def fix_list_of_items(contents: List):
         elif item_type == "PLAYER_HEAD":
             fix_player_skull_item_object(item)
 
-        elif "SHULKER_BOX" in item_type: # Ie, YELLOW_SHULKER_BOX, RED_SHULKER_BOX, etc
+        elif "SHULKER_BOX" in item_type:  # Ie, YELLOW_SHULKER_BOX, RED_SHULKER_BOX, etc
             if meta:
                 nbt_b64 = meta.get("internal", None)
                 if nbt_b64 is None:
@@ -307,27 +337,28 @@ def fix_file(file):
     with open(file, "r") as inv_f:
         inv_d = json.loads(inv_f.read())
 
-        if 'inventory' in inv_d:
-            if 'contents' in inv_d['inventory']:
-                fix_list_of_items(inv_d['inventory']['contents'])
+        if "inventory" in inv_d:
+            if "contents" in inv_d["inventory"]:
+                fix_list_of_items(inv_d["inventory"]["contents"])
 
-        if 'ender-chest' in inv_d:
-            fix_list_of_items(inv_d['ender-chest'])
+        if "ender-chest" in inv_d:
+            fix_list_of_items(inv_d["ender-chest"])
 
         pprint.pprint(inv_d)
-        #pprint.pprint(inv_d["inventory"]["contents"])
+        # pprint.pprint(inv_d["inventory"]["contents"])
 
     with open(file, "w") as inv_f:
         inv_f.write(json.dumps(inv_d))
 
+
 for p in Path("data/").iterdir():
     if p.is_file():
         continue
-    #if "e18aa899-1c62-41ad-acc4-2ef50e46114a" not in p.name: # Koko 
+    # if "e18aa899-1c62-41ad-acc4-2ef50e46114a" not in p.name: # Koko
     #    continue
-    #if "0093a48d-b26a-4e01-b090-f44ada97573e" not in p.name: # Purp
+    # if "0093a48d-b26a-4e01-b090-f44ada97573e" not in p.name: # Purp
     #    continue
-    #if "6a0bbafd -cb56-4075-ab5a-fd4ba4f7f8a7" not in p.name: # Mystia
+    # if "6a0bbafd -cb56-4075-ab5a-fd4ba4f7f8a7" not in p.name: # Mystia
     #    continue
 
     for file in p.iterdir():
