@@ -86,6 +86,10 @@ class RestoreBackupRequestBody(BaseModel):
     target_worlds: List[str] = Field(
         description="List of world names to restore from the snapshot"
     )
+    bypass_running_container_restriction: bool = Field(
+        default=False,
+        description="If you know what you're doing and want to restore world files while the server is still running, supply True.",
+    )
 
 
 class RestoreBackupResponse(BaseModel):

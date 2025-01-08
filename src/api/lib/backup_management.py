@@ -130,7 +130,7 @@ class BackupManagement:
                 # Only file objects have the "name" field.
                 worlds.add(name)
 
-        return list(worlds)
+        return sorted(list(worlds))
 
     def backup_minecraft(self, env: Env, world_group: str):
         """Performs an ad-hoc backup of `world_group` in env `env`
@@ -199,23 +199,61 @@ class BackupManagement:
 
     def archive_directory(
         self,
+        worlds_list: List[str],
         dir_to_archive: Path,
         archive_dir_suffix: str = "_archives",
         max_archives=10,
     ):
-        """Archives the `dir_to_archive` dir.
+        """Archives the `worlds_list` worlds from the `dir_to_archive` dir.
 
-        - The name of the archive dir will be of format f"{dir_to_archive}{archive_dir_suffix}".
-        - The directory being archived will have the current epoch timestamp appended to it.
+        This is to ensure if a rollback catastrophically fails, we can attempt to roll forward again to recover.
 
-        If `dir_to_archive` is `/a/b/c` and `archive_dir_suffic` is `_archive`, the archived directory
-            will exist in `/a/b/c_archive/c-123456789`
+        1. An archive directory of format f"{dir_to_archive}{archive_dir_suffix}" is created if one does not exist.
+        2. A new directory will be created within the archive directory of format f"{dir_to_archive}-<epoch-timestamp>"
+            - This will be placed inside the archive directory
+        3. Only the worlds in `worlds_list` will be moved to the new directory.
+            - Worlds not included will be left alone in their original directories.
+
+        Assuming:
+        - `worlds_list = ["world1", "world3"]`
+        - `dir_to_archive = "/a/b/c/"`
+        - `archive_dir_suffix = "_archive"`
+        - Folder structure:
+          /a/b/c/
+          │
+          ├─ world1/
+          │  ├─ uid.dat
+          │  ├─ level.dat
+          │  ├─ etc...
+          ├─ world2/
+          │  ├─ uid.dat
+          │  ├─ etc...
+          ├─ world3/
+          │  ├─ uid.dat
+          │  ├─ etc...
+
+        After archival, the folder will look like:
+        /a/b/
+        │
+        ├─ c/
+        │  ├─ world2/
+        │  │  ├─ etc...
+        ├─ c_archive/
+        │  ├─ c-123456789/
+        │  │  ├─ world1/
+        │  │  │  ├─ uid.dat
+        │  │  │  ├─ level.dat
+        │  │  │  ├─ etc...
+        │  │  ├─ world3/
+        │  │  │  ├─ uid.dat
+        │  │  │  ├─ etc...
 
         NOTE: This method is naive in a few ways:
         - We assume all dirs/files in the archive directory are archives of our target dir to archive.
           - If we have two types of archives in the same dir, our "max archives" logic will fail
 
         Args:
+        worlds_list (List[str]): List of worlds being restored
             dir_to_archive (Path): Directory to archive
             archive_dir_suffix (str): Suffix of the archive dir.
             max_archives (int): Maximum number of archived directories. Will remove oldest after this # is reached.
@@ -241,11 +279,17 @@ class BackupManagement:
         logger.info(f">> Archiving directory '{dir_to_archive}'")
         new_archive_name = f"{dir_to_archive.name}-{int(time.time())}"
         archive_destination = archive_dir / new_archive_name
+        archive_destination.mkdir(parents=True, exist_ok=True)
 
-        logger.info(
-            f">> Archiving directory '{dir_to_archive}' -> '{archive_destination}'"
-        )
-        dir_to_archive.rename(archive_destination)
+        for world in worlds_list:
+            world_to_archive = dir_to_archive / world
+            world_archive_destination = archive_destination / world
+
+            logger.info(
+                f">> Archiving directory '{world_to_archive}' -> '{world_archive_destination}'"
+            )
+
+            world_to_archive.rename(world_archive_destination)
 
     def build_restore_minecraft_restic_command(self, target_id: str, worlds: List[str]):
         """Helper to build the final `restic restore <...args>` etc command to be executed.
@@ -264,7 +308,12 @@ class BackupManagement:
         return cmd
 
     def restore_minecraft(
-        self, env: Env, world_group: str, target_id: str, worlds: List[str]
+        self,
+        env: Env,
+        world_group: str,
+        target_id: str,
+        worlds: List[str],
+        bypass_running_container_restriction: bool,
     ):
         """Restores the `target_id` backup to `world_group` in env `env`
 
@@ -279,7 +328,10 @@ class BackupManagement:
             name=world_group,
         )
 
-        if self.docker_management.is_container_up(container_name):
+        if (
+            not bypass_running_container_restriction
+            and self.docker_management.is_container_up(container_name)
+        ):
             raise CannotRestoreWhileContainerUpError(container_name)
 
         restore_container_name = f"{container_name}_restore"
@@ -291,6 +343,7 @@ class BackupManagement:
         )
 
         self.archive_directory(
+            worlds,
             world_files_dir,
         )
 

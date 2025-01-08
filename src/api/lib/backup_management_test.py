@@ -75,6 +75,29 @@ def restic_command() -> str:
     return "some restic command here"
 
 
+@pytest.fixture
+def bypass_running_container_restriction() -> bool:
+    return False
+
+
+@pytest.fixture
+def world_file() -> str:
+    return "world.file"
+
+
+@pytest.fixture
+def archive_directories_fs_setup(
+    tmp_path: Path, target_worlds: List[str], world_file: str
+) -> Path:
+    for target_world in target_worlds:
+        target_world_path = tmp_path / target_world
+        target_world_path.mkdir(exist_ok=True, parents=True)
+        file_in_world = target_world_path / world_file
+        file_in_world.touch()
+
+    return tmp_path
+
+
 class TestBackupManagement:
     """Backup Management lib unit tests"""
 
@@ -235,7 +258,10 @@ class TestBackupManagement:
         ), "Expected ENTRYPOINT_TARGET to call 'bash /restic.sh' if mc container is up!"
 
     def test__archive_directory__creates_archive_directory(
-        self, tmp_path: Path, backup_mgmt: BackupManagement
+        self,
+        target_worlds: List[str],
+        archive_directories_fs_setup: Path,
+        backup_mgmt: BackupManagement,
     ):
         """Test that the archive_directory() method creates a new archive directory if it doesn't already exist."""
 
@@ -244,12 +270,13 @@ class TestBackupManagement:
 
         # EXECUTE
         backup_mgmt.archive_directory(
-            tmp_path,
+            target_worlds,
+            archive_directories_fs_setup,
             suffix,
         )
 
         # ASSERT
-        expected_archive_path = f"{tmp_path}{suffix}"
+        expected_archive_path = f"{archive_directories_fs_setup}{suffix}"
         assert Path(
             expected_archive_path
         ).exists, (
@@ -257,7 +284,10 @@ class TestBackupManagement:
         )
 
     def test__archive_directory__extra_directories_removed(
-        self, tmp_path: Path, backup_mgmt: BackupManagement
+        self,
+        target_worlds: List[str],
+        archive_directories_fs_setup: Path,
+        backup_mgmt: BackupManagement,
     ):
         """Test that the final number of directories matches the max_archives count
 
@@ -266,17 +296,18 @@ class TestBackupManagement:
 
         # SETUP
         suffix = "_testsuffix"
-        expected_archive_path = Path(f"{tmp_path}{suffix}")
+        expected_archive_path = Path(f"{archive_directories_fs_setup}{suffix}")
         max_archives = 10
 
         for idx in range(max_archives + 1):
-            (expected_archive_path / f"{tmp_path.name}_{idx}").mkdir(
-                parents=True, exist_ok=True
-            )
+            (
+                expected_archive_path / f"{archive_directories_fs_setup.name}_{idx}"
+            ).mkdir(parents=True, exist_ok=True)
 
         # EXECUTE
         backup_mgmt.archive_directory(
-            tmp_path,
+            target_worlds,
+            archive_directories_fs_setup,
             suffix,
             max_archives,
         )
@@ -288,7 +319,10 @@ class TestBackupManagement:
         ), f"Expected there to be a max of '{max_archives}' archive directories but found '{num_archives}'!"
 
     def test__archive_directory__existing_directories_under_max_count_remain(
-        self, tmp_path: Path, backup_mgmt: BackupManagement
+        self,
+        target_worlds: List[str],
+        archive_directories_fs_setup: Path,
+        backup_mgmt: BackupManagement,
     ):
         """Test that the final number of directories matches the max_archives count
 
@@ -297,20 +331,30 @@ class TestBackupManagement:
 
         # SETUP
         suffix = "_testsuffix"
-        expected_archive_path = Path(f"{tmp_path}{suffix}")
+        expected_archive_path = Path(f"{archive_directories_fs_setup}{suffix}")
         max_archives = 10
         archives_to_premake = max_archives - 2
 
+        world_file = "world.file"
+        for target_world in target_worlds:
+            target_world_path = archive_directories_fs_setup / target_world
+            target_world_path.mkdir(exist_ok=True, parents=True)
+            file_in_world = target_world_path / world_file
+            file_in_world.touch()
+
         should_exist_archives = []
         for idx in range(archives_to_premake):
-            archive_dir = expected_archive_path / f"{tmp_path.name}_{idx}"
+            archive_dir = (
+                expected_archive_path / f"{archive_directories_fs_setup.name}_{idx}"
+            )
             archive_dir.mkdir(parents=True, exist_ok=True)
 
             should_exist_archives.append(archive_dir)
 
         # EXECUTE
         backup_mgmt.archive_directory(
-            tmp_path,
+            target_worlds,
+            archive_directories_fs_setup,
             suffix,
             max_archives,
         )
@@ -327,37 +371,65 @@ class TestBackupManagement:
             ), f"Expected a premade archive directory '{expected_archive_path}' to exist but it didn't!"
 
     def test__archive_directory__success(
-        self, mocker: MockerFixture, tmp_path: Path, backup_mgmt: BackupManagement
+        self,
+        mocker: MockerFixture,
+        target_worlds: List[str],
+        archive_directories_fs_setup: Path,
+        backup_mgmt: BackupManagement,
+        world_file: str,
     ):
         """Tests that the target dir to archive gets archived as expected"""
 
         # SETUP
-        suffix = "_testsuffix"
-        expected_archive_path = Path(f"{tmp_path}{suffix}")
-        max_archives = 10
-
-        file_in_archive = tmp_path / "foofile"
-        file_in_archive.touch()
-
         time_time = 123456789
         mocker.patch("time.time", return_value=time_time)
 
+        suffix = "_testsuffix"
+        expected_archive_path = Path(f"{archive_directories_fs_setup}{suffix}")
+        expected_archive_instance_path = (
+            expected_archive_path / f"{archive_directories_fs_setup.name}-{time_time}"
+        )
+        max_archives = 10
+
+        expected_files = []
+        expected_dirs = []
+        for target_world in target_worlds:
+            expected_dir_path = expected_archive_instance_path / target_world
+            expected_dirs.append(expected_dir_path)
+            expected_file_path = expected_dir_path / world_file
+            expected_files.append(expected_file_path)
+
+        non_target_world_path = archive_directories_fs_setup / "NotATargetWorld"
+        non_target_world_path.mkdir(exist_ok=True, parents=True)
+        non_target_file_in_world = non_target_world_path / world_file
+        non_target_file_in_world.touch()
+
         # EXECUTE
         backup_mgmt.archive_directory(
-            tmp_path,
+            target_worlds,
+            archive_directories_fs_setup,
             suffix,
             max_archives,
         )
 
         # ASSERT
-        archived_file = (
-            expected_archive_path
-            / f"{tmp_path.name}-{time_time}"
-            / file_in_archive.name
-        )
+        for directory in expected_dirs:
+            assert (
+                directory.exists()
+            ), f"Expected an archive directory '{directory}' to exist but it didn't!"
+
+        for file in expected_files:
+            assert (
+                file.exists()
+            ), f"Expected an archived file '{file}' to exist but it didn't!"
+
         assert (
-            archived_file.exists()
-        ), f"Expected a premade archive directory '{expected_archive_path}' to exist but it didn't!"
+            non_target_world_path.exists()
+        ), f"Expected a non-target world to have remained untouched in original location!"
+
+        assert (
+            non_target_file_in_world.exists()
+        ), f"Expected a non-target file to have remained untouched in original location!"
 
     def test__build_restore_minecraft_restic_command__success(
         self,
@@ -388,6 +460,7 @@ class TestBackupManagement:
         world_group: str,
         restic_target_id: str,
         target_worlds: List[str],
+        bypass_running_container_restriction: bool,
     ):
         """Ensure we get an error if the container we're trying to restore to is currently running."""
 
@@ -398,7 +471,11 @@ class TestBackupManagement:
             # EXECUTE
             # ASSERT
             backup_mgmt.restore_minecraft(
-                env1_object, world_group, restic_target_id, target_worlds
+                env1_object,
+                world_group,
+                restic_target_id,
+                target_worlds,
+                bypass_running_container_restriction,
             )
 
     def test__restore_minecraft__restore_already_in_progress_error(
@@ -408,6 +485,7 @@ class TestBackupManagement:
         world_group: str,
         restic_target_id: str,
         target_worlds: List[str],
+        bypass_running_container_restriction: bool,
     ):
         """Ensure we get an error if there is a restore already in progress for this world group and env."""
 
@@ -418,7 +496,11 @@ class TestBackupManagement:
             # EXECUTE
             # ASSERT
             backup_mgmt.restore_minecraft(
-                env1_object, world_group, restic_target_id, target_worlds
+                env1_object,
+                world_group,
+                restic_target_id,
+                target_worlds,
+                bypass_running_container_restriction,
             )
 
     def test__restore_minecraft__success(
@@ -429,6 +511,7 @@ class TestBackupManagement:
         world_group: str,
         restic_target_id: str,
         target_worlds: List[str],
+        bypass_running_container_restriction: bool,
     ):
         """Ensures given no container state issues, the docker call to run the restore sidecar container is executed"""
 
@@ -442,7 +525,11 @@ class TestBackupManagement:
 
         # EXECUTE
         backup_mgmt.restore_minecraft(
-            env1_object, world_group, restic_target_id, target_worlds
+            env1_object,
+            world_group,
+            restic_target_id,
+            target_worlds,
+            bypass_running_container_restriction,
         )
 
         # ASSERT

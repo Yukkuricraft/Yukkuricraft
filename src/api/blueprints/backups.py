@@ -164,6 +164,7 @@ def restore_minecraft_backup_handler(body: RestoreBackupRequestBody):
     target_hostname = body.target_hostname
     target_snapshot_id = body.target_snapshot_id
     target_worlds = body.target_worlds
+    bypass_running_container_restriction = body.bypass_running_container_restriction
 
     split = target_hostname.split("-")
     target_env, target_world_group = split[1], split[2]
@@ -172,7 +173,11 @@ def restore_minecraft_backup_handler(body: RestoreBackupRequestBody):
     success = False
     try:
         out = BackupsApi.restore_minecraft(
-            Env(target_env), target_world_group, target_snapshot_id, target_worlds
+            Env(target_env),
+            target_world_group,
+            target_snapshot_id,
+            target_worlds,
+            bypass_running_container_restriction,
         )
         success = True
     except Exception as e:
