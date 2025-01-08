@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Union
-from pydantic import BaseModel  # type: ignore
+from pydantic import BaseModel, computed_field  # type: ignore
 
 
 class InvalidContainerException(Exception):
@@ -40,7 +40,7 @@ class Backup(BaseModel):
 
     tags: Optional[List[str]] = None  # If no --tag arg supplied at backup time
     excludes: Optional[List[str]] = None  # If no --exclude arg supplied at backup time
-    parent: Optional[str] = None  # If first backup
+    parent: Optional[str] = None  # If first back
 
 
 # See docker_management.convert_dockerpy_container_to_container_definition

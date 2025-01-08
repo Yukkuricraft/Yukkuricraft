@@ -46,3 +46,11 @@ WHITELISTED_USERS_FILE = "secrets/whitelisted_google_sub_ids.txt"
 ACCESS_TOKEN_DUR_MINS = 30
 YC_TOKEN_AUTH_SCHEME = "Bearer"
 ENV_FOLDER: Path = Path("/app/env")
+
+BACKUP_CONTENT_ROOT: str = "/worlds-bindmount"
+"""We technically can't assume this will _always_ be the backup root but
+we have to hardcode it in a few places like template files and shellscripts.
+
+It's probably not gonna change.
+But if it does, we should figure out a better way to share the value across api, templates, scripts etc.
+"""

@@ -24,6 +24,10 @@ class EnvRequestPath(BaseModel):
     env_str: str = Field(description="Environment id string")
 
 
+class TargetIdRequestPath(BaseModel):
+    target_id: str = Field(description="Restic Snapshot Target Id")
+
+
 class ContainerNameRequestPath(BaseModel):
     container_name: str = Field(description="Container name string")
 
@@ -79,11 +83,26 @@ class RestoreBackupRequestBody(BaseModel):
     target_snapshot_id: str = Field(
         description="The restic snapshot ID for the backup to restore"
     )
+    target_worlds: List[str] = Field(
+        description="List of world names to restore from the snapshot"
+    )
 
 
 class RestoreBackupResponse(BaseModel):
     success: bool = Field(description="Whether the backup succeeded or not")
     output: str = Field(description="Stdout from the backup container run")
+
+
+class ListSnapshotWorldsBody(BaseModel):
+    target_id: str = Field(
+        description="The snapshot id to get list of worlds backed up in"
+    )
+
+
+class ListSnapshotWorldsResponse(BaseModel):
+    worlds: List[str] = Field(
+        description="List of world names that are in this backup snapshot"
+    )
 
 
 # ------------------

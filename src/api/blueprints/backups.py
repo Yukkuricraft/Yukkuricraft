@@ -20,6 +20,9 @@ from src.api.blueprints import (
     ListBackupsResponse,
     RestoreBackupRequestBody,
     RestoreBackupResponse,
+    ListSnapshotWorldsBody,
+    ListSnapshotWorldsResponse,
+    TargetIdRequestPath,
     UnauthorizedResponse,
     backups_tag,
 )
@@ -66,6 +69,34 @@ def list_backups_handler(body: ListBackupsRequestBody):
         {
             "backups": list(map(lambda b: b.model_dump(), backups)),
         }
+    )
+
+    return resp
+
+
+@backups_bp.route("/snapshot/<string:target_id>/worlds", methods=["OPTIONS"])
+@log_request
+def list_snapshot_worlds_options_handler(target_id):
+    return return_cors_response()
+
+
+@backups_bp.get(
+    "/snapshot/<string:target_id>/worlds",
+    responses={HTTPStatus.OK: ListSnapshotWorldsResponse},
+)
+@validate_access_token
+@log_request
+def list_snapshot_worlds_handler(path: TargetIdRequestPath):
+    """Get Worlds in Snapshot
+
+    Returns all worlds backed up in the supplied Restic snapshot `target_id`
+    """
+
+    target_id = path.target_id
+
+    resp = prepare_response()
+    resp.data = json.dumps(
+        {"worlds": BackupsApi.get_worlds_backed_up_in_snapshot(target_id)}
     )
 
     return resp
@@ -132,6 +163,7 @@ def restore_minecraft_backup_handler(body: RestoreBackupRequestBody):
     """
     target_hostname = body.target_hostname
     target_snapshot_id = body.target_snapshot_id
+    target_worlds = body.target_worlds
 
     split = target_hostname.split("-")
     target_env, target_world_group = split[1], split[2]
@@ -140,7 +172,7 @@ def restore_minecraft_backup_handler(body: RestoreBackupRequestBody):
     success = False
     try:
         out = BackupsApi.restore_minecraft(
-            Env(target_env), target_world_group, target_snapshot_id
+            Env(target_env), target_world_group, target_snapshot_id, target_worlds
         )
         success = True
     except Exception as e:

@@ -3,12 +3,13 @@ import time
 import shutil
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pprint import pformat
 from unittest.mock import Mock
 
 from docker import DockerClient
 
+from src.api.constants import BACKUP_CONTENT_ROOT
 from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
 from src.common.environment import Env
@@ -39,18 +40,19 @@ class BackupManagement:
         )
         self.docker_client = self.docker_management.client
 
-    def list_backups_by_env_and_tags(self, env: Env, tags: List[str]) -> List[Backup]:
-        tags.append(env.name)
-        tags_str = f"--tag {','.join(tags)}"
+    def call_restic(self, command: str, override_args: Optional[Dict] = None) -> str:
+        override_args = override_args if override_args is not None else {}
 
-        response_as_json = self.docker_client.containers.run(
-            image="restic/restic",
-            command=f"snapshots --json {tags_str}",
-            environment={
+        params = {
+            "image": "restic/restic",
+            "command": command,
+            **override_args,
+            "environment": {
                 "RESTIC_REPOSITORY": "/backups",
                 "RESTIC_PASSWORD_FILE": "/restic.password",
+                **(override_args.get("environment", {})),
             },
-            volumes={
+            "volumes": {
                 str(RESTIC_REPO_PATH): {
                     "bind": "/backups",
                     "mode": "rw",
@@ -59,8 +61,21 @@ class BackupManagement:
                     "bind": "/restic.password",
                     "mode": "ro",
                 },
+                **(override_args.get("volumes", {})),
             },
-        )
+        }
+
+        out = self.docker_client.containers.run(**params)
+        if isinstance(out, bytes):
+            out = out.decode("utf-8")
+
+        return out
+
+    def list_backups_by_env_and_tags(self, env: Env, tags: List[str]) -> List[Backup]:
+        tags.append(env.name)
+        tags_str = f"--tag {','.join(tags)}"
+
+        response_as_json = self.call_restic(f"snapshots --json {tags_str}")
 
         if isinstance(response_as_json, bytes):
             response_as_json = response_as_json.decode("utf-8")
@@ -74,6 +89,48 @@ class BackupManagement:
         logger.info(pformat({"msg": "post", "backups": backups}))
 
         return backups
+
+    def get_worlds_backed_up_in_snapshot(self, target_id: str):
+        """Given a Restic snapshot id, gets the list of worlds that were backed up in that snapshot.
+
+        We do this by looking at all directory names at the first depth after the backup root.
+
+        Eg, a snapshot containing the following three files:
+        - /worlds-bindmount/lobby/uid.dat
+        - /worlds-bindmount/lobby_nether/uid.dat
+        - /worlds-bindmount/lobby_nether/level.dat
+
+        will be calculated as having the "lobby" and "lobby_nether" worlds in the snapshot as those are the directories
+        at the first depth after the root (`/worlds-bindmount`)
+
+        Args:
+            target_id (str): Restic snapshot id
+
+        Returns:
+            _type_: _description_
+        """
+        worlds = set()
+
+        response_as_json = self.call_restic(
+            f"ls {target_id} {BACKUP_CONTENT_ROOT} --json "
+        )
+        # The output contains both the snapshot and file objects.
+        for line in response_as_json.splitlines():
+            d = json.loads(line)
+            name = d.get("name")
+            path = d.get("path")
+
+            if path == BACKUP_CONTENT_ROOT:
+                # Output contains the root dir as a file object.
+                # If the object
+                continue
+
+            if name is not None:
+                # We only want file objects.
+                # Only file objects have the "name" field.
+                worlds.add(name)
+
+        return list(worlds)
 
     def backup_minecraft(self, env: Env, world_group: str):
         """Performs an ad-hoc backup of `world_group` in env `env`
@@ -105,7 +162,7 @@ class BackupManagement:
             f"Backing up container for '{env.name}' '{world_group}' using '{backup_container_name}'"
         )
         logger.info(underscored_env_alias)
-        out: str = self.docker_client.containers.run(
+        out = self.docker_client.containers.run(
             name=backup_container_name,
             image="yukkuricraft/mc-backup-restic",
             remove=True,
@@ -114,7 +171,7 @@ class BackupManagement:
                 "HOST_GID": HOST_GID,
                 "BACKUP_NAME": world_group,
                 "BACKUP_METHOD": "restic",
-                "SRC_DIR": "/worlds-bindmount",
+                "SRC_DIR": BACKUP_CONTENT_ROOT,
                 "RESTIC_REPOSITORY": "/backups",
                 "RESTIC_PASSWORD_FILE": "/restic.password",
                 "RESTIC_ADDITIONAL_TAGS": f"{env.name} adhoc {underscored_env_alias}",
@@ -128,12 +185,16 @@ class BackupManagement:
             volumes=[
                 # Use explicit volumes instead of volumes_from as the target container name may not be up if compose cluster is down.
                 f"{RESTIC_REPO_PATH}:/backups",
-                f"{server_paths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:/worlds-bindmount",
+                f"{server_paths.get_data_dir_path(env.name, world_group, DataDirType.WORLD_FILES)}:{BACKUP_CONTENT_ROOT}",
                 f"{server_paths.get_restic_password_file_path()}:/restic.password",
                 f"{server_paths.get_rcon_password_file_path()}:/rcon.password",
             ],
             network=(f"{env.name}_ycnet" if mc_container_up else ""),
         )
+
+        if isinstance(out, bytes):
+            out = out.decode("utf-8")
+
         return out
 
     def archive_directory(
@@ -186,7 +247,9 @@ class BackupManagement:
         )
         dir_to_archive.rename(archive_destination)
 
-    def restore_minecraft(self, env: Env, world_group: str, target_id: str):
+    def restore_minecraft(
+        self, env: Env, world_group: str, target_id: str, worlds: List[str]
+    ):
         """Restores the `target_id` backup to `world_group` in env `env`
 
         Args:
@@ -215,20 +278,20 @@ class BackupManagement:
             world_files_dir,
         )
 
-        out: str = self.docker_client.containers.run(
-            name=restore_container_name,
-            image="restic/restic",
-            command=f"restore {target_id} --target /",
-            remove=True,
-            environment={
-                "RESTIC_REPOSITORY": "/backups",
-                "RESTIC_PASSWORD_FILE": "/restic.password",
+        cmd = f"restore {target_id} --target /"
+        for world in worlds:
+            cmd += f" --iinclude {BACKUP_CONTENT_ROOT}/{world}"
+
+        out = self.call_restic(
+            cmd,
+            {
+                "volumes": {
+                    str(world_files_dir): {
+                        "bind": BACKUP_CONTENT_ROOT,
+                        "mode": "rw",
+                    },
+                }
             },
-            volumes=[
-                f"{RESTIC_REPO_PATH}:/backups",
-                f"{world_files_dir}:/worlds-bindmount",
-                f"{server_paths.get_restic_password_file_path()}:/restic.password",
-            ],
         )
 
         logger.info(out)
