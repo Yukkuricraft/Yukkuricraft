@@ -247,6 +247,22 @@ class BackupManagement:
         )
         dir_to_archive.rename(archive_destination)
 
+    def build_restore_minecraft_restic_command(self, target_id: str, worlds: List[str]):
+        """Helper to build the final `restic restore <...args>` etc command to be executed.
+
+        Args:
+            target_id (str): Restic snapshot id to restore
+            worlds (List[str]): List of worlds to restore from the target snapshot.
+
+        Returns:
+            str: Command string to pass into `docker run`.
+        """
+        cmd = f"restore {target_id} --target /"
+        for world in worlds:
+            cmd += f" --iinclude {BACKUP_CONTENT_ROOT}/{world}"
+
+        return cmd
+
     def restore_minecraft(
         self, env: Env, world_group: str, target_id: str, worlds: List[str]
     ):
@@ -278,12 +294,8 @@ class BackupManagement:
             world_files_dir,
         )
 
-        cmd = f"restore {target_id} --target /"
-        for world in worlds:
-            cmd += f" --iinclude {BACKUP_CONTENT_ROOT}/{world}"
-
         out = self.call_restic(
-            cmd,
+            self.build_restore_minecraft_restic_command(target_id, worlds),
             {
                 "volumes": {
                     str(world_files_dir): {

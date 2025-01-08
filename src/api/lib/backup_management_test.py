@@ -62,8 +62,68 @@ def restic_target_id() -> str:
     return "target-id-foo"
 
 
+@pytest.fixture
+def target_worlds() -> List[str]:
+    return [
+        "world1",
+        "world2",
+    ]
+
+
+@pytest.fixture
+def restic_command() -> str:
+    return "some restic command here"
+
+
 class TestBackupManagement:
     """Backup Management lib unit tests"""
+
+    def test__call_restic__success(
+        self,
+        mocker: MockerFixture,
+        backup_mgmt: BackupManagement,
+        restic_command: str,
+    ):
+        # SETUP
+        backup_mgmt.docker_management.is_container_up.side_effect = [False, False]
+        backup_mgmt.docker_client.containers.run.return_value = ""
+        mocker.patch(
+            "src.api.lib.backup_management.BackupManagement.archive_directory",
+            return_value=None,
+        )
+
+        expected_field1 = "field1"
+        expected_val1 = {"foo": "bar"}
+        expected_field2 = "field2"
+        expected_val2 = "val2"
+
+        override_args = {
+            expected_field1: expected_val1,
+            "environment": {
+                expected_field2: expected_val2,
+            },
+        }
+
+        # EXECUTE
+        backup_mgmt.call_restic(
+            restic_command,
+            override_args,
+        )
+
+        # ASSERT
+        call_kwargs = backup_mgmt.docker_client.containers.run.call_args.kwargs
+
+        assert (
+            call_kwargs["command"] == restic_command
+        ), "Expected to have passed supplied command to .run()!"
+
+        assert (
+            call_kwargs[expected_field1] == expected_val1
+        ), "Expected new override arg to be supplied to .run()!"
+
+        assert (
+            call_kwargs["environment"][expected_field2] == expected_val2
+        ), "Expected override arg to be merged with default arg vals when passed to .run()!"
 
     def test__list_backups_by_env_and_tags__pydantic_validation_error(
         self,
@@ -299,12 +359,35 @@ class TestBackupManagement:
             archived_file.exists()
         ), f"Expected a premade archive directory '{expected_archive_path}' to exist but it didn't!"
 
+    def test__build_restore_minecraft_restic_command__success(
+        self,
+        backup_mgmt: BackupManagement,
+        restic_target_id: str,
+        target_worlds: List[str],
+    ):
+        # SETUP
+        # EXECUTE
+        command = backup_mgmt.build_restore_minecraft_restic_command(
+            restic_target_id, target_worlds
+        )
+
+        # ASSERT
+        assert (
+            restic_target_id in command
+        ), "Expected restic target id to be included in the command!"
+
+        for world in target_worlds:
+            assert (
+                world in command
+            ), "Expected all supplied target worlds to be in the command!"
+
     def test__restore_minecraft__cannot_restore_while_container_up_error(
         self,
         backup_mgmt: BackupManagement,
         env1_object: Env,
         world_group: str,
         restic_target_id: str,
+        target_worlds: List[str],
     ):
         """Ensure we get an error if the container we're trying to restore to is currently running."""
 
@@ -314,7 +397,9 @@ class TestBackupManagement:
         with pytest.raises(CannotRestoreWhileContainerUpError):
             # EXECUTE
             # ASSERT
-            backup_mgmt.restore_minecraft(env1_object, world_group, restic_target_id)
+            backup_mgmt.restore_minecraft(
+                env1_object, world_group, restic_target_id, target_worlds
+            )
 
     def test__restore_minecraft__restore_already_in_progress_error(
         self,
@@ -322,6 +407,7 @@ class TestBackupManagement:
         env1_object: Env,
         world_group: str,
         restic_target_id: str,
+        target_worlds: List[str],
     ):
         """Ensure we get an error if there is a restore already in progress for this world group and env."""
 
@@ -331,7 +417,9 @@ class TestBackupManagement:
         with pytest.raises(RestoreAlreadyInProgressError):
             # EXECUTE
             # ASSERT
-            backup_mgmt.restore_minecraft(env1_object, world_group, restic_target_id)
+            backup_mgmt.restore_minecraft(
+                env1_object, world_group, restic_target_id, target_worlds
+            )
 
     def test__restore_minecraft__success(
         self,
@@ -340,6 +428,7 @@ class TestBackupManagement:
         env1_object: Env,
         world_group: str,
         restic_target_id: str,
+        target_worlds: List[str],
     ):
         """Ensures given no container state issues, the docker call to run the restore sidecar container is executed"""
 
@@ -352,7 +441,9 @@ class TestBackupManagement:
         )
 
         # EXECUTE
-        backup_mgmt.restore_minecraft(env1_object, world_group, restic_target_id)
+        backup_mgmt.restore_minecraft(
+            env1_object, world_group, restic_target_id, target_worlds
+        )
 
         # ASSERT
         backup_mgmt.docker_client.containers.run.assert_called_once()
