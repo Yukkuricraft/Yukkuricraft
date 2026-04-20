@@ -32,3 +32,50 @@ class TestIsAllowedPingHost:
     def test_is_case_insensitive(self):
         # DNS is case-insensitive; treat "Play.YukkuriCraft.NET" as valid.
         assert is_allowed_ping_host("Play.YukkuriCraft.NET") is True
+
+
+from src.api.lib.minecraft import flatten_description
+
+
+class TestFlattenDescription:
+    def test_plain_string_passes_through(self):
+        assert flatten_description("hello world") == "hello world"
+
+    def test_simple_component_with_text(self):
+        assert flatten_description({"text": "hello"}) == "hello"
+
+    def test_component_with_color(self):
+        assert flatten_description({"text": "hello", "color": "red"}) == "\u00a7chello"
+
+    def test_component_with_bold_and_color(self):
+        # Bold + color: emit both prefix codes before text.
+        result = flatten_description({"text": "hi", "color": "blue", "bold": True})
+        # Order is color then style, but exact order isn't part of MC's spec —
+        # both must be present before "hi".
+        assert "\u00a7l" in result and "\u00a79" in result and result.endswith("hi")
+
+    def test_component_with_extras(self):
+        component = {
+            "text": "Hello ",
+            "extra": [
+                {"text": "World", "color": "green"},
+                {"text": "!", "color": "yellow", "bold": True},
+            ],
+        }
+        out = flatten_description(component)
+        assert out.startswith("Hello ")
+        assert "\u00a7aWorld" in out  # green = a
+        assert "\u00a7e" in out and "\u00a7l" in out and out.endswith("!")  # yellow + bold
+
+    def test_unknown_color_is_skipped(self):
+        # Don't emit a code for colors we don't recognize.
+        assert flatten_description({"text": "hi", "color": "fuchsia"}) == "hi"
+
+    def test_handles_missing_text_key(self):
+        # A component with only `extra` and no own text.
+        component = {"extra": [{"text": "child"}]}
+        assert flatten_description(component) == "child"
+
+    def test_returns_empty_for_unexpected_shape(self):
+        assert flatten_description(None) == ""
+        assert flatten_description(123) == ""

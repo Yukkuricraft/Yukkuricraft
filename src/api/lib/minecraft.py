@@ -4,6 +4,8 @@ These are public, unauthenticated endpoints. Anti-abuse is layered on at the
 blueprint level (see `src/api/lib/anti_abuse.py`).
 """
 
+from typing import Any
+
 from src.api.constants import MC_PING_ALLOWED_BASE_DOMAIN
 
 
@@ -20,3 +22,69 @@ def is_allowed_ping_host(host: str) -> bool:
     host_lc = host.strip().lower()
     base = MC_PING_ALLOWED_BASE_DOMAIN.lower()
     return host_lc == base or host_lc.endswith("." + base)
+
+
+# Minecraft chat color → § code. See https://minecraft.wiki/w/Formatting_codes
+_COLOR_CODES = {
+    "black": "0",
+    "dark_blue": "1",
+    "dark_green": "2",
+    "dark_aqua": "3",
+    "dark_red": "4",
+    "dark_purple": "5",
+    "gold": "6",
+    "gray": "7",
+    "dark_gray": "8",
+    "blue": "9",
+    "green": "a",
+    "aqua": "b",
+    "red": "c",
+    "light_purple": "d",
+    "yellow": "e",
+    "white": "f",
+}
+
+_STYLE_CODES = {
+    "obfuscated": "k",
+    "bold": "l",
+    "strikethrough": "m",
+    "underlined": "n",
+    "italic": "o",
+}
+
+_SECTION = "\u00a7"  # §
+
+
+def _emit(component: dict) -> str:
+    """Emit `§<color><styles...><text>` for a single component (no recursion)."""
+    out = ""
+    color = component.get("color")
+    if color in _COLOR_CODES:
+        out += _SECTION + _COLOR_CODES[color]
+    for name, code in _STYLE_CODES.items():
+        if component.get(name):
+            out += _SECTION + code
+    out += str(component.get("text", ""))
+    return out
+
+
+def flatten_description(desc: Any) -> str:
+    """Flatten a Minecraft chat-component tree (or plain string) to legacy
+    §-prefixed text.
+
+    SLP responses use either a plain string or a nested component dict
+    `{text, color?, bold?, ..., extra: [...]}`. The Vue caller expects a
+    single string and calls its own `parseMCCodes` on it, which only
+    understands the legacy `§<code>` format.
+    """
+    if isinstance(desc, str):
+        return desc
+    if not isinstance(desc, dict):
+        return ""
+    out = _emit(desc)
+    for child in desc.get("extra", []) or []:
+        if isinstance(child, dict):
+            out += flatten_description(child)
+        elif isinstance(child, str):
+            out += child
+    return out
