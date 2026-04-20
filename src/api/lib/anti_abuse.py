@@ -1,5 +1,7 @@
+import time
+from collections import deque
 from functools import wraps
-from typing import Callable
+from typing import Callable, Deque
 
 from flask import request  # type: ignore
 
@@ -43,3 +45,65 @@ def require_known_origin(func: Callable) -> Callable:
         return func(*args, **kwargs)
 
     return wrapper
+
+
+class CircuitBreaker:
+    """Simple in-memory circuit breaker.
+
+    State machine:
+    - **closed:** all calls allowed, failures recorded.
+    - **open:** trips when `failure_threshold` failures occur within
+      `window_secs`. While open, `is_open()` returns True for `open_secs`.
+    - **half-open:** after `open_secs` elapses, `is_open()` returns False
+      once (the "trial" request). The next `record_failure()` re-opens for
+      another full `open_secs`; a `record_success()` resets to closed.
+
+    All times use `time.monotonic()` so they're immune to wall-clock jumps.
+    Single-threaded reasoning is fine — gunicorn/gevent serializes Python-level
+    ops within a single greenlet, and per-worker imprecision (multiple workers
+    each tracking their own breaker state) is accepted at this scale.
+    """
+
+    def __init__(self, failure_threshold: int, window_secs: float, open_secs: float):
+        self.failure_threshold = failure_threshold
+        self.window_secs = window_secs
+        self.open_secs = open_secs
+        self._failures: Deque[float] = deque()
+        self._opened_at: float | None = None
+        self._half_open: bool = False
+
+    def _prune_old_failures(self, now: float) -> None:
+        cutoff = now - self.window_secs
+        while self._failures and self._failures[0] < cutoff:
+            self._failures.popleft()
+
+    def is_open(self) -> bool:
+        now = time.monotonic()
+        if self._opened_at is not None:
+            if now - self._opened_at < self.open_secs:
+                return True
+            # open_secs elapsed — transition to half-open. Clear failure
+            # history; flag the trial state so the next record_failure() can
+            # re-open immediately.
+            self._opened_at = None
+            self._failures.clear()
+            self._half_open = True
+            return False
+        return False
+
+    def record_failure(self) -> None:
+        now = time.monotonic()
+        if self._half_open:
+            # Half-open trial failed — re-open immediately.
+            self._opened_at = now
+            self._half_open = False
+            return
+        self._failures.append(now)
+        self._prune_old_failures(now)
+        if len(self._failures) >= self.failure_threshold:
+            self._opened_at = now
+
+    def record_success(self) -> None:
+        self._failures.clear()
+        self._opened_at = None
+        self._half_open = False
