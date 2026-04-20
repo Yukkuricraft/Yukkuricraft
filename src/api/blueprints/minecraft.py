@@ -8,10 +8,13 @@ Defense in depth comes from the anti-abuse layers composed below
 
 import re
 
+from flask import request  # type: ignore
 from flask_openapi3 import APIBlueprint  # type: ignore
 
 from src.api.blueprints import MinecraftPingPath, MinecraftUuidPath
+from src.api.constants import CORS_ORIGINS
 from src.api.lib.anti_abuse import require_known_origin
+from src.api.lib.auth import return_cors_response
 from src.api.lib.minecraft import (
     is_allowed_ping_host,
     lookup_uuid,
@@ -24,6 +27,32 @@ minecraft_bp: APIBlueprint = APIBlueprint(
     url_prefix="/minecraft",
     # No abp_security — these endpoints are public by design.
 )
+
+
+@minecraft_bp.after_request
+def _add_cors_headers(response):
+    """Set Access-Control-Allow-Origin on every response from this blueprint.
+
+    The minecraft handlers return raw dicts that Flask jsonifies, so they
+    bypass `prepare_response()` (which is what sets CORS headers elsewhere
+    in the API). This hook closes that gap. Reuses `CORS_ORIGINS` directly
+    rather than calling auth.py's private `_pick_cors_origin` helper.
+    """
+    if CORS_ORIGINS == ["*"]:
+        origin = "*"
+    else:
+        request_origin = request.headers.get("Origin", "")
+        origin = request_origin if request_origin in CORS_ORIGINS else CORS_ORIGINS[0]
+
+    response.headers.setdefault("Access-Control-Allow-Origin", origin)
+    if origin != "*":
+        response.headers.setdefault("Vary", "Origin")
+    return response
+
+
+@minecraft_bp.route("/ping/<string:host>/<string:port>", methods=["OPTIONS"])
+def ping_options_handler(host: str, port: str):
+    return return_cors_response()
 
 
 @minecraft_bp.get("/ping/<string:host>/<string:port>")
@@ -45,6 +74,11 @@ def ping_handler(path: MinecraftPingPath):
 
 
 _UUID_HEX_RE = re.compile(r"^[0-9a-fA-F]{32}$")
+
+
+@minecraft_bp.route("/uuid/<string:uuid>", methods=["OPTIONS"])
+def uuid_options_handler(uuid: str):
+    return return_cors_response()
 
 
 @minecraft_bp.get("/uuid/<string:uuid>")
