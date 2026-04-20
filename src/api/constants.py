@@ -11,9 +11,16 @@ IS_PROD = CONFIGURATION_TYPE == "prod"
 IS_DEV = CONFIGURATION_TYPE == "dev"
 IS_LOCAL = CONFIGURATION_TYPE == "local"
 
+# Public-site origins that are also allowed to call the /minecraft/* endpoints.
+# Kept separate from the dashboard origins so the lists can diverge later if needed.
+PUBLIC_SITE_ORIGINS = [
+    "https://www.yukkuricraft.net",
+    "https://yukkuricraft.net",
+]
+
 if IS_LOCAL:
     G_CLIENT_ID = "some-arbitrary-client-id"
-    CORS_ORIGIN = "*"
+    CORS_ORIGINS = ["*"]  # wildcard preserved for local dev
     MIN_VALID_PROXY_PORT = 26600
     MAX_VALID_PROXY_PORT = 26700
     API_HOST = "api.localhost"
@@ -22,7 +29,7 @@ elif IS_DEV:
     G_CLIENT_ID = (
         "1084736521175-2b5rrrpcs422qdc5458dhisdsj8auo0p.apps.googleusercontent.com"
     )
-    CORS_ORIGIN = "https://dev.yakumo.yukkuricraft.net"
+    CORS_ORIGINS = ["https://dev.yakumo.yukkuricraft.net"] + PUBLIC_SITE_ORIGINS
     MIN_VALID_PROXY_PORT = 26600
     MAX_VALID_PROXY_PORT = 26700
     API_HOST = "dev.api.yukkuricraft.net"
@@ -31,7 +38,7 @@ elif IS_PROD:
     G_CLIENT_ID = (
         "1084736521175-2b5rrrpcs422qdc5458dhisdsj8auo0p.apps.googleusercontent.com"
     )
-    CORS_ORIGIN = "https://yakumo.yukkuricraft.net"
+    CORS_ORIGINS = ["https://yakumo.yukkuricraft.net"] + PUBLIC_SITE_ORIGINS
     MIN_VALID_PROXY_PORT = 25600
     MAX_VALID_PROXY_PORT = 25700
     API_HOST = "api.yukkuricraft.net"
@@ -54,3 +61,7 @@ we have to hardcode it in a few places like template files and shellscripts.
 It's probably not gonna change.
 But if it does, we should figure out a better way to share the value across api, templates, scripts etc.
 """
+
+# Anti-abuse / minecraft proxy
+MC_PING_ALLOWED_BASE_DOMAIN = "yukkuricraft.net"
+TRUSTED_PROXY_HOPS = 2  # SSL-terminator + nginx-proxy. Validate empirically before going live (see plan task 16).
