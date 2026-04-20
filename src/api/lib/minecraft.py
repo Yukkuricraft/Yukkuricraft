@@ -4,7 +4,9 @@ These are public, unauthenticated endpoints. Anti-abuse is layered on at the
 blueprint level (see `src/api/lib/anti_abuse.py`).
 """
 
-from typing import Any
+import time
+from collections import OrderedDict
+from typing import Any, Optional, Tuple
 
 from src.api.constants import MC_PING_ALLOWED_BASE_DOMAIN
 
@@ -88,3 +90,39 @@ def flatten_description(desc: Any) -> str:
         elif isinstance(child, str):
             out += child
     return out
+
+
+class TTLCache:
+    """Tiny FIFO-ish TTL cache with separate success/error TTLs.
+
+    Why not `cachetools.TTLCache`: that library uses a single TTL per cache
+    instance. We want different TTLs for success vs error entries (so failed
+    upstream calls recover quickly). Implementation is small enough that
+    rolling our own is cheaper than two parallel cachetools instances.
+    """
+
+    def __init__(self, maxsize: int, success_ttl: float, error_ttl: float):
+        self.maxsize = maxsize
+        self.success_ttl = success_ttl
+        self.error_ttl = error_ttl
+        # value: (payload, expires_at_monotonic)
+        self._store: "OrderedDict[str, Tuple[Any, float]]" = OrderedDict()
+
+    def get(self, key: str) -> Optional[Any]:
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        payload, expires = entry
+        if time.monotonic() >= expires:
+            del self._store[key]
+            return None
+        return payload
+
+    def set(self, key: str, payload: Any, is_error: bool) -> None:
+        ttl = self.error_ttl if is_error else self.success_ttl
+        expires = time.monotonic() + ttl
+        if key in self._store:
+            del self._store[key]
+        self._store[key] = (payload, expires)
+        while len(self._store) > self.maxsize:
+            self._store.popitem(last=False)
