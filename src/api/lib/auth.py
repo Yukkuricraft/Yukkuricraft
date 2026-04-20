@@ -343,19 +343,36 @@ def _pick_cors_origin() -> str:
 
 
 def return_cors_response() -> Response:
-    """Makes a skeleton Flask Response with CORS headers."""
+    """Makes a skeleton Flask Response with CORS headers.
+
+    Returns:
+        flask.Response: Response object with only the CORS headers set.
+    """
     resp = make_response()
-    resp.headers.add("Access-Control-Allow-Origin", _pick_cors_origin())
+    origin = _pick_cors_origin()
+    resp.headers.add("Access-Control-Allow-Origin", origin)
+    if origin != "*":
+        resp.headers.add("Vary", "Origin")
     resp.headers.add("Access-Control-Allow-Headers", "*")
     resp.headers.add("Access-Control-Allow-Methods", "*")
     return resp
 
 
 def prepare_response(status_code=200):
-    """Helper for creating an empty response object with the CORS origin and other headers added."""
+    """Helper for creating an empty response object with the CORS origin and other headers added.
+
+    Args:
+        status_code (int, optional): Status code of the response. Defaults to 200.
+
+    Returns:
+        Flask response object
+    """
     resp = make_response("")
 
-    resp.headers.add("Access-Control-Allow-Origin", _pick_cors_origin())
+    origin = _pick_cors_origin()
+    resp.headers.add("Access-Control-Allow-Origin", origin)
+    if origin != "*":
+        resp.headers.add("Vary", "Origin")
     resp.content_type = "application/json"
     resp.status = status_code
 

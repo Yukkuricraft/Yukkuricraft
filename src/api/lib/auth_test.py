@@ -15,6 +15,7 @@ from src.api.lib.auth import (
     InvalidTokenSchemeError,
     TimeTravelerError,
     UnknownUserError,
+    _pick_cors_origin,
     generate_access_token,
     deserialize_id_token,
     generate_access_token_if_valid,
@@ -415,3 +416,44 @@ class TestAuth:
 
         # ASSERT
         assert val.status_code == 200, "Expected to get a 200 authorized!"
+
+
+class TestPickCorsOrigin:
+    @pytest.fixture
+    def app(self):
+        return flask.Flask(__name__)
+
+    def test_returns_wildcard_when_origins_is_wildcard(self, app, mocker: MockerFixture):
+        mocker.patch("src.api.lib.auth.CORS_ORIGINS", ["*"])
+        with app.test_request_context("/", headers={"Origin": "https://anything.example"}):
+            assert _pick_cors_origin() == "*"
+
+    def test_returns_wildcard_without_request_origin(self, app, mocker: MockerFixture):
+        # Wildcard branch must short-circuit before reading request.headers.
+        mocker.patch("src.api.lib.auth.CORS_ORIGINS", ["*"])
+        with app.test_request_context("/"):
+            assert _pick_cors_origin() == "*"
+
+    def test_echoes_known_origin(self, app, mocker: MockerFixture):
+        mocker.patch(
+            "src.api.lib.auth.CORS_ORIGINS",
+            ["https://yakumo.yukkuricraft.net", "https://www.yukkuricraft.net"],
+        )
+        with app.test_request_context("/", headers={"Origin": "https://www.yukkuricraft.net"}):
+            assert _pick_cors_origin() == "https://www.yukkuricraft.net"
+
+    def test_falls_back_to_first_for_unknown_origin(self, app, mocker: MockerFixture):
+        mocker.patch(
+            "src.api.lib.auth.CORS_ORIGINS",
+            ["https://yakumo.yukkuricraft.net", "https://www.yukkuricraft.net"],
+        )
+        with app.test_request_context("/", headers={"Origin": "https://evil.example"}):
+            assert _pick_cors_origin() == "https://yakumo.yukkuricraft.net"
+
+    def test_falls_back_to_first_when_no_origin_header(self, app, mocker: MockerFixture):
+        mocker.patch(
+            "src.api.lib.auth.CORS_ORIGINS",
+            ["https://yakumo.yukkuricraft.net", "https://www.yukkuricraft.net"],
+        )
+        with app.test_request_context("/"):
+            assert _pick_cors_origin() == "https://yakumo.yukkuricraft.net"
