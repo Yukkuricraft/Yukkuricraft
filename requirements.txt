@@ -10,7 +10,7 @@ cachetools==5.2.0
 certifi==2022.6.15
 charset-normalizer==2.1.0
 click==8.1.3
-dnspython==1.16.0
+dnspython==2.8.0
 docker==7.1.0
 exceptiongroup==1.2.2
 Flask==3.0.3
@@ -23,6 +23,7 @@ flask-openapi3-scalar==1.25.60
 flask-openapi3-swagger==5.18.2
 Flask-SocketIO==5.3.1
 Flask-SQLAlchemy==3.1.1
+flask-limiter==4.1.1
 gevent==24.11.1
 gevent-websocket==0.10.1
 google-api-core==2.8.2
@@ -41,6 +42,7 @@ Jinja2==3.1.2
 jsonschema==4.6.2
 MarkupSafe==2.1.1
 mock-alchemy==0.2.6
+mcstatus==13.0.1
 mypy==1.13.0
 mypy-extensions==1.0.0
 mysqlclient==2.1.1
