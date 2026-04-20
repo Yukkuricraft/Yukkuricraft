@@ -248,3 +248,100 @@ class TestPing:
         first = ping("play.yukkuricraft.net", 25565)
         second = ping("play.yukkuricraft.net", 25565)
         assert first == second == {"error": "timeout"}
+
+
+import requests as _requests
+
+from src.api.lib.minecraft import lookup_uuid, _uuid_cache, mojang_breaker
+
+
+@pytest.fixture(autouse=True)
+def clear_uuid_state():
+    _uuid_cache._store.clear()
+    mojang_breaker.record_success()  # forces closed state
+    yield
+    _uuid_cache._store.clear()
+    mojang_breaker.record_success()
+
+
+def _mock_response(status_code, json_body=None):
+    resp = mock.Mock()
+    resp.status_code = status_code
+    if json_body is not None:
+        resp.json.return_value = json_body
+    return resp
+
+
+class TestLookupUuid:
+    def test_returns_normalized_success(self, mocker):
+        body = {"id": "069a79f444e94726a5befca90e38aaf5", "name": "Notch"}
+        mocker.patch(
+            "src.api.lib.minecraft.requests.get",
+            return_value=_mock_response(200, body),
+        )
+        result = lookup_uuid("069a79f444e94726a5befca90e38aaf5")
+        assert result == {"id": "069a79f444e94726a5befca90e38aaf5", "name": "Notch"}
+
+    def test_returns_not_found_for_204(self, mocker):
+        mocker.patch(
+            "src.api.lib.minecraft.requests.get", return_value=_mock_response(204)
+        )
+        assert lookup_uuid("00000000000000000000000000000000") == {"error": "not found"}
+
+    def test_returns_not_found_for_404(self, mocker):
+        mocker.patch(
+            "src.api.lib.minecraft.requests.get", return_value=_mock_response(404)
+        )
+        assert lookup_uuid("00000000000000000000000000000000") == {"error": "not found"}
+
+    def test_returns_rate_limited_for_429(self, mocker):
+        mocker.patch(
+            "src.api.lib.minecraft.requests.get", return_value=_mock_response(429)
+        )
+        assert lookup_uuid("069a79f444e94726a5befca90e38aaf5") == {"error": "rate limited"}
+
+    def test_429_records_failure_on_circuit_breaker(self, mocker):
+        mocker.patch(
+            "src.api.lib.minecraft.requests.get", return_value=_mock_response(429)
+        )
+        # Trigger threshold (3) consecutive 429s — breaker should open.
+        for _ in range(3):
+            lookup_uuid(f"{_:032x}")
+        assert mojang_breaker.is_open() is True
+
+    def test_open_breaker_short_circuits_without_calling_mojang(self, mocker):
+        get_mock = mocker.patch("src.api.lib.minecraft.requests.get")
+        # Force breaker open without calling Mojang
+        for _ in range(3):
+            mojang_breaker.record_failure()
+        assert mojang_breaker.is_open()
+
+        result = lookup_uuid("069a79f444e94726a5befca90e38aaf5")
+        assert result == {"error": "rate limited"}
+        get_mock.assert_not_called()
+
+    def test_caches_success(self, mocker):
+        body = {"id": "069a79f444e94726a5befca90e38aaf5", "name": "Notch"}
+        get_mock = mocker.patch(
+            "src.api.lib.minecraft.requests.get",
+            return_value=_mock_response(200, body),
+        )
+        lookup_uuid("069a79f444e94726a5befca90e38aaf5")
+        lookup_uuid("069a79f444e94726a5befca90e38aaf5")
+        assert get_mock.call_count == 1
+
+    def test_caches_not_found(self, mocker):
+        get_mock = mocker.patch(
+            "src.api.lib.minecraft.requests.get", return_value=_mock_response(204)
+        )
+        lookup_uuid("00000000000000000000000000000000")
+        lookup_uuid("00000000000000000000000000000000")
+        assert get_mock.call_count == 1
+
+    def test_unexpected_exception_returns_error_string(self, mocker):
+        mocker.patch(
+            "src.api.lib.minecraft.requests.get",
+            side_effect=_requests.ConnectionError("boom"),
+        )
+        result = lookup_uuid("069a79f444e94726a5befca90e38aaf5")
+        assert "error" in result and "boom" in result["error"]

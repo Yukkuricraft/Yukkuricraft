@@ -9,11 +9,14 @@ import time
 from collections import OrderedDict
 from typing import Any, Optional, Tuple
 
+import requests
+
 from mcstatus import JavaServer  # type: ignore
 
 from src.common.logger_setup import logger
 
 from src.api.constants import MC_PING_ALLOWED_BASE_DOMAIN
+from src.api.lib.anti_abuse import CircuitBreaker
 
 
 def is_allowed_ping_host(host: str) -> bool:
@@ -205,4 +208,76 @@ def ping(host: str, port: int) -> dict:
         "latency": status.latency,
     }
     _ping_cache.set(cache_key, result, is_error=False)
+    return result
+
+
+UUID_TIMEOUT_SECS = 3.0
+_UUID_CACHE_MAXSIZE = 512
+_UUID_SUCCESS_TTL = 24 * 60 * 60.0  # 24 hours
+_UUID_ERROR_TTL = 5 * 60.0  # 5 minutes
+
+_uuid_cache = TTLCache(
+    maxsize=_UUID_CACHE_MAXSIZE,
+    success_ttl=_UUID_SUCCESS_TTL,
+    error_ttl=_UUID_ERROR_TTL,
+)
+
+# One breaker for Mojang sessionserver. 3 consecutive 429s in a 60s window
+# trip it for 5 minutes.
+mojang_breaker = CircuitBreaker(
+    failure_threshold=3, window_secs=60.0, open_secs=5 * 60.0
+)
+
+_MOJANG_PROFILE_URL = "https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
+
+
+def lookup_uuid(uuid_no_dashes: str) -> dict:
+    """Look up a Minecraft username from a UUID via Mojang sessionserver.
+
+    Returns `{"id": "...", "name": "..."}` on success, or `{"error": "..."}`
+    where error is one of: `"not found"`, `"rate limited"`, or an exception
+    string.
+
+    Caller is responsible for input validation (32 hex chars, dashes
+    stripped).
+    """
+    cached = _uuid_cache.get(uuid_no_dashes)
+    if cached is not None:
+        return cached
+
+    if mojang_breaker.is_open():
+        # Don't even try — Mojang is throttling us. Don't cache (we want to
+        # try again as soon as the breaker half-opens).
+        return {"error": "rate limited"}
+
+    try:
+        resp = requests.get(
+            _MOJANG_PROFILE_URL.format(uuid=uuid_no_dashes),
+            timeout=UUID_TIMEOUT_SECS,
+        )
+    except Exception as e:
+        logger.exception("Unexpected error calling Mojang sessionserver")
+        result = {"error": str(e) or e.__class__.__name__}
+        _uuid_cache.set(uuid_no_dashes, result, is_error=True)
+        return result
+
+    if resp.status_code == 200:
+        body = resp.json()
+        result = {"id": body.get("id", ""), "name": body.get("name", "")}
+        _uuid_cache.set(uuid_no_dashes, result, is_error=False)
+        mojang_breaker.record_success()
+        return result
+    if resp.status_code in (204, 404):
+        result = {"error": "not found"}
+        _uuid_cache.set(uuid_no_dashes, result, is_error=True)
+        mojang_breaker.record_success()  # 404 isn't a Mojang failure mode
+        return result
+    if resp.status_code == 429:
+        mojang_breaker.record_failure()
+        # Don't cache — we want immediate retry once the breaker permits it.
+        return {"error": "rate limited"}
+
+    # Anything else: treat as a generic error.
+    result = {"error": f"upstream {resp.status_code}"}
+    _uuid_cache.set(uuid_no_dashes, result, is_error=True)
     return result
