@@ -4,9 +4,14 @@ These are public, unauthenticated endpoints. Anti-abuse is layered on at the
 blueprint level (see `src/api/lib/anti_abuse.py`).
 """
 
+import socket
 import time
 from collections import OrderedDict
 from typing import Any, Optional, Tuple
+
+from mcstatus import JavaServer  # type: ignore
+
+from src.common.logger_setup import logger
 
 from src.api.constants import MC_PING_ALLOWED_BASE_DOMAIN
 
@@ -126,3 +131,78 @@ class TTLCache:
         self._store[key] = (payload, expires)
         while len(self._store) > self.maxsize:
             self._store.popitem(last=False)
+
+
+PING_TIMEOUT_SECS = 3.0
+_PING_CACHE_MAXSIZE = 512
+_PING_SUCCESS_TTL = 60.0
+_PING_ERROR_TTL = 10.0
+
+_ping_cache = TTLCache(
+    maxsize=_PING_CACHE_MAXSIZE,
+    success_ttl=_PING_SUCCESS_TTL,
+    error_ttl=_PING_ERROR_TTL,
+)
+
+
+def _normalize_player_sample(sample) -> list:
+    if not sample:
+        return []
+    return [{"id": p.id, "name": p.name} for p in sample]
+
+
+def ping(host: str, port: int) -> dict:
+    """Server List Ping a Minecraft server and normalize the response.
+
+    Returns a success dict matching the api.minetools.eu shape, or
+    `{"error": "<reason>"}` on failure. Failure reasons:
+    - `"timeout"`     — socket timeout
+    - `"refused"`     — TCP connection refused
+    - `"invalid host"` — DNS lookup failed
+    - exception message — anything else
+
+    Caller is responsible for the host allow-list check (see
+    `is_allowed_ping_host`) — this function does not enforce it.
+    """
+    cache_key = f"{host}:{port}"
+    cached = _ping_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        server = JavaServer.lookup(f"{host}:{port}", timeout=PING_TIMEOUT_SECS)
+        status = server.status()
+    except socket.timeout:
+        result = {"error": "timeout"}
+        _ping_cache.set(cache_key, result, is_error=True)
+        return result
+    except ConnectionRefusedError:
+        result = {"error": "refused"}
+        _ping_cache.set(cache_key, result, is_error=True)
+        return result
+    except socket.gaierror:
+        result = {"error": "invalid host"}
+        _ping_cache.set(cache_key, result, is_error=True)
+        return result
+    except Exception as e:
+        logger.exception("Unexpected error pinging %s:%d", host, port)
+        result = {"error": str(e) or e.__class__.__name__}
+        _ping_cache.set(cache_key, result, is_error=True)
+        return result
+
+    result = {
+        "description": flatten_description(status.description),
+        "favicon": status.favicon,
+        "players": {
+            "max": status.players.max,
+            "online": status.players.online,
+            "sample": _normalize_player_sample(status.players.sample),
+        },
+        "version": {
+            "name": status.version.name,
+            "protocol": status.version.protocol,
+        },
+        "latency": status.latency,
+    }
+    _ping_cache.set(cache_key, result, is_error=False)
+    return result

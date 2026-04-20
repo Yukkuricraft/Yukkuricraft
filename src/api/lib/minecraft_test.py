@@ -128,3 +128,123 @@ class TestTTLCache:
         # Should hold at most 2 entries — oldest evicted.
         present = sum(1 for k in ("a", "b", "c") if c.get(k) is not None)
         assert present == 2
+
+
+import socket
+from unittest import mock
+
+from src.api.lib.minecraft import ping, _ping_cache
+
+
+@pytest.fixture(autouse=True)
+def clear_caches():
+    _ping_cache._store.clear()
+    yield
+    _ping_cache._store.clear()
+
+
+class TestPing:
+    def test_returns_normalized_success(self, mocker):
+        fake_status = mock.Mock()
+        fake_status.description = {"text": "MOTD"}
+        fake_status.favicon = "data:image/png;base64,abc"
+        fake_status.players.max = 100
+        fake_status.players.online = 7
+        fake_player = mock.Mock()
+        fake_player.id = "11111111-2222-3333-4444-555555555555"
+        fake_player.name = "remiscarlet"
+        fake_status.players.sample = [fake_player]
+        fake_status.version.name = "Paper 1.20.1"
+        fake_status.version.protocol = 763
+        fake_status.latency = 42.7
+
+        fake_server = mock.Mock()
+        fake_server.status.return_value = fake_status
+        mocker.patch(
+            "src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server
+        )
+
+        result = ping("play.yukkuricraft.net", 25565)
+        assert result == {
+            "description": "MOTD",
+            "favicon": "data:image/png;base64,abc",
+            "players": {
+                "max": 100,
+                "online": 7,
+                "sample": [
+                    {"id": "11111111-2222-3333-4444-555555555555", "name": "remiscarlet"}
+                ],
+            },
+            "version": {"name": "Paper 1.20.1", "protocol": 763},
+            "latency": 42.7,
+        }
+
+    def test_handles_missing_player_sample(self, mocker):
+        fake_status = mock.Mock()
+        fake_status.description = "plain MOTD"
+        fake_status.favicon = None
+        fake_status.players.max = 100
+        fake_status.players.online = 0
+        fake_status.players.sample = None
+        fake_status.version.name = "Paper 1.20.1"
+        fake_status.version.protocol = 763
+        fake_status.latency = 5.0
+
+        fake_server = mock.Mock()
+        fake_server.status.return_value = fake_status
+        mocker.patch("src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server)
+
+        result = ping("play.yukkuricraft.net", 25565)
+        assert result["players"]["sample"] == []
+        assert result["favicon"] is None
+        assert result["description"] == "plain MOTD"
+
+    def test_returns_timeout_error(self, mocker):
+        fake_server = mock.Mock()
+        fake_server.status.side_effect = socket.timeout()
+        mocker.patch("src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server)
+        assert ping("play.yukkuricraft.net", 25565) == {"error": "timeout"}
+
+    def test_returns_refused_error(self, mocker):
+        fake_server = mock.Mock()
+        fake_server.status.side_effect = ConnectionRefusedError()
+        mocker.patch("src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server)
+        assert ping("play.yukkuricraft.net", 25565) == {"error": "refused"}
+
+    def test_returns_invalid_host_for_dns_failure(self, mocker):
+        # mcstatus surfaces DNS failures as socket.gaierror.
+        fake_server = mock.Mock()
+        fake_server.status.side_effect = socket.gaierror()
+        mocker.patch("src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server)
+        assert ping("nope.yukkuricraft.net", 25565) == {"error": "invalid host"}
+
+    def test_caches_success(self, mocker):
+        fake_status = mock.Mock()
+        fake_status.description = "ok"
+        fake_status.favicon = None
+        fake_status.players.max = 1
+        fake_status.players.online = 0
+        fake_status.players.sample = []
+        fake_status.version.name = "v"
+        fake_status.version.protocol = 0
+        fake_status.latency = 0.0
+        fake_server = mock.Mock()
+        fake_server.status.return_value = fake_status
+        lookup_mock = mocker.patch(
+            "src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server
+        )
+
+        ping("play.yukkuricraft.net", 25565)
+        ping("play.yukkuricraft.net", 25565)
+        assert lookup_mock.call_count == 1  # second call served from cache
+
+    def test_caches_errors_separately(self, mocker):
+        fake_server = mock.Mock()
+        fake_server.status.side_effect = socket.timeout()
+        mocker.patch(
+            "src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server
+        )
+
+        first = ping("play.yukkuricraft.net", 25565)
+        second = ping("play.yukkuricraft.net", 25565)
+        assert first == second == {"error": "timeout"}
