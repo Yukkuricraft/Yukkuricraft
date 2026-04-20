@@ -18,10 +18,14 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      - name: Load submodule SSH keys
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SUBMODULE_DEPLOY_KEYS }}
+
       - name: Checkout repository and submodules
         uses: actions/checkout@v4
         with:
-          ssh-key: ${{ secrets.SECRETS_SUBMODULE_DEPLOY_KEY }}
           submodules: recursive
 
       - name: Set up Python
