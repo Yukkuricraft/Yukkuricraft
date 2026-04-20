@@ -32,6 +32,15 @@ class ContainerNameRequestPath(BaseModel):
     container_name: str = Field(description="Container name string")
 
 
+class MinecraftPingPath(BaseModel):
+    host: str = Field(description="Minecraft server hostname (must be in allowed base domain)")
+    port: str = Field(description="Minecraft server port (validated as int 1-65535 in handler)")
+
+
+class MinecraftUuidPath(BaseModel):
+    uuid: str = Field(description="Minecraft player UUID (32 hex chars, dashes optional)")
+
+
 # -----------
 # Auth Models
 # -----------
