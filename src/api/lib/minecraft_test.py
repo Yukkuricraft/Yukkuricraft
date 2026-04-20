@@ -80,6 +80,16 @@ class TestFlattenDescription:
         assert flatten_description(None) == ""
         assert flatten_description(123) == ""
 
+    def test_uses_motd_to_minecraft_when_available(self):
+        # mcstatus v11+ wraps the description in a Motd object. We must use
+        # its built-in `.to_minecraft()` method rather than treating it as a
+        # plain object.
+        class FakeMotd:
+            def to_minecraft(self):
+                return "\u00a7cfake red"
+
+        assert flatten_description(FakeMotd()) == "\u00a7cfake red"
+
 
 import time as time_module
 from src.api.lib.minecraft import TTLCache
@@ -147,7 +157,7 @@ class TestPing:
     def test_returns_normalized_success(self, mocker):
         fake_status = mock.Mock()
         fake_status.description = {"text": "MOTD"}
-        fake_status.favicon = "data:image/png;base64,abc"
+        fake_status.icon = "data:image/png;base64,abc"
         fake_status.players.max = 100
         fake_status.players.online = 7
         fake_player = mock.Mock()
@@ -182,7 +192,7 @@ class TestPing:
     def test_handles_missing_player_sample(self, mocker):
         fake_status = mock.Mock()
         fake_status.description = "plain MOTD"
-        fake_status.favicon = None
+        fake_status.icon = None
         fake_status.players.max = 100
         fake_status.players.online = 0
         fake_status.players.sample = None
@@ -221,7 +231,7 @@ class TestPing:
     def test_caches_success(self, mocker):
         fake_status = mock.Mock()
         fake_status.description = "ok"
-        fake_status.favicon = None
+        fake_status.icon = None
         fake_status.players.max = 1
         fake_status.players.online = 0
         fake_status.players.sample = []

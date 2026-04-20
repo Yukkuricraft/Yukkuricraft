@@ -79,14 +79,18 @@ def _emit(component: dict) -> str:
 
 
 def flatten_description(desc: Any) -> str:
-    """Flatten a Minecraft chat-component tree (or plain string) to legacy
-    §-prefixed text.
+    """Flatten a Minecraft chat-component tree (or plain string, or mcstatus
+    Motd object) to legacy §-prefixed text.
 
-    SLP responses use either a plain string or a nested component dict
-    `{text, color?, bold?, ..., extra: [...]}`. The Vue caller expects a
-    single string and calls its own `parseMCCodes` on it, which only
-    understands the legacy `§<code>` format.
+    SLP responses use either a plain string, a nested component dict
+    `{text, color?, bold?, ..., extra: [...]}`, or in newer mcstatus versions
+    a structured `Motd` object whose `to_minecraft()` method emits exactly
+    the format the Vue caller's `parseMCCodes` expects.
     """
+    # mcstatus v11+ wraps the description in a Motd object that already knows
+    # how to emit legacy §-codes. Prefer that path when available.
+    if hasattr(desc, "to_minecraft"):
+        return desc.to_minecraft()
     if isinstance(desc, str):
         return desc
     if not isinstance(desc, dict):
@@ -195,7 +199,7 @@ def ping(host: str, port: int) -> dict:
 
     result = {
         "description": flatten_description(status.description),
-        "favicon": status.favicon,
+        "favicon": status.icon,
         "players": {
             "max": status.players.max,
             "online": status.players.online,
