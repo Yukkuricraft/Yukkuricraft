@@ -16,6 +16,7 @@ def create_app():
     from src.common.config import load_env_config
     from src.api.db import db
     from src.api.lib.sockets import socketio
+    from src.api.lib.anti_abuse import limiter
 
     from src.api.blueprints.server import server_bp
     from src.api.blueprints.auth import auth_bp
@@ -23,6 +24,7 @@ def create_app():
     from src.api.blueprints.environment import envs_bp
     from src.api.blueprints.files import files_bp
     from src.api.blueprints.sockets import sockets_bp
+    from src.api.blueprints.minecraft import minecraft_bp
 
     db_config = load_env_config(server_paths.get_api_db_env_file_path())
     app = OpenAPI("YC API", info=info, security_schemes=security_schemes)
@@ -36,9 +38,21 @@ def create_app():
     app.register_api(files_bp)
     app.register_api(server_bp)
     app.register_api(sockets_bp)
+    app.register_api(minecraft_bp)
 
     db.init_app(app)
     socketio.init_app(app)
+    limiter.init_app(app)
+
+    @app.errorhandler(429)
+    def _rate_limited_response(_err):
+        # Reshape flask-limiter's default text body into our standard
+        # {"error": ...} JSON envelope. The Retry-After header set by
+        # flask-limiter is preserved.
+        from flask import jsonify
+        resp = jsonify({"error": "rate limited"})
+        resp.status_code = 429
+        return resp
 
     with app.app_context():
         db.create_all()

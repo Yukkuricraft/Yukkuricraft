@@ -4,6 +4,7 @@ from functools import wraps
 from typing import Callable, Deque
 
 from flask import request  # type: ignore
+from flask_limiter import Limiter  # type: ignore
 
 from src.api.constants import CORS_ORIGINS, TRUSTED_PROXY_HOPS
 
@@ -107,3 +108,14 @@ class CircuitBreaker:
         self._failures.clear()
         self._opened_at = None
         self._half_open = False
+
+
+# Single shared limiter instance. Decorators on routes (`@limiter.limit(...)`)
+# register their limits against this. The default in-memory backend is
+# per-worker, which is acceptable at current scale (effective limit is
+# N_workers x stated_limit). Swap to Redis later via `storage_uri="redis://..."`
+# without changing any decorators.
+limiter = Limiter(
+    key_func=client_ip_key,
+    default_limits=[],  # no global default — each protected endpoint declares its own
+)
