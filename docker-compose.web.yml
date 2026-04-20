@@ -87,6 +87,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     networks:
       - yc-web-dev
+      - yc-dynmap
     environment:
       DOCKER_HOST: unix:///tmp/docker.sock
     restart: 'unless-stopped'
@@ -106,3 +107,6 @@ volumes:
 
 networks:
   yc-web-dev:
+  yc-dynmap:
+    external: true
+    name: yc-dynmap

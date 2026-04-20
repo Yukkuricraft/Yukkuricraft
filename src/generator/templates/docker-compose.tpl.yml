@@ -38,6 +38,7 @@ custom_extensions:
     restart: unless-stopped
     networks:
       - ycnet
+      - yc-dynmap
     stop_grace_period: 20s
     environment:
       MOTD: "<<WORLDGROUP>>-${ENV}-${MC_TYPE}_${MC_VERSION}"
@@ -270,3 +271,6 @@ volumes:
 # Networks will be automatically generated as ycnet-${ENV}
 networks:
   ycnet:
+  yc-dynmap:
+    external: true
+    name: yc-dynmap

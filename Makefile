@@ -59,6 +59,11 @@ __ensure_env_file_exists:
 		exit 1; \
 	fi
 
+.PHONY: __ensure_dynmap_network
+__ensure_dynmap_network:
+	@docker network inspect yc-dynmap >/dev/null 2>&1 \
+		|| docker network create yc-dynmap
+
 #############
 ## TARGETS ##
 #############
@@ -192,6 +197,7 @@ build_mysql_backup:
 # YC2.0 api
 .PHONY: up_web
 up_web: ENV=env1
+up_web: __ensure_dynmap_network
 up_web:
 	docker compose -f $(WEB_COMPOSE_FILE) \
 		--env-file=${WEB_DOCKER_ENV_FILE} \
@@ -215,6 +221,7 @@ restart_web:
 .PHONY: up
 up: generate
 up: __pre_ensure
+up: __ensure_dynmap_network
 up:
 	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
@@ -223,6 +230,7 @@ up:
 .PHONY: up_one
 up_one: generate
 up_one: __pre_ensure
+up_one: __ensure_dynmap_network
 up_one:
 	$(PRE) docker compose -f $(COMPOSE_FILE) \
 		$(COMPOSE_ARGS) \
