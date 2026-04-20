@@ -19,7 +19,7 @@ from src.api.constants import (
     IS_LOCAL,
     ACCESS_TOKEN_DUR_MINS,
     G_CLIENT_ID,
-    CORS_ORIGIN,
+    CORS_ORIGINS,
     WHITELISTED_USERS_FILE,
     YC_TOKEN_AUTH_SCHEME,
 )
@@ -327,32 +327,35 @@ def invalidate_access_token(headers: Dict, session: scoped_session[Session]):
     session.commit()
 
 
-def return_cors_response() -> Response:
-    """Makes a skeleton Flask Response with CORS headers.
+def _pick_cors_origin() -> str:
+    """Choose the value to send in `Access-Control-Allow-Origin`.
 
-    Returns:
-        flask.Response: Response object with only the CORS headers set.
+    If the request's Origin is in CORS_ORIGINS, echo it back. Otherwise fall
+    back to the first allow-list entry. Wildcard ("*") is treated as an
+    explicit allow-anything, used only in local dev.
     """
+    if CORS_ORIGINS == ["*"]:
+        return "*"
+    request_origin = request.headers.get("Origin", "")
+    if request_origin in CORS_ORIGINS:
+        return request_origin
+    return CORS_ORIGINS[0]
+
+
+def return_cors_response() -> Response:
+    """Makes a skeleton Flask Response with CORS headers."""
     resp = make_response()
-    resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
+    resp.headers.add("Access-Control-Allow-Origin", _pick_cors_origin())
     resp.headers.add("Access-Control-Allow-Headers", "*")
     resp.headers.add("Access-Control-Allow-Methods", "*")
-
     return resp
 
 
 def prepare_response(status_code=200):
-    """Helper for creating an empty response object with the CORS origin and other headers added.
-
-    Args:
-        status_code (int, optional): Status code of the response. Defaults to 200.
-
-    Returns:
-        Flask response object
-    """
+    """Helper for creating an empty response object with the CORS origin and other headers added."""
     resp = make_response("")
 
-    resp.headers.add("Access-Control-Allow-Origin", CORS_ORIGIN)
+    resp.headers.add("Access-Control-Allow-Origin", _pick_cors_origin())
     resp.content_type = "application/json"
     resp.status = status_code
 
