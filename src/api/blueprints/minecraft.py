@@ -2,8 +2,8 @@
 
 Both endpoints are intentionally NOT decorated with `@validate_access_token`.
 Defense in depth comes from the anti-abuse layers composed below
-(`require_known_origin`, `@limiter.limit`) plus the host allow-list (ping)
-and circuit breaker (uuid).
+(`require_known_origin`) plus the host allow-list (ping) and circuit breaker
+(uuid).
 """
 
 import re
@@ -11,7 +11,7 @@ import re
 from flask_openapi3 import APIBlueprint  # type: ignore
 
 from src.api.blueprints import MinecraftPingPath, MinecraftUuidPath
-from src.api.lib.anti_abuse import limiter, require_known_origin
+from src.api.lib.anti_abuse import require_known_origin
 from src.api.lib.minecraft import (
     is_allowed_ping_host,
     lookup_uuid,
@@ -28,7 +28,6 @@ minecraft_bp: APIBlueprint = APIBlueprint(
 
 @minecraft_bp.get("/ping/<string:host>/<string:port>")
 @require_known_origin
-@limiter.limit("30/minute; 5/second")
 def ping_handler(path: MinecraftPingPath):
     """SLP-ping a Minecraft server. Host must be under MC_PING_ALLOWED_BASE_DOMAIN."""
     try:
@@ -50,7 +49,6 @@ _UUID_HEX_RE = re.compile(r"^[0-9a-fA-F]{32}$")
 
 @minecraft_bp.get("/uuid/<string:uuid>")
 @require_known_origin
-@limiter.limit("60/minute; 10/second")
 def uuid_handler(path: MinecraftUuidPath):
     """Resolve a Minecraft username from a UUID via Mojang sessionserver."""
     normalized = path.uuid.replace("-", "")

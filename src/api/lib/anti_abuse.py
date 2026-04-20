@@ -4,26 +4,8 @@ from functools import wraps
 from typing import Callable, Deque
 
 from flask import request  # type: ignore
-from flask_limiter import Limiter  # type: ignore
 
-from src.api.constants import CORS_ORIGINS, TRUSTED_PROXY_HOPS
-
-
-def client_ip_key() -> str:
-    """flask-limiter `key_func` — returns the real client IP behind our proxy chain.
-
-    Topology: client → SSL terminator → nginx-proxy → API. Both proxies append
-    to X-Forwarded-For, so the rightmost TRUSTED_PROXY_HOPS entries are proxy
-    hops and the entry just before them is the real client.
-
-    If XFF is missing or shorter than expected (local dev, direct hit), we fall
-    back to request.remote_addr.
-    """
-    xff = request.headers.get("X-Forwarded-For", "")
-    parts = [p.strip() for p in xff.split(",") if p.strip()]
-    if len(parts) > TRUSTED_PROXY_HOPS:
-        return parts[-(TRUSTED_PROXY_HOPS + 1)]
-    return request.remote_addr or "unknown"
+from src.api.constants import CORS_ORIGINS
 
 
 def require_known_origin(func: Callable) -> Callable:
@@ -110,12 +92,3 @@ class CircuitBreaker:
         self._half_open = False
 
 
-# Single shared limiter instance. Decorators on routes (`@limiter.limit(...)`)
-# register their limits against this. The default in-memory backend is
-# per-worker, which is acceptable at current scale (effective limit is
-# N_workers x stated_limit). Swap to Redis later via `storage_uri="redis://..."`
-# without changing any decorators.
-limiter = Limiter(
-    key_func=client_ip_key,
-    default_limits=[],  # no global default — each protected endpoint declares its own
-)

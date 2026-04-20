@@ -23,7 +23,6 @@ flask-openapi3-scalar==1.25.60
 flask-openapi3-swagger==5.18.2
 Flask-SocketIO==5.3.1
 Flask-SQLAlchemy==3.1.1
-flask-limiter==4.1.1
 gevent==24.11.1
 gevent-websocket==0.10.1
 google-api-core==2.8.2

@@ -16,7 +16,6 @@ def create_app():
     from src.common.config import load_env_config
     from src.api.db import db
     from src.api.lib.sockets import socketio
-    from src.api.lib.anti_abuse import limiter
 
     from src.api.blueprints.server import server_bp
     from src.api.blueprints.auth import auth_bp
@@ -42,17 +41,6 @@ def create_app():
 
     db.init_app(app)
     socketio.init_app(app)
-    limiter.init_app(app)
-
-    @app.errorhandler(429)
-    def _rate_limited_response(_err):
-        # Reshape flask-limiter's default text body into our standard
-        # {"error": ...} JSON envelope. The Retry-After header set by
-        # flask-limiter is preserved.
-        from flask import jsonify
-        resp = jsonify({"error": "rate limited"})
-        resp.status_code = 429
-        return resp
 
     with app.app_context():
         db.create_all()

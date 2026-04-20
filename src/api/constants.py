@@ -64,4 +64,3 @@ But if it does, we should figure out a better way to share the value across api,
 
 # Anti-abuse / minecraft proxy
 MC_PING_ALLOWED_BASE_DOMAIN = "yukkuricraft.net"
-TRUSTED_PROXY_HOPS = 2  # SSL-terminator + nginx-proxy; adjust if topology changes.
