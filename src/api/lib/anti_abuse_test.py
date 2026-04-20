@@ -54,3 +54,54 @@ class TestClientIpKey:
         with _request_ctx(app, remote_addr=""):
             # Werkzeug coerces empty REMOTE_ADDR to None
             assert client_ip_key() == "unknown"
+
+
+from src.api.lib.anti_abuse import require_known_origin
+
+
+def _make_app_with_protected_route(monkeypatch, allowed_origins):
+    monkeypatch.setattr("src.api.lib.anti_abuse.CORS_ORIGINS", allowed_origins)
+    app = flask.Flask(__name__)
+
+    @app.route("/protected")
+    @require_known_origin
+    def protected():
+        return {"ok": True}
+
+    return app
+
+
+class TestRequireKnownOrigin:
+    def test_allows_request_with_known_origin(self, monkeypatch):
+        app = _make_app_with_protected_route(
+            monkeypatch, ["https://www.yukkuricraft.net"]
+        )
+        client = app.test_client()
+        resp = client.get("/protected", headers={"Origin": "https://www.yukkuricraft.net"})
+        assert resp.status_code == 200
+        assert resp.get_json() == {"ok": True}
+
+    def test_rejects_request_with_unknown_origin(self, monkeypatch):
+        app = _make_app_with_protected_route(
+            monkeypatch, ["https://www.yukkuricraft.net"]
+        )
+        client = app.test_client()
+        resp = client.get("/protected", headers={"Origin": "https://evil.example"})
+        assert resp.status_code == 403
+        assert resp.get_json() == {"error": "forbidden origin"}
+
+    def test_rejects_request_with_no_origin(self, monkeypatch):
+        app = _make_app_with_protected_route(
+            monkeypatch, ["https://www.yukkuricraft.net"]
+        )
+        client = app.test_client()
+        resp = client.get("/protected")
+        assert resp.status_code == 403
+        assert resp.get_json() == {"error": "forbidden origin"}
+
+    def test_wildcard_origins_allows_anything(self, monkeypatch):
+        # Local-dev convention: CORS_ORIGINS == ["*"] means accept any (or no) Origin.
+        app = _make_app_with_protected_route(monkeypatch, ["*"])
+        client = app.test_client()
+        assert client.get("/protected").status_code == 200
+        assert client.get("/protected", headers={"Origin": "https://anything"}).status_code == 200
