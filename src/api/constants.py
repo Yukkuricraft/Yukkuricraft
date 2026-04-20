@@ -20,7 +20,7 @@ PUBLIC_SITE_ORIGINS = [
 
 if IS_LOCAL:
     G_CLIENT_ID = "some-arbitrary-client-id"
-    CORS_ORIGINS = ["*"]  # wildcard preserved for local dev
+    CORS_ORIGINS = ["*"]  # wildcard for local dev — not a real allowlist; guard for this before using `in`
     MIN_VALID_PROXY_PORT = 26600
     MAX_VALID_PROXY_PORT = 26700
     API_HOST = "api.localhost"
@@ -64,4 +64,4 @@ But if it does, we should figure out a better way to share the value across api,
 
 # Anti-abuse / minecraft proxy
 MC_PING_ALLOWED_BASE_DOMAIN = "yukkuricraft.net"
-TRUSTED_PROXY_HOPS = 2  # SSL-terminator + nginx-proxy. Validate empirically before going live (see plan task 16).
+TRUSTED_PROXY_HOPS = 2  # SSL-terminator + nginx-proxy; adjust if topology changes.
