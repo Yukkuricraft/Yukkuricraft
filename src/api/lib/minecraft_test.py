@@ -205,7 +205,9 @@ class TestPing:
         mocker.patch("src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server)
 
         result = ping("play.yukkuricraft.net", 25565)
-        assert result["players"]["sample"] is None
+        assert result["players"]["sample"] == [
+            {"id": "00000000-0000-0000-0000-000000000000", "name": ""}
+        ]
         assert result["favicon"] is None
         assert result["description"] == "plain MOTD"
 
@@ -233,7 +235,9 @@ class TestPing:
         )
 
         result = ping("play.yukkuricraft.net", 25565)
-        assert result["players"]["sample"] is None
+        assert result["players"]["sample"] == [
+            {"id": "00000000-0000-0000-0000-000000000000", "name": ""}
+        ]
         assert result["players"]["online"] == 0
         assert result["players"]["max"] == 666
 

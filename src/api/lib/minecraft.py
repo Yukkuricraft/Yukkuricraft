@@ -152,23 +152,28 @@ _ping_cache = TTLCache(
 )
 
 
-def _normalize_player_sample(sample) -> list | None:
+def _normalize_player_sample(sample) -> list:
     """Normalize SLP player sample for the API response.
 
     - Filters out §-coded "fake player" entries that plugins like
       ServerListPlus and Velocity's default empty-server message inject.
       These aren't real players; the count is in `players.online`.
-    - Returns `None` (serialized as JSON `null`) when nothing remains, NOT
-      `[]`. The consumer's `.filter()` call throws on `null`, which lets it
-      short-circuit to a partial render rather than getting an empty array
-      that triggers a different render-time bug downstream. minetools
-      behaved similarly (the consumer code was structured to tolerate that
-      throw).
+    - When nothing real remains, returns a single placeholder entry with
+      empty `name`. This is a workaround for a pre-existing bug in the
+      yukkuricraft.net Vue widget: its `chunk()` returns `[[]]` for an
+      empty array, then accesses `[0].name` and throws; passing `null`
+      makes the widget's `.filter()` throw on `null` which also breaks
+      rendering. The placeholder survives the filter (no `§`), keeps
+      `chunk()` happy (non-empty input), and the widget's
+      `v-if="player.name"` check hides the empty-name entry from the UI.
+      A future consumer fix to handle an empty `sample` directly would let
+      us drop this placeholder.
     """
+    placeholder = [{"id": "00000000-0000-0000-0000-000000000000", "name": ""}]
     if not sample:
-        return None
+        return placeholder
     real = [{"id": p.id, "name": p.name} for p in sample if "\u00a7" not in (p.name or "")]
-    return real or None
+    return real or placeholder
 
 
 def ping(host: str, port: int) -> dict:
