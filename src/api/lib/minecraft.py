@@ -152,10 +152,23 @@ _ping_cache = TTLCache(
 )
 
 
-def _normalize_player_sample(sample) -> list:
+def _normalize_player_sample(sample) -> list | None:
+    """Normalize SLP player sample for the API response.
+
+    - Filters out §-coded "fake player" entries that plugins like
+      ServerListPlus and Velocity's default empty-server message inject.
+      These aren't real players; the count is in `players.online`.
+    - Returns `None` (serialized as JSON `null`) when nothing remains, NOT
+      `[]`. The consumer's `.filter()` call throws on `null`, which lets it
+      short-circuit to a partial render rather than getting an empty array
+      that triggers a different render-time bug downstream. minetools
+      behaved similarly (the consumer code was structured to tolerate that
+      throw).
+    """
     if not sample:
-        return []
-    return [{"id": p.id, "name": p.name} for p in sample]
+        return None
+    real = [{"id": p.id, "name": p.name} for p in sample if "\u00a7" not in (p.name or "")]
+    return real or None
 
 
 def ping(host: str, port: int) -> dict:

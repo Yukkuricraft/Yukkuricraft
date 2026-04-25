@@ -205,9 +205,68 @@ class TestPing:
         mocker.patch("src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server)
 
         result = ping("play.yukkuricraft.net", 25565)
-        assert result["players"]["sample"] == []
+        assert result["players"]["sample"] is None
         assert result["favicon"] is None
         assert result["description"] == "plain MOTD"
+
+    def test_filters_section_coded_fake_player(self, mocker):
+        """ServerListPlus / Velocity inject §-coded "players" as a status
+        message; we strip them so the consumer doesn't have to."""
+        fake_player = mock.Mock()
+        fake_player.id = "ec5ff5a1-7ee3-4db8-a078-8b50484faecd"
+        fake_player.name = "\u00a7aServer is currently empty!"
+
+        fake_status = mock.Mock()
+        fake_status.description = "ok"
+        fake_status.icon = None
+        fake_status.players.max = 666
+        fake_status.players.online = 0
+        fake_status.players.sample = [fake_player]
+        fake_status.version.name = "Velocity"
+        fake_status.version.protocol = 47
+        fake_status.latency = 1.0
+
+        fake_server = mock.Mock()
+        fake_server.status.return_value = fake_status
+        mocker.patch(
+            "src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server
+        )
+
+        result = ping("play.yukkuricraft.net", 25565)
+        assert result["players"]["sample"] is None
+        assert result["players"]["online"] == 0
+        assert result["players"]["max"] == 666
+
+    def test_keeps_real_players_strips_fake_only(self, mocker):
+        """Mixed sample: real players survive, fake ones are stripped."""
+        real_player = mock.Mock()
+        real_player.id = "11111111-2222-3333-4444-555555555555"
+        real_player.name = "remiscarlet"
+
+        fake_player = mock.Mock()
+        fake_player.id = "00000000-0000-0000-0000-000000000000"
+        fake_player.name = "\u00a7aServer message"
+
+        fake_status = mock.Mock()
+        fake_status.description = "ok"
+        fake_status.icon = None
+        fake_status.players.max = 100
+        fake_status.players.online = 1
+        fake_status.players.sample = [real_player, fake_player]
+        fake_status.version.name = "Paper"
+        fake_status.version.protocol = 763
+        fake_status.latency = 1.0
+
+        fake_server = mock.Mock()
+        fake_server.status.return_value = fake_status
+        mocker.patch(
+            "src.api.lib.minecraft.JavaServer.lookup", return_value=fake_server
+        )
+
+        result = ping("play.yukkuricraft.net", 25565)
+        assert result["players"]["sample"] == [
+            {"id": "11111111-2222-3333-4444-555555555555", "name": "remiscarlet"}
+        ]
 
     def test_returns_timeout_error(self, mocker):
         fake_server = mock.Mock()
