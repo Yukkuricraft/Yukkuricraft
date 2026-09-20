@@ -126,15 +126,26 @@ build: build_mc_backup
 build: build_mc_proxy
 build: build_postgres
 
+# Defaults reproduce the java21 image env1 runs today. Override per-invocation
+# (or via the java25 target below) to build an alternate JVM under its own tag.
+MC_SERVER_BASE_IMAGE?=itzg/minecraft-server:java21-graalvm
+MC_SERVER_IMAGE_TAG?=latest
+
 .PHONY: build_minecraft_server
 build_minecraft_server:
 	docker build -f images/minecraft-server/Dockerfile \
 		--no-cache \
+		--build-arg BASE_IMAGE=${MC_SERVER_BASE_IMAGE} \
 		--build-arg HOST_UID=${CURRENT_UID} \
 		--build-arg HOST_GID=${CURRENT_GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
-		--tag='yukkuricraft/minecraft-server' \
+		--tag='yukkuricraft/minecraft-server:${MC_SERVER_IMAGE_TAG}' \
 		.
+
+.PHONY: build_minecraft_server_java25
+build_minecraft_server_java25: MC_SERVER_BASE_IMAGE=itzg/minecraft-server:java25-graalvm
+build_minecraft_server_java25: MC_SERVER_IMAGE_TAG=java25
+build_minecraft_server_java25: build_minecraft_server
 
 .PHONY: build_api
 build_api:

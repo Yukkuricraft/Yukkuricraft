@@ -1,4 +1,5 @@
-FROM itzg/minecraft-server:java21-graalvm AS base
+ARG BASE_IMAGE=itzg/minecraft-server:java21-graalvm
+FROM ${BASE_IMAGE} AS base
 COPY scripts/ /scripts
 
 ARG HOST_UID=1000
@@ -21,16 +22,16 @@ RUN mkdir /worlds-bindmount
 RUN chown $HOST_UID:$HOST_GID /plugins-bindmount
 RUN chown $HOST_UID:$HOST_GID /worlds-bindmount
 
-# ARG JMXREMOTE_CONFIG_PATH=/opt/java/openjdk/conf/management/
-ARG JMXREMOTE_CONFIG_PATH=/usr/lib64/graalvm/graalvm-java21/conf/management
+# Every itzg/minecraft-server variant sets JAVA_HOME, so this resolves for both the
+# graalvm (/usr/lib64/graalvm/graalvm-javaNN) and openjdk (/opt/java/openjdk) bases.
+# Don't hardcode it - a COPY to a wrong path silently creates it instead of failing.
+COPY secrets/jmxremote.password $JAVA_HOME/conf/management/jmxremote.password
+RUN chown $HOST_UID:$HOST_GID $JAVA_HOME/conf/management/jmxremote.password && \
+    chmod 600 $JAVA_HOME/conf/management/jmxremote.password
 
-COPY secrets/jmxremote.password $JMXREMOTE_CONFIG_PATH/jmxremote.password
-RUN chown $HOST_UID:$HOST_GID $JMXREMOTE_CONFIG_PATH/jmxremote.password && \
-    chmod 600 $JMXREMOTE_CONFIG_PATH/jmxremote.password
-
-COPY secrets/jmxremote.access $JMXREMOTE_CONFIG_PATH/jmxremote.access
-RUN chown $HOST_UID:$HOST_GID $JMXREMOTE_CONFIG_PATH/jmxremote.access && \
-    chmod 600 $JMXREMOTE_CONFIG_PATH/jmxremote.access
+COPY secrets/jmxremote.access $JAVA_HOME/conf/management/jmxremote.access
+RUN chown $HOST_UID:$HOST_GID $JAVA_HOME/conf/management/jmxremote.access && \
+    chmod 600 $JAVA_HOME/conf/management/jmxremote.access
 
 # Just in-case remotely SSH'ing in and dev'ing from vscode (windows) causes CRLF issues
 RUN sed -i 's/\r$//' /scripts/start.sh && \
