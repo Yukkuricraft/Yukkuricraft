@@ -187,14 +187,24 @@ build_postgres:
 		--tag='yukkuricraft/postgres' \
 		.
 
+# Defaults reproduce the java21 proxy image env1 runs today.
+MC_PROXY_BASE_IMAGE?=itzg/mc-proxy
+MC_PROXY_IMAGE_TAG?=latest
+
 .PHONY: build_mc_proxy
 build_mc_proxy:
 	docker build -f images/yc-mc-proxy/Dockerfile \
 		--no-cache \
+		--build-arg BASE_IMAGE=${MC_PROXY_BASE_IMAGE} \
 		--build-arg HOST_UID=${CURRENT_UID} \
 		--build-arg HOST_GID=${CURRENT_GID} \
-		--tag='yukkuricraft/mc-proxy' \
+		--tag='yukkuricraft/mc-proxy:${MC_PROXY_IMAGE_TAG}' \
 		.
+
+.PHONY: build_mc_proxy_java25
+build_mc_proxy_java25: MC_PROXY_BASE_IMAGE=itzg/mc-proxy:java25
+build_mc_proxy_java25: MC_PROXY_IMAGE_TAG=java25
+build_mc_proxy_java25: build_mc_proxy
 
 .PHONY: build_mysql_backup
 build_mysql_backup:

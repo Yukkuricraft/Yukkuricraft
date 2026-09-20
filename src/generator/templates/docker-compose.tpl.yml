@@ -135,7 +135,9 @@ custom_extensions:
 
   velocity_template:
     depends_on: {}
-    image: yukkuricraft/mc-proxy
+    # Unset (every env but the java25 test env) renders exactly 'yukkuricraft/mc-proxy',
+    # keeping the resolved config - and therefore compose's config hash - unchanged.
+    image: yukkuricraft/mc-proxy${VELOCITY_IMAGE_TAG:+:${VELOCITY_IMAGE_TAG}}
     environment:
       DEBUG: "false"
       TYPE: "VELOCITY"

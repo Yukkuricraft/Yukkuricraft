@@ -1,4 +1,5 @@
-FROM itzg/mc-proxy
+ARG BASE_IMAGE=itzg/mc-proxy
+FROM ${BASE_IMAGE}
 
 # Set up UID/GID
 ARG HOST_UID=1000
