@@ -156,6 +156,12 @@ custom_extensions:
       - ${YC_REPO_ROOT}/secrets/velocity/forwarding.secret:/config/forwarding.secret
     ports:
       - "${VELOCITY_PORT}:25577"
+
+    # Without a TTY the proxy's stdout has no onlcr translation and jline falls back to
+    # raw System.out, so console output arrives as bare LF and staircases in the webconsole.
+    # stdin_open is what makes the webconsole writable rather than read-only.
+    tty: true
+    stdin_open: true
     networks:
       - ycnet
     logging: *default-logging
