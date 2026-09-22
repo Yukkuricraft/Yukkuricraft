@@ -4,11 +4,9 @@ from datetime import datetime, timedelta, timezone
 import docker
 from docker.models.containers import Container
 from docker import DockerClient, from_env
-from concurrent.futures import ThreadPoolExecutor
 
 from pprint import pformat
 from typing import Any, Callable, List, Optional, Dict
-from ptyprocess import PtyProcessUnicode  # type: ignore
 
 from src.api.lib import LegacyActiveContainer, LegacyDefinedContainer
 from src.api.lib.runner import Runner
@@ -20,7 +18,6 @@ from src.common import server_paths
 from src.common.logger_setup import logger
 from src.common.config import load_yaml_config
 from src.common.constants import (
-    YC_CONTAINER_TYPE_LABEL,
     YC_ENV_LABEL,
     YC_CONTAINER_NAME_LABEL,
 )
@@ -138,43 +135,6 @@ class DockerManagement:
     def __init__(self, client: Optional[DockerClient] = None):
         self.client = client if client else from_env()
 
-    def pty_attach_container(self, container: Container):
-        # This is super weird.
-        # This only affects Paper/MC forks that use jline3
-        # There's a bug between docker/jline3 where a docker ws attach causes jline3's persistent input line to not function.
-        # "Not function" meaning the socket connection will send input correctly but doesn't send back the persistent input line modifications
-        #   However, all input behaviors are still executed properly upon a `\n` being sent over the socket.
-        # A CLI workaround was to call `docker attach` on each container that started. From a python script, calling `subprocess.Popen` with docker attach
-        #   also worked. However, it only worked when executed from an interactive terminal ie was running inside a PTY. Thus, using `subprocess.Popen` from a
-        #   server context with no PTY caused it to not work.
-        # The final workaround that worked was to create a PTY process from the server using ptyprocess and run the `docker attach` inside of that.
-        #
-        # Wtf lol.
-        if (
-            YC_CONTAINER_TYPE_LABEL in container.labels
-            and container.labels[YC_CONTAINER_TYPE_LABEL] == "minecraft"
-        ):
-            logger.info("Spawning process")
-            p = PtyProcessUnicode.spawn(["docker", "attach", container.name])
-            logger.info(f"Spawned. {pformat(p)}")
-            try:
-                logger.info("Is Alive?")
-                logger.info(p.isalive())
-                with ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(lambda: p.write("list\n"))
-                    logger.info(future.result(timeout=1))
-
-                    future = executor.submit(lambda: p.read(1024))
-                    logger.info(future.result(timeout=1))
-            except EOFError:
-                logger.info("Got EOFError - Did not read from ptyprocess.")
-            except TimeoutError:
-                logger.info("Got TimeoutError - read() on PTY process failed!")
-            except:
-                log_exception()
-            finally:
-                logger.info("Done")
-
     def exec_run(
         self,
         container: Container,
@@ -230,10 +190,29 @@ class DockerManagement:
             ],
         )
 
-    def prepare_container_for_ws_attach(self, container_name: str):
-        container = self.container_name_to_container(container_name)
-        self.pty_attach_container(container)
-        return True
+    def resize_container_tty(self, container_name: str, height: int, width: int):
+        """Set a container's TTY dimensions.
+
+        Containers come up with a 0x0 TTY until something resizes them, and jline3
+        maps a zero dimension to a degenerate 1-row/MAX_VALUE-column display whose
+        incremental repaints emit nothing. The console then accepts input without
+        ever rendering it. Docker's websocket attach has no resize channel, so the
+        size has to be set out of band via this endpoint.
+
+        Args:
+            container_name (str): A docker container name or id
+            height (int): Terminal height in rows. Must be non-zero.
+            width (int): Terminal width in columns. Must be non-zero.
+
+        Returns:
+            Optional[Any]: None if the container could not be found.
+        """
+
+        return self.perform_cb_on_container(
+            container_name=container_name,
+            callback=lambda container: container.resize(height=height, width=width),
+            additional_data_to_log={"height": height, "width": width},
+        )
 
     def container_name_to_container(self, container_name):
         return self.client.containers.get(container_name)

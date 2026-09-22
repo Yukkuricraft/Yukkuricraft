@@ -198,3 +198,16 @@ class ListActiveContainersResponse(BaseModel):
     active_containers: List[LegacyActiveContainer] = Field(
         description="List of currently running containers"
     )
+
+
+class ResizeContainerTtyRequestBody(BaseModel):
+    # Zero dimensions are what break the console in the first place, so reject them here.
+    h: int = Field(description="Terminal height in rows", gt=0)
+    w: int = Field(description="Terminal width in columns", gt=0)
+
+
+class ResizeContainerTtyResponse(BaseModel):
+    success: bool = Field(description="Whether the resize was applied")
+    container_name: str = Field(description="Container that was resized")
+    h: int = Field(description="Applied terminal height in rows")
+    w: int = Field(description="Applied terminal width in columns")
