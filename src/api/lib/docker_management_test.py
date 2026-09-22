@@ -402,26 +402,6 @@ class TestDockerManagement:
             container.ports == container_config_node.ports
         ), f"Expected 'ports' field to contain '{container_config_node.ports}'!"
 
-    def test__pty_attach_container__success(
-        self, mocker: MockerFixture, docker_container, docker_mgmt: DockerManagement
-    ):
-        """Ensures the function calls the PtyProcessUnicode.spawn() method with the docker attach command."""
-        # SETUP
-        spawn_mock = mocker.patch(
-            "src.api.lib.docker_management.PtyProcessUnicode.spawn"
-        )
-
-        # EXECUTE
-        docker_mgmt.pty_attach_container(docker_container)
-
-        # ASSERT
-        expected_call_args = call(
-            ["docker", "attach", docker_container.name],
-        )
-        assert (
-            spawn_mock.call_args_list[0] == expected_call_args
-        ), "Did not get the expected calls to PtyProcessUnicode.spawn()!"
-
     def test__exec_run__args_correct_no_extras(
         self,
         docker_container,
@@ -519,28 +499,25 @@ class TestDockerManagement:
         )
         assert exec_run_mock.call_args_list[0][0][1] == ["rcon-cli", config_cmd]
 
-    def test__prepare_container_for_ws_attach__success(
+    def test__resize_container_tty__success(
         self, mocker: MockerFixture, docker_container, docker_mgmt: DockerManagement
     ):
-        """Ensures we call the pty_attach_container() helper with a container we get from container_name_to_container()"""
+        """Ensures resize_container_tty() resizes the container to the requested dimensions."""
         # SETUP
-        container_name_to_container_return_value = mocker.MagicMock()
-        container_name_to_container_mock = mocker.patch(
-            "src.api.lib.docker_management.DockerManagement.container_name_to_container",
-            return_value=container_name_to_container_return_value,
-        )
-        pty_attach_container_spy = mocker.spy(docker_mgmt, "pty_attach_container")
+        docker_mgmt.client.containers.get.return_value = docker_container
+        perform_cb_on_container_spy = mocker.spy(docker_mgmt, "perform_cb_on_container")
 
         # EXECUTE
-        docker_mgmt.prepare_container_for_ws_attach(docker_container.name)
+        docker_mgmt.resize_container_tty(docker_container.name, height=40, width=160)
 
         # ASSERT
-        assert container_name_to_container_mock.call_args_list[0][0] == (
-            docker_container.name,
-        ), f"Expected call to container_name_to_container() to include the container name '{docker_container.name}'!"
-        assert pty_attach_container_spy.call_args_list[0][0] == (
-            container_name_to_container_return_value,
-        ), "Expected call to pty_attach_container() to include the container mock object"
+        assert (
+            perform_cb_on_container_spy.call_args_list[0][1]["container_name"]
+            == docker_container.name
+        )
+        assert docker_container.resize.call_args_list[0] == call(
+            height=40, width=160
+        ), "Expected the container to be resized to the requested dimensions!"
 
     def test__container_name_to_container__success(
         self, docker_container, docker_mgmt: DockerManagement

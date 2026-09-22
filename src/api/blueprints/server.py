@@ -20,6 +20,8 @@ from src.api.blueprints import (
     ContainerNameRequestPath,
     ListActiveContainersResponse,
     ListDefinedContainersResponse,
+    ResizeContainerTtyRequestBody,
+    ResizeContainerTtyResponse,
     UnauthorizedResponse,
     server_tag,
     EnvRequestPath,
@@ -162,34 +164,44 @@ def down_containers_handler(path: EnvRequestPath):
     return resp
 
 
-@server_bp.route(
-    "/container/<string:container_name>/prepare_ws_attach", methods=["OPTIONS"]
-)
+@server_bp.route("/container/<string:container_name>/resize", methods=["OPTIONS"])
 @log_request
-def prepare_ws_options_attach(container_name):
+def resize_container_tty_options_handler(container_name):
     return return_cors_response()
 
 
-@server_bp.post("/container/<string:container_name>/prepare_ws_attach")
+@server_bp.post(
+    "/container/<string:container_name>/resize",
+    responses={
+        HTTPStatus.OK: ResizeContainerTtyResponse,
+    },
+)
 @validate_access_token
 @log_request
-def prepare_ws_attach(path: ContainerNameRequestPath):
-    """Prepares a container for websocket attach
+def resize_container_tty_handler(
+    path: ContainerNameRequestPath, body: ResizeContainerTtyRequestBody
+):
+    """Resize a container's TTY
 
-    There's a bug where we need to `docker attach` from a PTY connected context in order for docker's websocket attach
-    to work when using jline3.
-
-    Yakumo will call this endpoint first to ensure whenever we try to attach to console, the container has been attached from
-    the necessary PTY context to ensure it's ready.
+    Containers start with a 0x0 TTY, which puts jline3's console into a degenerate
+    display mode where typed input is accepted but never rendered back. Docker's
+    websocket attach protocol carries no resize channel, so Yakumo calls this with
+    the terminal's real dimensions before attaching and whenever the window resizes.
     """
     resp = prepare_response()
     container_name = path.container_name
 
-    resp_data = {}
-    resp_data["success"] = DockerMgmtApi.prepare_container_for_ws_attach(
-        container_name=container_name
+    resized = DockerMgmtApi.resize_container_tty(
+        container_name=container_name,
+        height=body.h,
+        width=body.w,
     )
+
+    resp_data = {}
+    resp_data["success"] = resized is not None
     resp_data["container_name"] = container_name
+    resp_data["h"] = body.h
+    resp_data["w"] = body.w
 
     resp.data = json.dumps(resp_data)
 
