@@ -63,6 +63,8 @@ custom_extensions:
       REPLACE_ENV_VARIABLES: true
       ENV_VARIABLE_PREFIX: YC_
       REPLACE_ENV_VARIABLES_EXCLUDE_PATHS: ${REPLACE_ENV_VARIABLES_EXCLUDE_PATHS}
+      # Comma-separated `link:target` pairs symlinked by start.sh. Keeps large dirs (eg dynmap tiles) out of /data so startup doesn't walk them.
+      MISC_SYMLINKS: /data/plugins/dynmap/web/tiles:/yc-misc/dynmap/tiles
       YC_MYSQL_DB: ${YC_MYSQL_DB}
       YC_MYSQL_HOST: ${YC_MYSQL_HOST}
       YC_MYSQL_USER: ${YC_MYSQL_USER}
@@ -82,6 +84,7 @@ custom_extensions:
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/client-and-server-mods:/client-and-server-mods-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/logs:/data/logs
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/crash-reports:/data/crash-reports
+      - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/misc:/yc-misc
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/mods:/modsconfig-bindmount
       # - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/plugins:/pluginsconfig-bindmount
       - ${MC_FS_ROOT}/env/${ENV}/minecraft/<<WORLDGROUP>>/configs/server:/serverconfig-bindmount
