@@ -11,6 +11,9 @@ IS_PROD = CONFIGURATION_TYPE == "prod"
 IS_DEV = CONFIGURATION_TYPE == "dev"
 IS_LOCAL = CONFIGURATION_TYPE == "local"
 
+MC_BACKUP_RESTIC_IMAGE = "yukkuricraft/mc-backup-restic"
+"""Image shared by adhoc backups and the API's restic calls."""
+
 # Public-site origins that are also allowed to call the /minecraft/* endpoints.
 # Kept separate from the dashboard origins so the lists can diverge later if needed.
 PUBLIC_SITE_ORIGINS = [

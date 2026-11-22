@@ -11,7 +11,9 @@ from src.api.lib import (
     CannotRestoreWhileContainerUpError,
     RestoreAlreadyInProgressError,
 )
+from src.api.constants import MC_BACKUP_RESTIC_IMAGE
 from src.api.lib.backup_management import BackupManagement
+from src.common.constants import HOST_UID, HOST_GID
 from src.common.environment import Env  # type: ignore
 
 
@@ -147,6 +149,44 @@ class TestBackupManagement:
         assert (
             call_kwargs["environment"][expected_field2] == expected_val2
         ), "Expected override arg to be merged with default arg vals when passed to .run()!"
+
+    def test__call_restic__runs_as_host_user_on_shared_image(
+        self, backup_mgmt: BackupManagement, restic_command: str
+    ):
+        backup_mgmt.call_restic(restic_command)
+        kw = backup_mgmt.docker_client.containers.run.call_args.kwargs
+        assert kw["image"] == MC_BACKUP_RESTIC_IMAGE
+        assert kw["entrypoint"] == ["restic"]
+        assert kw["user"] == f"{HOST_UID}:{HOST_GID}"
+        assert kw["remove"] is True
+        assert "/backups" in [v["bind"] for v in kw["volumes"].values()]
+
+    def test__call_restic__forced_params_not_overridable(
+        self, backup_mgmt: BackupManagement, restic_command: str
+    ):
+        backup_mgmt.call_restic(
+            restic_command,
+            {
+                "image": "restic/restic",
+                "entrypoint": None,
+                "user": "0:0",
+                "remove": False,
+            },
+        )
+        kw = backup_mgmt.docker_client.containers.run.call_args.kwargs
+        assert kw["image"] == MC_BACKUP_RESTIC_IMAGE
+        assert kw["entrypoint"] == ["restic"]
+        assert kw["user"] == f"{HOST_UID}:{HOST_GID}"
+        assert kw["remove"] is True
+
+    def test__backup_minecraft__uses_shared_image(
+        self, backup_mgmt: BackupManagement, env1_object: Env, world_group: str
+    ):
+        backup_mgmt.docker_management.is_container_up.side_effect = [False, True]
+        backup_mgmt.docker_client.containers.run.return_value = "[]".encode("utf8")
+        backup_mgmt.backup_minecraft(env1_object, world_group)
+        kw = backup_mgmt.docker_client.containers.run.call_args.kwargs
+        assert kw["image"] == MC_BACKUP_RESTIC_IMAGE
 
     def test__list_backups_by_env_and_tags__pydantic_validation_error(
         self,

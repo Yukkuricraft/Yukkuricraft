@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 from docker import DockerClient
 
-from src.api.constants import BACKUP_CONTENT_ROOT
+from src.api.constants import BACKUP_CONTENT_ROOT, MC_BACKUP_RESTIC_IMAGE
 from src.api.lib.docker_management import DockerManagement
 from src.common.logger_setup import logger
 from src.common.environment import Env
@@ -44,7 +44,6 @@ class BackupManagement:
         override_args = override_args if override_args is not None else {}
 
         params = {
-            "image": "restic/restic",
             "command": command,
             **override_args,
             "environment": {
@@ -63,6 +62,12 @@ class BackupManagement:
                 },
                 **(override_args.get("volumes", {})),
             },
+            # Forced last so they can't be overridden: run as the host user
+            # (not root) so repo locks stay usable by the backup containers.
+            "image": MC_BACKUP_RESTIC_IMAGE,
+            "entrypoint": ["restic"],
+            "user": f"{HOST_UID}:{HOST_GID}",
+            "remove": True,
         }
 
         out = self.docker_client.containers.run(**params)
@@ -164,7 +169,7 @@ class BackupManagement:
         logger.info(underscored_env_alias)
         out = self.docker_client.containers.run(
             name=backup_container_name,
-            image="yukkuricraft/mc-backup-restic",
+            image=MC_BACKUP_RESTIC_IMAGE,
             remove=True,
             environment={
                 "HOST_UID": HOST_UID,
