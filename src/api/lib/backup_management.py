@@ -40,8 +40,18 @@ class BackupManagement:
         )
         self.docker_client = self.docker_management.client
 
-    def call_restic(self, command: str, override_args: Optional[Dict] = None) -> str:
+    def call_restic(
+        self,
+        command: str,
+        override_args: Optional[Dict] = None,
+        read_only: bool = False,
+    ) -> str:
         override_args = override_args if override_args is not None else {}
+
+        if read_only:
+            # Read-only commands skip the repo lock so they can't collide with
+            # backups/prunes. The flag must come before the subcommand.
+            command = f"--no-lock {command}"
 
         params = {
             "command": command,
@@ -80,7 +90,9 @@ class BackupManagement:
         tags.append(env.name)
         tags_str = f"--tag {','.join(tags)}"
 
-        response_as_json = self.call_restic(f"snapshots --json {tags_str}")
+        response_as_json = self.call_restic(
+            f"snapshots --json {tags_str}", read_only=True
+        )
 
         if isinstance(response_as_json, bytes):
             response_as_json = response_as_json.decode("utf-8")
@@ -117,7 +129,7 @@ class BackupManagement:
         worlds = set()
 
         response_as_json = self.call_restic(
-            f"ls {target_id} {BACKUP_CONTENT_ROOT} --json "
+            f"ls {target_id} {BACKUP_CONTENT_ROOT} --json ", read_only=True
         )
         # The output contains both the snapshot and file objects.
         for line in response_as_json.splitlines():

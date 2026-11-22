@@ -574,3 +574,98 @@ class TestBackupManagement:
 
         # ASSERT
         backup_mgmt.docker_client.containers.run.assert_called_once()
+
+    def test__call_restic__read_only_adds_no_lock(
+        self, backup_mgmt: BackupManagement, restic_command: str
+    ):
+        """Read-only calls put --no-lock before the subcommand"""
+
+        # EXECUTE
+        backup_mgmt.call_restic(restic_command, read_only=True)
+
+        # ASSERT
+        assert (
+            backup_mgmt.docker_client.containers.run.call_args.kwargs["command"]
+            == f"--no-lock {restic_command}"
+        )
+
+    def test__call_restic__default_takes_lock(
+        self, backup_mgmt: BackupManagement, restic_command: str
+    ):
+        """Calls are not read-only by default, so they take the repo lock"""
+
+        # EXECUTE
+        backup_mgmt.call_restic(restic_command)
+
+        # ASSERT
+        assert (
+            "--no-lock"
+            not in backup_mgmt.docker_client.containers.run.call_args.kwargs["command"]
+        )
+
+    def test__list_backups_by_env_and_tags__no_lock(
+        self,
+        backup_mgmt: BackupManagement,
+        env1_object: Env,
+        restic_tags_list: List[str],
+    ):
+        """Listing snapshots is read-only and must not take the repo lock"""
+
+        # EXECUTE
+        backup_mgmt.list_backups_by_env_and_tags(env=env1_object, tags=restic_tags_list)
+
+        # ASSERT
+        assert backup_mgmt.docker_client.containers.run.call_args.kwargs[
+            "command"
+        ].startswith("--no-lock snapshots ")
+
+    def test__get_worlds_backed_up_in_snapshot__no_lock(
+        self, backup_mgmt: BackupManagement, restic_target_id: str
+    ):
+        """Listing snapshot contents is read-only and must not take the repo lock"""
+
+        # SETUP
+        backup_mgmt.docker_client.containers.run.return_value = ""
+
+        # EXECUTE
+        backup_mgmt.get_worlds_backed_up_in_snapshot(restic_target_id)
+
+        # ASSERT
+        assert backup_mgmt.docker_client.containers.run.call_args.kwargs[
+            "command"
+        ].startswith("--no-lock ls ")
+
+    def test__restore_minecraft__takes_lock(
+        self,
+        mocker: MockerFixture,
+        backup_mgmt: BackupManagement,
+        env1_object: Env,
+        world_group: str,
+        restic_target_id: str,
+        target_worlds: List[str],
+        bypass_running_container_restriction: bool,
+    ):
+        """Restore writes to the repo's world dir and must keep taking the repo lock"""
+
+        # SETUP
+        backup_mgmt.docker_management.is_container_up.side_effect = [False, False]
+        backup_mgmt.docker_client.containers.run.return_value = ""
+        mocker.patch(
+            "src.api.lib.backup_management.BackupManagement.archive_directory",
+            return_value=None,
+        )
+
+        # EXECUTE
+        backup_mgmt.restore_minecraft(
+            env1_object,
+            world_group,
+            restic_target_id,
+            target_worlds,
+            bypass_running_container_restriction,
+        )
+
+        # ASSERT
+        assert (
+            "--no-lock"
+            not in backup_mgmt.docker_client.containers.run.call_args.kwargs["command"]
+        )
